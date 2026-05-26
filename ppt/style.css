@@ -1,0 +1,1246 @@
+/* Slidev 전역 — Yooshin 폰트 · 1.20em · UI 균형 */
+
+@font-face {
+  font-family: 'Yooshin';
+  src: url('/fonts/Yooshin-Medium.ttf') format('truetype');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Yooshin';
+  src: url('/fonts/Yooshin-Bold.ttf') format('truetype');
+  font-weight: 700 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+.slidev-layout,
+.slidev-layout p,
+.slidev-layout li,
+.slidev-layout td,
+.slidev-layout th,
+.slidev-layout h1,
+.slidev-layout h2,
+.slidev-layout h3,
+.slidev-layout h4,
+.slidev-layout span,
+.slidev-layout div {
+  font-family: 'Yooshin', 'Noto Sans KR', sans-serif;
+}
+
+.slidev-layout pre,
+.slidev-layout code,
+.slidev-layout .font-mono {
+  font-family: 'D2Coding', Consolas, monospace !important;
+}
+
+/* 강조: *italic*(em) 제거 · **bold**(strong)만 사용 */
+.slidev-layout em,
+.slidev-layout i {
+  font-style: normal !important;
+  font-weight: inherit;
+}
+
+.slidev-layout strong,
+.slidev-layout b {
+  font-weight: 700 !important;
+}
+
+/* 1페이지 커버 — AI 학습 고급 히어로 */
+.slidev-layout.cover.cover-hero,
+.slidev-layout.cover.cover-hero .slidev-layout {
+  background:
+    linear-gradient(135deg, rgba(4, 8, 22, 0.84) 0%, rgba(8, 18, 42, 0.78) 45%, rgba(4, 10, 28, 0.9) 100%),
+    url('/cover-ai-native.jpg') center / cover no-repeat !important;
+  padding: 2rem 2.4rem !important;
+}
+
+.slidev-layout.cover.cover-hero h1 {
+  font-size: 4em !important;
+  font-weight: 700;
+  color: #ffffff !important;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.25em;
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.85),
+    0 6px 28px rgba(0, 0, 0, 0.65),
+    0 0 48px rgba(0, 0, 0, 0.45);
+}
+
+.slidev-layout.cover.cover-hero .cover-sub {
+  font-size: 1.75em;
+  color: #f1f5f9;
+  margin-top: 0.85rem;
+  line-height: 1.35;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.75);
+}
+
+.slidev-layout.cover.cover-hero .cover-tagline {
+  font-size: 1.45em;
+  color: #e2e8f0;
+  margin-top: 0.65rem;
+  line-height: 1.4;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.75);
+}
+
+.slidev-layout.cover.cover-hero .cover-accent {
+  color: #fde047 !important;
+  font-weight: 700;
+  text-shadow:
+    0 0 24px rgba(253, 224, 71, 0.55),
+    0 2px 10px rgba(0, 0, 0, 0.85);
+}
+
+.slidev-layout.cover.cover-hero .cover-footer {
+  font-size: 0.95em;
+  color: #cbd5e1 !important;
+  opacity: 1;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+.slidev-layout {
+  font-size: 1.2em;
+  /* 세로 compact · 좌우는 기존처럼 넉넉히 */
+  padding: 0.5rem 2rem !important;
+  padding-top: calc(0.45rem + var(--slide-nav-h, 5.7rem)) !important;
+}
+
+.slidev-layout.cover,
+.slidev-layout.break-slide,
+.slidev-layout.thanks-slide {
+  padding: 1.1rem 2.4rem !important;
+  padding-top: 1.1rem !important;
+}
+
+.slidev-layout.section,
+.slidev-layout.statement,
+.slidev-layout.center:not(.break-slide):not(.thanks-slide) {
+  padding-left: 2.4rem !important;
+  padding-right: 2.4rem !important;
+}
+
+.slidev-layout:not(.cover):not(.break-slide):not(.thanks-slide) {
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}
+
+/* Step 1: compact — dense 슬라이드 h1 (발표형 layout 제외) */
+.slidev-layout:not(.cover):not(.section):not(.statement):not(.center):not(.break-slide):not(.thanks-slide) h1 {
+  font-size: 1.65em;
+  line-height: 1.12;
+  margin-top: 0;
+  margin-bottom: 0.15em;
+}
+
+.slidev-layout.cover h1 {
+  line-height: 1.15;
+  margin-bottom: 0.35em;
+}
+
+/* ── 발표형 슬라이드 (center / section / statement) ──
+   글자: 확대 전·후 중간값 / 배치: 목차 바로 아래부터 (위 여백 최소) */
+.slidev-layout.center:not(.cover):not(.break-slide):not(.thanks-slide),
+.slidev-layout.section,
+.slidev-layout.statement {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  text-align: center !important;
+  min-height: calc(100dvh - var(--slide-nav-h, 5.7rem)) !important;
+  padding-top: calc(var(--slide-nav-h, 5.7rem) + 0.25rem) !important;
+  padding-bottom: 1rem !important;
+  box-sizing: border-box !important;
+  font-size: 1.35em !important;
+}
+
+.slidev-layout.break-slide,
+.slidev-layout.thanks-slide {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  min-height: 100vh !important;
+  padding: 2rem 2.4rem !important;
+  box-sizing: border-box !important;
+  font-size: 1.35em !important;
+}
+
+.slidev-layout.center:not(.cover) .my-auto,
+.slidev-layout.section .my-auto,
+.slidev-layout.statement .my-auto,
+.slidev-layout.break-slide > *,
+.slidev-layout.thanks-slide > * {
+  width: 100%;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0 !important;
+  text-align: center;
+}
+
+/* 제목 — center / section / statement 공통 (중간 크기) */
+.slidev-layout.center:not(.cover):not(.break-slide):not(.thanks-slide) h1,
+.slidev-layout.section h1,
+.slidev-layout.statement h1 {
+  font-size: 2.75em !important;
+  line-height: 1.12 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0.3em !important;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* center · hero — 본문 (중간 크기) */
+.slidev-layout.center:not(.cover):not(.break-slide):not(.thanks-slide) .text-3xl {
+  font-size: 2.3em !important;
+  line-height: 1.32 !important;
+}
+
+.slidev-layout.center:not(.cover):not(.break-slide):not(.thanks-slide) .text-2xl {
+  font-size: 1.95em !important;
+  line-height: 1.38 !important;
+}
+
+.slidev-layout.center:not(.cover):not(.break-slide):not(.thanks-slide) .text-xl {
+  font-size: 1.75em !important;
+  line-height: 1.42 !important;
+}
+
+.slidev-layout.center:not(.cover):not(.break-slide):not(.thanks-slide) .text-lg {
+  font-size: 1.5em !important;
+  line-height: 1.42 !important;
+}
+
+.slidev-layout.center:not(.cover):not(.break-slide):not(.thanks-slide) .text-base {
+  font-size: 1.3em !important;
+  line-height: 1.45 !important;
+}
+
+/* section — 교시·소단원 표지 */
+.slidev-layout.section .text-4xl {
+  font-size: 3em !important;
+  line-height: 1.14 !important;
+  margin: 0.15em 0 0.3em !important;
+  font-weight: 700;
+}
+
+.slidev-layout.section .text-xl,
+.slidev-layout.section .text-lg,
+.slidev-layout.section .opacity-80,
+.slidev-layout.section .opacity-60 {
+  font-size: 1.6em !important;
+  line-height: 1.42 !important;
+  margin-top: 0.3em !important;
+}
+
+/* statement — 9p 두 가지 부탁 */
+.slidev-layout.statement {
+  font-size: 1.15em !important;
+}
+
+.slidev-layout.statement h1 {
+  font-size: 2.1em !important;
+  margin-bottom: 0.2em !important;
+}
+
+.slidev-layout.statement .slide-statement-block,
+.slidev-layout.statement .slide-statement-block p {
+  font-size: 1.45em !important;
+  line-height: 1.42 !important;
+  margin: 0.35em 0 !important;
+}
+
+.slidev-layout.statement .slide-statement-note,
+.slidev-layout.statement .slide-statement-note p {
+  font-size: 1.05em !important;
+  line-height: 1.4 !important;
+  margin-top: 0.45em !important;
+  opacity: 0.88;
+}
+
+/* 3p 9시간 로드맵 — 표·간격·미리보기 6칸 */
+.slidev-layout .slide-roadmap-table {
+  margin-top: 0.35rem !important;
+}
+
+.slidev-layout .slide-roadmap-table table {
+  font-size: 1.05em !important;
+  width: 100%;
+}
+
+.slidev-layout .slide-roadmap-table table th,
+.slidev-layout .slide-roadmap-table table td {
+  padding: 0.55em 0.7em !important;
+  line-height: 1.42 !important;
+}
+
+.slidev-layout .slide-roadmap-outcome {
+  margin-top: 3rem !important;
+}
+
+.slidev-layout .slide-roadmap-outcome .text-lg {
+  font-size: 1.1em !important;
+  line-height: 1.45 !important;
+}
+
+.slidev-layout .slide-roadmap-outcome .text-2xl {
+  font-size: 1.42em !important;
+  line-height: 1.4 !important;
+}
+
+.slidev-layout .slide-roadmap-preview-intro {
+  margin-top: 3rem !important;
+  font-size: 0.98em !important;
+  line-height: 1.4 !important;
+}
+
+.slidev-layout .slide-roadmap-tools {
+  gap: 0.55rem !important;
+  margin-top: 0.5rem !important;
+  max-width: 920px;
+}
+
+.slidev-layout .slide-roadmap-tools a {
+  padding: 0.9rem 0.55rem !important;
+  min-height: 6rem;
+  font-size: 2em !important;
+  line-height: 1.35 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 4p 본 교육이 하지 않는 일 — 3칸 카드 높이·글자 확대 */
+.slidev-layout .slide-not-cards {
+  gap: 0.75rem !important;
+  margin-top: 0.35rem !important;
+  font-size: 1.22em !important;
+}
+
+.slidev-layout .slide-not-cards .border-l-4 {
+  padding: 1.15rem 1.4rem !important;
+  min-height: 5.25rem;
+  line-height: 1.48 !important;
+  font-size: 1.05em !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.slidev-layout .slide-not-cards .text-sm {
+  font-size: 0.92em !important;
+  line-height: 1.4 !important;
+  margin-top: 0.25em;
+  display: block;
+}
+
+/* 5p 사용 도구 4종 — 표 2배·하단 여백 3rem */
+[data-slidev-no="5"] .slidev-layout h1 {
+  font-size: 1.4em !important;
+  margin-bottom: 0.12em !important;
+}
+
+.slidev-layout .slide-tools-table table,
+[data-slidev-no="5"] .slidev-layout table {
+  font-size: 1.275em !important;
+  width: 100%;
+}
+
+.slidev-layout .slide-tools-table table th,
+.slidev-layout .slide-tools-table table td,
+[data-slidev-no="5"] .slidev-layout table th,
+[data-slidev-no="5"] .slidev-layout table td {
+  padding: 0.42em 0.68em !important;
+  line-height: 1.45 !important;
+}
+
+.slidev-layout .slide-tools-footnote,
+[data-slidev-no="5"] .slidev-layout .slide-tools-footnote {
+  margin-top: 3rem !important;
+}
+
+[data-slidev-no="5"] .slidev-layout .text-lg {
+  font-size: 1.05em !important;
+}
+
+[data-slidev-no="5"] .slidev-layout .text-base {
+  font-size: 0.95em !important;
+}
+
+/* 6p 1회차 목표 — ①~④ 세로 4칸·높이 2배·글자 확대 */
+[data-slidev-no="6"] .slidev-layout h1 {
+  font-size: 1.35em !important;
+  margin-bottom: 0.1em !important;
+}
+
+.slidev-layout .slide-goals-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.45rem !important;
+  margin-top: 0.25rem !important;
+  font-size: 1.18em !important;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.slidev-layout .slide-goals-list > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.45rem !important;
+  width: 100%;
+}
+
+.slidev-layout .slide-goals-list .slide-goals-card {
+  padding: 1.1rem 1.45rem !important;
+  min-height: 6.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 1.1em !important;
+  line-height: 1.44 !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.slidev-layout .slide-goals-list .slide-goals-sub {
+  font-size: 0.9em !important;
+  line-height: 1.4 !important;
+  margin-top: 0.35em !important;
+}
+
+/* 38p 대응 전략 3가지 — 칸 높이 2배·글자 1.7배·여백 축소 */
+[data-slidev-no="38"] .slidev-layout h1 {
+  font-size: 1.28em !important;
+  margin-bottom: 0.06em !important;
+  line-height: 1.1 !important;
+}
+
+[data-slidev-no="38"] .slidev-layout .slide-strategy-fill {
+  padding-top: 0 !important;
+}
+
+[data-slidev-no="38"] .slide-strategy-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.32rem !important;
+  margin-top: 0.12rem !important;
+  font-size: 1.7em !important;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+[data-slidev-no="38"] .slide-strategy-list > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.32rem !important;
+  width: 100%;
+}
+
+[data-slidev-no="38"] .slide-strategy-list .slide-strategy-card {
+  padding: 0.72rem 1.05rem !important;
+  min-height: 6.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.36 !important;
+  box-sizing: border-box;
+}
+
+[data-slidev-no="38"] .slide-strategy-list .slide-strategy-card-tall {
+  min-height: 9.25rem;
+}
+
+[data-slidev-no="38"] .slide-strategy-list .slide-strategy-sub {
+  font-size: 0.84em !important;
+  line-height: 1.34 !important;
+  margin-top: 0.22em !important;
+}
+
+[data-slidev-no="38"] .slide-strategy-list .slide-strategy-note {
+  font-size: 0.76em !important;
+  line-height: 1.32 !important;
+  display: block;
+  margin-top: 0.12em;
+}
+
+[data-slidev-no="38"] .slide-strategy-foot {
+  font-size: 1.02em !important;
+  padding-top: 0.2rem !important;
+  line-height: 1.34 !important;
+}
+
+/* 47p 일상 MD 3종 — 칸 높이 2배·글자 1.7배·여백 축소 */
+[data-slidev-no="47"] .slidev-layout h1 {
+  font-size: 1.28em !important;
+  margin-bottom: 0.06em !important;
+  line-height: 1.1 !important;
+}
+
+[data-slidev-no="47"] .slide-daily-fill {
+  padding-top: 0 !important;
+  font-size: 1.7em !important;
+}
+
+[data-slidev-no="47"] .slide-daily-intro {
+  font-size: 0.78em !important;
+  line-height: 1.34 !important;
+  margin-bottom: 0.2rem !important;
+}
+
+[data-slidev-no="47"] .slide-daily-cards {
+  gap: 0.38rem !important;
+  margin-top: 0.08rem !important;
+}
+
+[data-slidev-no="47"] .slide-daily-card {
+  padding: 0.68rem 0.62rem !important;
+  min-height: 9.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  line-height: 1.34 !important;
+  box-sizing: border-box;
+}
+
+[data-slidev-no="47"] .slide-daily-card h3 {
+  font-size: 1em !important;
+  margin: 0 0 0.12em 0 !important;
+  line-height: 1.22 !important;
+}
+
+[data-slidev-no="47"] .slide-daily-sub {
+  font-size: 0.84em !important;
+  line-height: 1.32 !important;
+  margin-top: 0.18em !important;
+}
+
+[data-slidev-no="47"] .slide-daily-steps {
+  margin-top: 0.32rem !important;
+  font-size: 0.86em !important;
+  line-height: 1.36 !important;
+}
+
+[data-slidev-no="47"] .slide-daily-steps h2 {
+  font-size: 1em !important;
+  margin: 0 0 0.1em 0 !important;
+  line-height: 1.2 !important;
+}
+
+[data-slidev-no="47"] .slide-daily-foot {
+  font-size: 0.92em !important;
+  padding: 0.5rem 0.7rem !important;
+  padding-top: 0.5rem !important;
+  line-height: 1.34 !important;
+}
+
+/* 2p 아이스브레이커 — ①~④(1.05em) 대비 하단 안내 80% 통일 */
+.slidev-layout.center.slide-icebreaker:not(.break-slide):not(.thanks-slide),
+.slidev-layout.center:has(.slide-q-list):not(.break-slide):not(.thanks-slide) {
+  --ice-q-size: 1.05em;
+  padding-top: calc(var(--slide-nav-h, 5.7rem) + 0.1rem) !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.slidev-layout.center:has(.slide-q-list) h1 {
+  font-size: 1.75em !important;
+  line-height: 1.14 !important;
+  margin-bottom: 0.1em !important;
+}
+
+.slidev-layout.center:has(.slide-q-list) .slide-q-list,
+.slidev-layout.center:has(.slide-q-list) .slide-q-list :is(p, div, li) {
+  display: inline-block;
+  text-align: left;
+  font-size: var(--ice-q-size) !important;
+  line-height: 1.34 !important;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.slidev-layout.center:has(.slide-q-list) .slide-q-list :is(p, div, li) {
+  margin: 0.1em 0 !important;
+}
+
+.slidev-layout.center:has(.slide-q-list) .slide-focus-note {
+  font-size: calc(var(--ice-q-size) * 0.8) !important;
+  line-height: 1.36 !important;
+  margin-top: 0.35rem !important;
+  max-width: 760px;
+  text-align: center;
+}
+
+.slidev-layout.center:has(.slide-q-list) .slide-focus-note p,
+.slidev-layout.center:has(.slide-q-list) .slide-focus-sub,
+.slidev-layout.center:has(.slide-q-list) .slide-focus-sub p {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.slidev-layout.center:has(.slide-q-list) .slide-focus-sub.mt-3 {
+  margin-top: 0.25rem !important;
+}
+
+.slidev-layout.center:has(.slide-q-list) .slide-focus-sub.mt-2 {
+  margin-top: 0.15rem !important;
+}
+
+/* 7p 성공 장면 — 코드 블록 포함, 위쪽부터 배치 */
+.slidev-layout.center.slide-success-scene h1 {
+  font-size: 2.35em !important;
+  margin-bottom: 0.2em !important;
+}
+
+.slidev-layout.center.slide-success-scene .font-mono {
+  font-size: 0.88em !important;
+  line-height: 1.45 !important;
+  padding: 0.65rem 0.85rem !important;
+  margin-top: 0.15rem !important;
+}
+
+.slidev-layout.center.slide-success-scene .text-lg {
+  font-size: 1.25em !important;
+  margin-top: 0.45rem !important;
+}
+
+/* 휴식 */
+.slidev-layout.break-slide h1 {
+  font-size: 3.25em !important;
+  margin-bottom: 0.45em !important;
+}
+
+.slidev-layout.break-slide .slide-break-body,
+.slidev-layout.break-slide .slide-break-body p {
+  font-size: 1.72em !important;
+  line-height: 1.42 !important;
+  opacity: 0.92;
+}
+
+.slidev-layout.break-slide .slide-break-icon {
+  font-size: 4.5em;
+  line-height: 1;
+  margin-top: 0.55em;
+}
+
+/* 감사합니다 */
+.slidev-layout.thanks-slide h1 {
+  font-size: 3.25em !important;
+  margin-bottom: 0.45em !important;
+}
+
+.slidev-layout.thanks-slide .slide-thanks-body,
+.slidev-layout.thanks-slide .slide-thanks-body p {
+  font-size: 1.65em !important;
+  line-height: 1.42 !important;
+  margin-top: 0.35em;
+}
+
+.slidev-layout.thanks-slide .slide-thanks-quote,
+.slidev-layout.thanks-slide .slide-thanks-quote p {
+  font-size: 1.45em !important;
+  line-height: 1.42 !important;
+  margin-top: 0.75em !important;
+  opacity: 0.82;
+  max-width: 720px;
+}
+
+.slidev-layout.thanks-slide .slide-thanks-foot {
+  font-size: 1.35em !important;
+  margin-top: 0.65em;
+  opacity: 0.75;
+}
+
+.slidev-layout h2 {
+  font-size: 1.35em;
+  line-height: 1.18;
+  margin-top: 0.25em;
+  margin-bottom: 0.15em;
+}
+
+.slidev-layout:not(.cover):not(.section):not(.statement):not(.center) h2 {
+  font-size: 1.3em;
+  margin-top: 0.15em;
+  margin-bottom: 0.1em;
+}
+
+.slidev-layout h3 {
+  font-size: 1.1em;
+  line-height: 1.22;
+  margin-top: 0.15em;
+  margin-bottom: 0.1em;
+}
+
+.slidev-layout table {
+  font-size: 0.95em;
+}
+
+.slidev-layout:not(.cover):not(.section):not(.statement):not(.center) table {
+  font-size: 0.98em;
+}
+
+.slidev-layout table th,
+.slidev-layout table td {
+  padding: 0.28em 0.45em;
+}
+
+.slidev-layout ul li,
+.slidev-layout ol li {
+  margin: 0.05em 0;
+  line-height: 1.32;
+}
+
+.slidev-layout:not(.cover):not(.section):not(.statement):not(.center) p {
+  margin: 0.2em 0;
+  line-height: 1.32;
+}
+
+.slidev-layout p {
+  margin: 0.2em 0;
+  line-height: 1.32;
+}
+
+.slidev-layout pre {
+  font-size: 0.72em;
+  line-height: 1.3;
+  padding: 0.45em 0.65em !important;
+  margin: 0.15em 0 !important;
+}
+
+.slidev-layout .mt-12 { margin-top: 0.45rem !important; }
+.slidev-layout .mt-10 { margin-top: 0.35rem !important; }
+.slidev-layout .mt-8 { margin-top: 0.28rem !important; }
+.slidev-layout .mt-6 { margin-top: 0.22rem !important; }
+.slidev-layout .mt-5 { margin-top: 0.18rem !important; }
+.slidev-layout .mt-4 { margin-top: 0.15rem !important; }
+.slidev-layout .mt-3 { margin-top: 0.12rem !important; }
+.slidev-layout .mt-2 { margin-top: 0.08rem !important; }
+
+.slidev-layout .mb-8 { margin-bottom: 0.28rem !important; }
+.slidev-layout .mb-6 { margin-bottom: 0.22rem !important; }
+.slidev-layout .mb-4 { margin-bottom: 0.15rem !important; }
+
+.slidev-layout .p-5 { padding: 0.4rem !important; }
+.slidev-layout .p-4 { padding: 0.35rem !important; }
+.slidev-layout .p-3 { padding: 0.28rem !important; }
+.slidev-layout .p-2 { padding: 0.22rem !important; }
+
+.slidev-layout .gap-6 { gap: 0.35rem !important; }
+.slidev-layout .gap-5 { gap: 0.3rem !important; }
+.slidev-layout .gap-4 { gap: 0.28rem !important; }
+.slidev-layout .gap-3 { gap: 0.22rem !important; }
+.slidev-layout .gap-2 { gap: 0.15rem !important; }
+
+.slidev-layout .space-y-5 > * + * { margin-top: 0.28rem !important; }
+.slidev-layout .space-y-3 > * + * { margin-top: 0.18rem !important; }
+
+.slidev-layout .text-xs { font-size: 0.78em !important; }
+.slidev-layout .text-sm { font-size: 0.88em !important; }
+.slidev-layout .text-base { font-size: 0.95em !important; }
+.slidev-layout .text-lg { font-size: 1.05em !important; }
+.slidev-layout .text-xl { font-size: 1.15em !important; }
+.slidev-layout .text-2xl { font-size: 1.35em !important; }
+.slidev-layout .text-3xl { font-size: 1.55em !important; }
+.slidev-layout .text-4xl { font-size: 1.75em !important; }
+
+.slidev-presenter-notes {
+  font-family: 'Yooshin', 'Noto Sans KR', sans-serif;
+  font-size: 1em;
+  line-height: 1.55;
+}
+
+.slidev-layout img.icebreaker-img {
+  width: 100%;
+  height: min(52vh, 420px);
+  object-fit: cover;
+  object-position: center;
+}
+
+/* 좋은 프롬프트 — 코드 위 · 결과 아래 가로 한 줄 */
+.slidev-layout .prompt-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.slidev-layout .prompt-stack pre {
+  font-size: 0.62em !important;
+  line-height: 1.28 !important;
+  padding: 0.45em 0.6em !important;
+  margin: 0 !important;
+  max-height: min(52vh, 420px);
+  overflow: hidden;
+}
+
+.slidev-layout .prompt-result-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.85rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.4rem;
+  background: #ecfdf5;
+  border-left: 4px solid #22c55e;
+  font-size: 0.9em;
+  line-height: 1.32;
+}
+
+.dark .slidev-layout .prompt-result-bar {
+  background: #14532d;
+}
+
+.slidev-layout .prompt-result-label {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.slidev-layout .prompt-result-tip {
+  opacity: 0.85;
+  font-size: 0.95em;
+}
+
+.slidev-layout .slide-card {
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.92em;
+  line-height: 1.32;
+}
+
+.slidev-layout .slide-card h2 {
+  font-size: 1.05em;
+  margin: 0 0 0.35em 0;
+}
+
+.slidev-layout .slide-card ul,
+.slidev-layout .slide-card ol {
+  margin: 0.2em 0;
+  padding-left: 1.1em;
+}
+
+.slidev-layout .slide-card li {
+  margin: 0.15em 0;
+}
+
+.slidev-layout .slide-sub {
+  font-size: 0.95em;
+  opacity: 0.85;
+  margin-bottom: 0.35rem;
+}
+
+.slidev-layout .slide-banner {
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.4rem;
+  font-size: 0.88em;
+  text-align: center;
+}
+
+/* ── A단계: 연습문제형 카드 — Step 3 compact ── */
+.slidev-layout .exercise-card {
+  border: 2px solid #1a1a1a;
+  border-radius: 0.25rem;
+  padding: 0.65rem 0.85rem 0.7rem;
+  margin-top: 0.15rem;
+  font-size: 1.05em;
+  line-height: 1.35;
+}
+
+.dark .slidev-layout .exercise-card {
+  border-color: #cbd5e1;
+}
+
+.slidev-layout .exercise-instruction {
+  font-size: 1.02em;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.slidev-layout .exercise-prompt {
+  border: 1.5px solid #333;
+  border-radius: 0.2rem;
+  padding: 0.4rem 0.65rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.1em;
+  font-weight: 600;
+  text-align: center;
+  background: #fafafa;
+}
+
+.dark .slidev-layout .exercise-prompt {
+  border-color: #94a3b8;
+  background: #1e293b;
+}
+
+.slidev-layout .prob-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.slidev-layout .prob-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr 3.2rem;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.75rem;
+}
+
+.slidev-layout .prob-num {
+  font-size: 0.95em;
+  opacity: 0.75;
+  text-align: right;
+}
+
+.slidev-layout .prob-track {
+  position: relative;
+  height: 1.75rem;
+  background: #f0f4f8;
+  border-radius: 0.15rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.dark .slidev-layout .prob-track {
+  background: #334155;
+}
+
+.slidev-layout .prob-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #b8d4f0;
+  border-radius: 0.15rem 0 0 0.15rem;
+  min-width: 0.25rem;
+}
+
+.dark .slidev-layout .prob-fill {
+  background: #3b82a0;
+}
+
+.slidev-layout .prob-label {
+  position: relative;
+  z-index: 1;
+  padding: 0 0.65rem;
+  font-size: 1.02em;
+  white-space: nowrap;
+}
+
+.slidev-layout .prob-label.is-top {
+  font-weight: 700;
+}
+
+.slidev-layout .prob-pct {
+  text-align: right;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: #1d4ed8;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.dark .slidev-layout .prob-pct {
+  color: #93c5fd;
+}
+
+.slidev-layout .exercise-note {
+  margin-top: 0.35rem;
+  text-align: center;
+  font-size: 1em;
+  opacity: 0.88;
+}
+
+.slidev-layout .exercise-tip {
+  margin-top: 0.25rem;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+/* 나쁜/좋은 프롬프트 — 카드 안 코드 */
+.slidev-layout .exercise-card .bad-prompt-pre {
+  margin: 0 !important;
+}
+
+.slidev-layout .exercise-card .bad-prompt-pre pre {
+  font-size: 0.72em !important;
+  line-height: 1.38 !important;
+  padding: 0.65em 0.85em !important;
+  margin: 0 !important;
+  border: 1px solid #ddd;
+  border-radius: 0.2rem;
+  background: #fff !important;
+}
+
+.dark .slidev-layout .exercise-card .bad-prompt-pre pre {
+  border-color: #475569;
+  background: #0f172a !important;
+}
+
+.slidev-layout .exercise-outcomes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+
+.slidev-layout .exercise-outcome {
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.3rem;
+  font-size: 0.95em;
+  line-height: 1.32;
+  border-left: 4px solid;
+}
+
+.slidev-layout .exercise-outcome.bad {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+.slidev-layout .exercise-outcome.neutral {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.dark .slidev-layout .exercise-outcome.bad {
+  background: #450a0a;
+}
+
+.dark .slidev-layout .exercise-outcome.neutral {
+  background: #374151;
+}
+
+/* 좋은 프롬프트 — exercise 카드 안 */
+.slidev-layout .exercise-card .prompt-stack {
+  margin-top: 0;
+}
+
+.slidev-layout .exercise-card .prompt-stack pre {
+  font-size: 0.68em !important;
+  max-height: min(48vh, 380px);
+  border: 1px solid #ddd;
+  border-radius: 0.2rem;
+}
+
+/* 비교표 — exercise 카드 */
+.slidev-layout .exercise-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.98em;
+  margin-top: 0.25rem;
+}
+
+.slidev-layout .exercise-compare th,
+.slidev-layout .exercise-compare td {
+  border: 1px solid #333;
+  padding: 0.32em 0.5em;
+  vertical-align: middle;
+}
+
+.dark .slidev-layout .exercise-compare th,
+.dark .slidev-layout .exercise-compare td {
+  border-color: #64748b;
+}
+
+.slidev-layout .exercise-compare th {
+  background: #f3f4f6;
+  font-weight: 700;
+}
+
+.dark .slidev-layout .exercise-compare th {
+  background: #334155;
+}
+
+.slidev-layout .exercise-compare td:first-child {
+  font-weight: 600;
+  background: #fafafa;
+  white-space: nowrap;
+}
+
+.dark .slidev-layout .exercise-compare td:first-child {
+  background: #1e293b;
+}
+
+/* 실습 카드 — 2열 */
+.slidev-layout .exercise-lab {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.slidev-layout .exercise-lab-box {
+  border: 1.5px solid #333;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.95em;
+  line-height: 1.35;
+}
+
+.dark .slidev-layout .exercise-lab-box {
+  border-color: #64748b;
+}
+
+.slidev-layout .exercise-lab-box h3 {
+  font-size: 1.02em;
+  margin: 0 0 0.3em 0;
+  font-weight: 700;
+}
+
+.slidev-layout .exercise-lab-box ol {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.slidev-layout .exercise-lab-box li {
+  margin: 0.2em 0;
+}
+
+.slidev-layout .exercise-lab-ws {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92em;
+  margin-top: 0.35rem;
+}
+
+.slidev-layout .exercise-lab-ws th,
+.slidev-layout .exercise-lab-ws td {
+  border: 1px solid #999;
+  padding: 0.35em 0.5em;
+}
+
+.slidev-layout .exercise-lab-banner {
+  margin-top: 0.35rem;
+  padding: 0.38rem 0.6rem;
+  border: 1.5px solid #ca8a04;
+  border-radius: 0.25rem;
+  background: #fefce8;
+  text-align: center;
+  font-size: 0.96em;
+}
+
+.dark .slidev-layout .exercise-lab-banner {
+  background: #422006;
+  border-color: #ca8a04;
+}
+
+/* ── 상단 목차 바 (1번 참고 이미지) ── */
+:root {
+  --slide-nav-h: 5.7rem;
+}
+
+.slide-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: stretch;
+  min-height: var(--slide-nav-h);
+  font-size: 1.22em;
+  line-height: 1.3;
+  border-bottom: 1.5px solid #bbb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.slide-nav-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.1rem;
+  padding: 0.65rem 1.25rem;
+  background: #ececec;
+  flex: 1 1 42%;
+}
+
+.slide-nav-section {
+  opacity: 0.55;
+  white-space: nowrap;
+  font-size: 1.08em;
+}
+
+.slide-nav-section.is-active {
+  opacity: 1;
+  font-weight: 700;
+  color: #1e3a5f;
+  font-size: 1.15em;
+}
+
+.slide-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding: 0.65rem 1.25rem;
+  background: #ddd6f3;
+  flex: 1 1 38%;
+  border-left: 1.5px solid #aaa;
+}
+
+.slide-nav-topic {
+  font-weight: 700;
+  color: #312e81;
+  white-space: nowrap;
+  font-size: 1.22em;
+}
+
+.slide-nav-step {
+  font-size: 1.05em;
+  font-weight: 600;
+  color: #4338ca;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.slide-nav-dots {
+  font-size: 1.28em;
+  letter-spacing: 0.06em;
+  color: #4338ca;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.dark .slide-nav-left {
+  background: #374151;
+}
+
+.dark .slide-nav-right {
+  background: #4c1d95;
+}
+
+.dark .slide-nav-section.is-active {
+  color: #93c5fd;
+}
+
+.dark .slide-nav-topic {
+  color: #e9d5ff;
+}
+
+.slidev-layout:not(.cover):not(.section):not(.statement):not(.center):not(.break-slide):not(.thanks-slide) {
+  display: flex;
+  flex-direction: column;
+}
+
+.slidev-layout:not(.cover):not(.section):not(.statement):not(.center):not(.break-slide):not(.thanks-slide) > h1 {
+  flex-shrink: 0;
+}
+
+.slidev-layout .slide-fill {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 0;
+}
+
+.slidev-layout .slide-fill-bottom {
+  margin-top: auto;
+  padding-top: 0.35rem;
+}
