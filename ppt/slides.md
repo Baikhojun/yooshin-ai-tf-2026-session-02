@@ -1467,7 +1467,7 @@ layout: section
 
 1. ChatGPT/Gemini 새 대화
 2. `micro-tool-interviewer.md` 전체 붙여넣기<br>
-   <a href="https://raw.githubusercontent.com/isnbh0/yooshin-demo-data/main/session-04/micro-tool-interviewer.md" target="_blank" class="text-blue-500 underline text-xs">📄 micro-tool-interviewer 열기</a>
+   <a href="https://raw.githubusercontent.com/Baikhojun/yooshin-ai-tf-2026-session-02/main/demo-data/micro-tool-interviewer.md" target="_blank" class="text-blue-500 underline text-xs">📄 micro-tool-interviewer 열기</a>
 3. AI 질문 1개씩 → 솔직히 답
 4. **도구 사양서** + **화면 스케치** 받기
 
