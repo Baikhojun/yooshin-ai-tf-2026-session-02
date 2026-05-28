@@ -1,5 +1,6 @@
 // 슬라이드별 상단 목차·유형 — useNav().currentPage (1-based)
 // type: cover | break | thanks | section | hero | dense
+// 2026-05-29 개편: 게임 3종 통합 (Draw Toast/Customer Finder/Prompt Lego) + 9명 위원 매핑
 export default {
   1: { type: 'cover' },
 
@@ -12,11 +13,11 @@ export default {
   8: { type: 'dense', section: 0, topic: '상세 목차', step: 7, total: 8 },
   9: { type: 'dense', section: 0, topic: '두 가지 부탁', step: 8, total: 8 },
 
-  10: { type: 'dense', section: 1, topic: 'Draw Toast 목적', step: 1, total: 5 },
-  11: { type: 'dense', section: 1, topic: '규칙', step: 2, total: 5 },
-  12: { type: 'dense', section: 1, topic: '진행 단계', step: 3, total: 5 },
-  13: { type: 'dense', section: 1, topic: 'A/B/C 유형', step: 4, total: 5 },
-  14: { type: 'hero', section: 1, topic: 'Mermaid 연결', step: 5, total: 5 },
+  10: { type: 'dense', section: 1, topic: '🎮 Draw Toast 목적', step: 1, total: 5 },
+  11: { type: 'dense', section: 1, topic: '게임 규칙', step: 2, total: 5 },
+  12: { type: 'dense', section: 1, topic: '게임 진행', step: 3, total: 5 },
+  13: { type: 'dense', section: 1, topic: '8타입 자동 진단', step: 4, total: 5 },
+  14: { type: 'hero', section: 1, topic: 'Mermaid 다리', step: 5, total: 5 },
 
   15: { type: 'section', section: 1, topic: '1교시 · Mermaid' },
 
@@ -43,35 +44,36 @@ export default {
   32: { type: 'dense', section: 2, topic: 'AI+규격', step: 5, total: 6 },
   33: { type: 'hero', section: 2, topic: '2교시 클라이맥스', step: 6, total: 6 },
 
-  34: { type: 'dense', section: 2, topic: '실습 ③', step: 1, total: 2 },
-  35: { type: 'dense', section: 2, topic: '워크시트', step: 2, total: 2 },
+  34: { type: 'dense', section: 2, topic: '🎮 Customer Finder', step: 1, total: 3 },
+  35: { type: 'dense', section: 2, topic: '실습 ③', step: 2, total: 3 },
+  36: { type: 'dense', section: 2, topic: '워크시트 + 9명', step: 3, total: 3 },
 
-  36: { type: 'break' },
+  37: { type: 'break' },
 
-  37: { type: 'section', section: 3, topic: '3교시 · 도구 사양' },
+  38: { type: 'section', section: 3, topic: '3교시 · 도구 사양' },
 
-  38: { type: 'dense', section: 3, topic: '3요소', step: 1, total: 6 },
-  39: { type: 'dense', section: 3, topic: 'MD 6칸 연결', step: 2, total: 6 },
-  40: { type: 'dense', section: 3, topic: '분해 예시', step: 3, total: 6 },
-  41: { type: 'dense', section: 3, topic: 'micro-tool 관점', step: 4, total: 6 },
-  42: { type: 'dense', section: 3, topic: '3요소 실습', step: 5, total: 6 },
-  43: { type: 'dense', section: 3, topic: '3요소 실수', step: 6, total: 6 },
+  39: { type: 'dense', section: 3, topic: '3요소', step: 1, total: 6 },
+  40: { type: 'dense', section: 3, topic: 'MD 6칸 연결', step: 2, total: 6 },
+  41: { type: 'dense', section: 3, topic: '분해 예시', step: 3, total: 6 },
+  42: { type: 'dense', section: 3, topic: 'micro-tool 관점', step: 4, total: 6 },
+  43: { type: 'dense', section: 3, topic: '🎮 Prompt Lego', step: 5, total: 6 },
+  44: { type: 'dense', section: 3, topic: '3요소 실수', step: 6, total: 6 },
 
-  44: { type: 'section', section: 3, topic: 'micro-tool-interviewer' },
+  45: { type: 'section', section: 3, topic: 'micro-tool-interviewer' },
 
-  45: { type: 'dense', section: 3, topic: '인터뷰어 개념', step: 1, total: 7 },
-  46: { type: 'dense', section: 3, topic: '1회차와 비교', step: 2, total: 7 },
-  47: { type: 'dense', section: 3, topic: '라이브 시연', step: 3, total: 7 },
-  48: { type: 'dense', section: 3, topic: '화면 스케치', step: 4, total: 7 },
-  49: { type: 'dense', section: 3, topic: '실습 ④', step: 5, total: 7 },
-  50: { type: 'dense', section: 3, topic: '사양서 템플릿', step: 6, total: 7 },
-  51: { type: 'hero', section: 3, topic: '3교시 클라이맥스', step: 7, total: 7 },
+  46: { type: 'dense', section: 3, topic: '인터뷰어 개념', step: 1, total: 7 },
+  47: { type: 'dense', section: 3, topic: '1회차와 비교', step: 2, total: 7 },
+  48: { type: 'dense', section: 3, topic: '라이브 시연', step: 3, total: 7 },
+  49: { type: 'dense', section: 3, topic: '화면 스케치', step: 4, total: 7 },
+  50: { type: 'dense', section: 3, topic: '실습 ④', step: 5, total: 7 },
+  51: { type: 'dense', section: 3, topic: '사양서 템플릿', step: 6, total: 7 },
+  52: { type: 'hero', section: 3, topic: '3교시 클라이맥스', step: 7, total: 7 },
 
-  52: { type: 'section', section: 3, topic: '마무리' },
+  53: { type: 'section', section: 3, topic: '마무리' },
 
-  53: { type: 'dense', section: 3, topic: '5줄 정리', step: 1, total: 3 },
-  54: { type: 'dense', section: 3, topic: '과제 안내', step: 2, total: 3 },
-  55: { type: 'dense', section: 3, topic: '3회차 예고', step: 3, total: 3 },
+  54: { type: 'dense', section: 3, topic: '5줄 정리', step: 1, total: 3 },
+  55: { type: 'dense', section: 3, topic: '과제 안내', step: 2, total: 3 },
+  56: { type: 'dense', section: 3, topic: '3회차 예고', step: 3, total: 3 },
 
-  56: { type: 'thanks' },
+  57: { type: 'thanks' },
 }
