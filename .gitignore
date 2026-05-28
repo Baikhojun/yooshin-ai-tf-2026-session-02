@@ -39,6 +39,10 @@ yooshin-demo-data-main/
 **/실명*
 **/위원명단*
 
+# 1회차 위원 9명 결과물 (실명·실업무 포함 — 강사 로컬에만 보관)
+# README 인덱스도 함께 제외 (위원 이름·자동화 후보 노출 방지)
+demo-data/위원별/
+
 # 6개 HTML 도구의 *원본* (민감 정보 포함 — 절대 Public 금지)
 # 가공판은 ppt/public/tools/ 에만 보관
 Cursor/성과물/
