@@ -461,7 +461,7 @@ layout: section
 **📋 진행 순서**
 
 1. ChatGPT 또는 Gemini 열기 (새 대화)
-2. 강사가 나눠준 <a href="https://github.com/Baikhojun/yooshin-ai-tf-2026-session-02/blob/main/demo-data/자동화후보_발굴_인터뷰.md" target="_blank" class="text-blue-600 underline">「자동화후보_발굴_인터뷰.md」</a> 파일 열기
+2. 강사가 나눠준 <a href="https://raw.githubusercontent.com/Baikhojun/yooshin-ai-tf-2026-session-02/main/demo-data/자동화후보_발굴_인터뷰.md" target="_blank" class="text-blue-600 underline">「자동화후보_발굴_인터뷰.md」 (원본 텍스트)</a> 열기
 3. 내용 전체를 복사 → AI 대화창에 붙여넣기
 4. AI가 한 질문씩 던집니다 → 솔직히 답하기
 5. 15~20번 대화 후 후보 3개가 정리됩니다
