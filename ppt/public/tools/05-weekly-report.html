@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📝 사장단 주간보고 요약 (교육용 placeholder)</title>
+<style>
+  :root {
+    --primary: #7c3aed;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --warn: #fef3c7;
+    --warn-border: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: 'Noto Sans KR', 'Pretendard', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    max-width: 960px; margin-left: auto; margin-right: auto;
+  }
+  header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--primary); }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .placeholder-badge {
+    display: inline-block; padding: 4px 12px; margin-left: 8px;
+    background: var(--warn); border: 1px solid var(--warn-border);
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    color: #92400e;
+  }
+  .lede { color: var(--muted); font-size: 14px; margin: 8px 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 12px; font-size: 18px; color: var(--primary); }
+  textarea {
+    width: 100%; min-height: 180px; padding: 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'D2Coding', Consolas, monospace; font-size: 13px;
+    resize: vertical;
+  }
+  button {
+    background: var(--primary); color: white; border: 0;
+    padding: 12px 24px; border-radius: 8px; font-size: 15px;
+    font-weight: 600; cursor: pointer; margin-top: 8px;
+  }
+  button:hover { background: #6d28d9; }
+  table {
+    width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px;
+  }
+  th, td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: #f5f3ff; font-weight: 600; color: var(--primary); }
+  .summary-bar {
+    margin-top: 12px; padding: 10px;
+    background: #ede9fe; border-radius: 8px;
+    font-weight: 600; color: var(--primary); text-align: center;
+  }
+  .footer-note {
+    margin-top: 24px; padding: 16px; background: var(--warn);
+    border-left: 4px solid var(--warn-border); border-radius: 8px;
+    font-size: 13px; color: #92400e;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📝 사장단 주간보고 요약
+    <span class="placeholder-badge">교육용 placeholder</span>
+  </h1>
+  <div class="lede">
+    (주)멋진엔지니어링 기획실 · 가공 데이터 · 5차 AI 교육 2회차 미리보기<br>
+    실제 도구는 3회차에 교육생분이 본인 v2 프롬프트로 만듭니다.
+  </div>
+</header>
+
+<div class="card">
+  <h2>① 입력 — 각 부서 주간 보고서</h2>
+  <textarea id="input">[마케팅팀]
+5월 셋째 주: 신제품 광고안 3종 작성 완료, 검토 회의 일정 미정으로 다음 주 진행 예정.
+이슈: 광고 모델 섭외 지연 (1건)
+
+[기술팀]
+모바일 앱 v2.1 베타 출시 (5/15). 사용자 피드백 247건 수집.
+이슈: iOS 인앱결제 모듈 충돌 (긴급), Android는 정상.
+다음 주: iOS 핫픽스 배포
+
+[영업팀]
+3월 신규 계약 12건 (목표 대비 105%). 분기 누적 38건.
+이슈: 부산 지사 인력 1명 충원 필요
+다음 주: 부산 출장 (5/27~28)
+
+[관리팀]
+사무실 임차 계약 갱신 완료. 5월 법인카드 사용내역 마감.
+이슈: 없음
+다음 주: 6월 인사평가 시즌 준비</textarea>
+  <button onclick="summarize()">▶ 요약 실행</button>
+</div>
+
+<div class="card">
+  <h2>② 출력 — 1페이지 사장단 요약</h2>
+  <table>
+    <thead>
+      <tr><th>부서</th><th>성과</th><th>이슈</th><th>다음 주 계획</th></tr>
+    </thead>
+    <tbody id="output">
+      <tr><td colspan="4" style="color:#94a3b8;text-align:center">▶ 요약 실행 버튼을 누르세요</td></tr>
+    </tbody>
+  </table>
+  <div class="summary-bar" id="summary">전체 이슈: 0건</div>
+</div>
+
+<div class="footer-note">
+  ⚠ <strong>교육용 placeholder 입니다.</strong> 실제 사장단 보고에 사용하지 마세요.<br>
+  실제 작동하는 도구는 3회차에 교육생분이 본인 v2 프롬프트로 직접 만듭니다.
+</div>
+
+<script>
+function summarize() {
+  const text = document.getElementById('input').value;
+  const blocks = text.split(/\n\s*\n/).filter(b => b.trim());
+  const out = document.getElementById('output');
+  out.innerHTML = '';
+  let totalIssues = 0;
+  let urgent = 0;
+  blocks.forEach(block => {
+    const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+    if (!lines.length) return;
+    const header = lines[0].replace(/[\[\]팀부]/g, '').trim();
+    const issueLine = lines.find(l => l.startsWith('이슈')) || '이슈: —';
+    const nextLine = lines.find(l => l.startsWith('다음 주') || l.startsWith('다음주')) || '—';
+    const issue = issueLine.replace(/^이슈\s*[:：]\s*/, '').trim();
+    const isNone = /없음|—|-/.test(issue);
+    const isUrgent = /긴급|시급/.test(issue);
+    if (!isNone) totalIssues++;
+    if (isUrgent) urgent++;
+    const bodyLines = lines.filter(l => !l.startsWith('이슈') && !l.startsWith('다음') && l !== lines[0]);
+    const perf = bodyLines.join(' ').substring(0, 50) + (bodyLines.join(' ').length > 50 ? '…' : '');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${header}</strong></td>
+      <td>${perf}</td>
+      <td style="${isUrgent ? 'color:#dc2626;font-weight:600' : ''}">${isNone ? '—' : issue}${isUrgent ? ' (긴급)' : ''}</td>
+      <td>${nextLine.replace(/^다음\s*주\s*[:：]?\s*/, '')}</td>`;
+    out.appendChild(tr);
+  });
+  document.getElementById('summary').innerHTML =
+    `전체 이슈: <strong>${totalIssues}건</strong>` +
+    (urgent ? ` (긴급 <strong>${urgent}건</strong>)` : '');
+}
+</script>
+</body>
+</html>

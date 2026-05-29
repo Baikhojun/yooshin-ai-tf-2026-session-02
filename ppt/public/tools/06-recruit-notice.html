@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📋 채용공고 초안 (교육용 placeholder)</title>
+<style>
+  :root {
+    --primary: #059669;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --warn: #fef3c7;
+    --warn-border: #f59e0b;
+    --urgent: #fecaca;
+    --urgent-border: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: 'Noto Sans KR', 'Pretendard', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    max-width: 960px; margin-left: auto; margin-right: auto;
+  }
+  header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--primary); }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .placeholder-badge {
+    display: inline-block; padding: 4px 12px; margin-left: 8px;
+    background: var(--warn); border: 1px solid var(--warn-border);
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    color: #92400e;
+  }
+  .lede { color: var(--muted); font-size: 14px; margin: 8px 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 12px; font-size: 18px; color: var(--primary); }
+  .form-row { margin-bottom: 12px; }
+  .form-row label {
+    display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px;
+  }
+  input, select, textarea {
+    width: 100%; padding: 10px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 14px;
+  }
+  button {
+    background: var(--primary); color: white; border: 0;
+    padding: 12px 24px; border-radius: 8px; font-size: 15px;
+    font-weight: 600; cursor: pointer; margin-top: 8px;
+  }
+  button:hover { background: #047857; }
+  .notice-out {
+    padding: 16px; background: #f9fafb;
+    border-left: 4px solid var(--primary); border-radius: 8px;
+    font-size: 14px; white-space: pre-line; min-height: 100px;
+  }
+  .urgent {
+    background: var(--urgent); border-left-color: var(--urgent-border);
+  }
+  .urgent-badge {
+    display: inline-block; padding: 2px 8px; margin-right: 8px;
+    background: var(--urgent-border); color: white;
+    border-radius: 4px; font-size: 12px; font-weight: 600;
+  }
+  .footer-note {
+    margin-top: 24px; padding: 16px; background: var(--warn);
+    border-left: 4px solid var(--warn-border); border-radius: 8px;
+    font-size: 13px; color: #92400e;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 채용공고 초안 작성기
+    <span class="placeholder-badge">교육용 placeholder</span>
+  </h1>
+  <div class="lede">
+    (주)멋진엔지니어링 총무부 · 가공 데이터 · 5차 AI 교육 2회차 미리보기<br>
+    실제 도구는 3회차에 교육생분이 본인 v2 프롬프트로 만듭니다.
+  </div>
+</header>
+
+<div class="card">
+  <h2>① 입력 — 채용 정보</h2>
+  <div class="form-row">
+    <label>직무명</label>
+    <input id="job" type="text" value="구조설계 엔지니어">
+  </div>
+  <div class="form-row">
+    <label>채용 인원</label>
+    <input id="count" type="number" value="1" min="1">
+  </div>
+  <div class="form-row">
+    <label>자격요건 키워드 (쉼표로 구분)</label>
+    <input id="req" type="text" value="토목구조 5년 이상, 토목구조기술사 우대">
+  </div>
+  <div class="form-row">
+    <label>마감일</label>
+    <input id="deadline" type="date" value="2026-06-30">
+  </div>
+  <div class="form-row">
+    <label>근무지</label>
+    <input id="location" type="text" value="서울 본사">
+  </div>
+  <button onclick="generate()">▶ 공고 초안 생성</button>
+</div>
+
+<div class="card">
+  <h2>② 출력 — 채용공고 초안</h2>
+  <div class="notice-out" id="output">▶ 공고 초안 생성 버튼을 누르세요</div>
+</div>
+
+<div class="footer-note">
+  ⚠ <strong>교육용 placeholder 입니다.</strong> 실제 채용공고로 사용하지 마세요.<br>
+  실제 작동하는 도구는 3회차에 교육생분이 본인 v2 프롬프트로 직접 만듭니다.
+</div>
+
+<script>
+function generate() {
+  const job = document.getElementById('job').value.trim() || '___';
+  const count = document.getElementById('count').value || '1';
+  const reqRaw = document.getElementById('req').value;
+  const deadline = document.getElementById('deadline').value || '___';
+  const location = document.getElementById('location').value || '본사(서울)';
+  const reqs = reqRaw.split(',').map(s => s.trim()).filter(s => s);
+  const requirements = reqs.filter(r => !r.includes('우대'));
+  const preferred = reqs.filter(r => r.includes('우대')).map(r => r.replace(/\s*우대$/, ''));
+
+  // 긴급 채용 판단 (영업일 기준 7일)
+  const today = new Date();
+  const dl = new Date(deadline);
+  const days = Math.floor((dl - today) / (1000 * 60 * 60 * 24));
+  const isUrgent = days >= 0 && days < 7;
+
+  const out = document.getElementById('output');
+  out.classList.toggle('urgent', isUrgent);
+
+  let body = '';
+  if (isUrgent) body += `<span class="urgent-badge">긴급 채용</span>`;
+  body += `\n# 📢 (주)멋진엔지니어링 — ${job} ${count}명 채용\n\n`;
+  body += `## 직무 소개\n`;
+  body += `${job} 분야 ${requirements.length ? requirements[0] : '실무 경력자'}를 모십니다.\n`;
+  body += `국내외 대형 인프라 프로젝트의 설계·검토를 담당하실 분을 찾습니다.\n\n`;
+
+  body += `## 자격 요건\n`;
+  if (requirements.length) {
+    requirements.forEach(r => body += `- ${r}\n`);
+  } else {
+    body += `- 관련 학과 졸업 (학사 이상)\n`;
+    body += `- 실무 경력 보유\n`;
+  }
+  body += `\n`;
+
+  if (preferred.length) {
+    body += `## 우대 사항\n`;
+    preferred.forEach(p => body += `- ${p}\n`);
+    body += `\n`;
+  }
+
+  body += `## 전형 절차\n`;
+  body += `1. 서류 전형 (~${deadline})\n`;
+  body += `2. 1차 면접\n`;
+  body += `3. 임원 면접\n`;
+  body += `4. 최종 합격자 발표\n\n`;
+
+  body += `## 제출 서류\n`;
+  body += `- 이력서 (자유 양식)\n`;
+  body += `- 자기소개서 (1,500자 내외)\n`;
+  body += `- 경력기술서\n\n`;
+
+  body += `## 마감일\n${deadline} 18:00\n\n`;
+  body += `## 근무지\n${location}`;
+
+  out.innerHTML = body;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 회계 전표 분개기 (교육용 placeholder)</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --warn: #fef3c7;
+    --warn-border: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: 'Noto Sans KR', 'Pretendard', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    max-width: 960px; margin-left: auto; margin-right: auto;
+  }
+  header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--primary); }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .placeholder-badge {
+    display: inline-block; padding: 4px 12px; margin-left: 8px;
+    background: var(--warn); border: 1px solid var(--warn-border);
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    color: #92400e;
+  }
+  .lede { color: var(--muted); font-size: 14px; margin: 8px 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 12px; font-size: 18px; color: var(--primary); }
+  textarea {
+    width: 100%; min-height: 140px; padding: 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'D2Coding', Consolas, monospace; font-size: 13px;
+    resize: vertical;
+  }
+  button {
+    background: var(--primary); color: white; border: 0;
+    padding: 12px 24px; border-radius: 8px; font-size: 15px;
+    font-weight: 600; cursor: pointer; margin-top: 8px;
+  }
+  button:hover { background: #1d4ed8; }
+  table {
+    width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px;
+  }
+  th, td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { background: #f1f5f9; font-weight: 600; }
+  td.num { text-align: right; font-family: 'D2Coding', monospace; }
+  .footer-note {
+    margin-top: 24px; padding: 16px; background: var(--warn);
+    border-left: 4px solid var(--warn-border); border-radius: 8px;
+    font-size: 13px; color: #92400e;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 회계 전표 분개기
+    <span class="placeholder-badge">교육용 placeholder</span>
+  </h1>
+  <div class="lede">
+    (주)멋진엔지니어링 · 가공 데이터 · 5차 AI 교육 2회차 미리보기<br>
+    실제 도구는 3회차에 교육생분이 본인 데이터로 만듭니다.
+  </div>
+</header>
+
+<div class="card">
+  <h2>① 입력 — 거래내역 (텍스트)</h2>
+  <textarea id="input" placeholder="예시:
+2026-05-15 / (주)○○문구 / 1,100,000원 / 사무용품 구입
+2026-05-15 / 한국통신 / 88,000원 / 5월 전화요금">2026-05-15 / (주)○○문구 / 1,100,000원 / 사무용품 구입
+2026-05-15 / 한국통신 / 88,000원 / 5월 전화요금
+2026-05-16 / (주)○○건설 / 50,000,000원 / 설계용역 수주 입금</textarea>
+  <button onclick="parse()">▶ 분개 실행</button>
+</div>
+
+<div class="card">
+  <h2>② 출력 — 전표 양식 (예시)</h2>
+  <table>
+    <thead>
+      <tr><th>일자</th><th>거래처</th><th>계정과목</th><th class="num">차변</th><th class="num">대변</th><th class="num">부가세</th><th>적요</th></tr>
+    </thead>
+    <tbody id="output">
+      <tr><td colspan="7" style="color:#94a3b8;text-align:center">▶ 분개 실행 버튼을 누르세요</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer-note">
+  ⚠ <strong>교육용 placeholder 입니다.</strong> 실제 회계 처리에 사용하지 마세요.<br>
+  본 도구는 5차 AI 교육 2회차 미리보기용으로 작성되었으며,
+  실제 작동하는 도구는 3회차에 교육생분이 본인 v2 프롬프트로 직접 만듭니다.
+</div>
+
+<script>
+function parse() {
+  const lines = document.getElementById('input').value.trim().split('\n').filter(l => l.trim());
+  const rules = {
+    '문구': {acct: '소모품비', side: 'debit'},
+    '사무용품': {acct: '소모품비', side: 'debit'},
+    '통신': {acct: '통신비', side: 'debit'},
+    '전화': {acct: '통신비', side: 'debit'},
+    '수주': {acct: '매출', side: 'credit'},
+    '입금': {acct: '매출', side: 'credit'},
+    '용역': {acct: '매출', side: 'credit'},
+    '자재': {acct: '자재비', side: 'debit'},
+  };
+  const out = document.getElementById('output');
+  out.innerHTML = '';
+  lines.forEach(line => {
+    const parts = line.split('/').map(s => s.trim());
+    if (parts.length < 4) return;
+    const [date, biz, amtRaw, desc] = parts;
+    const amount = parseInt(amtRaw.replace(/[^0-9]/g, '')) || 0;
+    let acct = '미상', side = 'debit';
+    for (const k in rules) {
+      if (desc.includes(k) || biz.includes(k)) {
+        acct = rules[k].acct;
+        side = rules[k].side;
+        break;
+      }
+    }
+    const isCredit = side === 'credit';
+    const vat = Math.floor(amount / 11);
+    const net = amount - vat;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${date}</td>
+      <td>${biz}</td>
+      <td>${acct}</td>
+      <td class="num">${isCredit ? '' : net.toLocaleString()}</td>
+      <td class="num">${isCredit ? net.toLocaleString() : ''}</td>
+      <td class="num">${vat.toLocaleString()}</td>
+      <td>${desc}</td>`;
+    out.appendChild(tr);
+  });
+  if (!out.children.length) {
+    out.innerHTML = '<tr><td colspan="7" style="color:#dc2626;text-align:center">입력 형식 확인 필요</td></tr>';
+  }
+}
+</script>
+</body>
+</html>
