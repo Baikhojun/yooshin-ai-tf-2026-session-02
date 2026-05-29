@@ -707,204 +707,169 @@ layout: section
 
 ---
 
-# Draw Toast → 내 업무로 다리 🌉
+# Draw Toast → FlowBuilder로 다리 🌉
 
 <div class="grid grid-cols-2 gap-4 mt-4 text-base">
 
 <div class="slide-card bg-orange-50 dark:bg-orange-900">
 
-**방금 (게임)**
+**방금 (토스트 게임)**
 
-- 박스 = 식빵, 토스터, 잼
+- 카드 = 식빵, 토스터, 잼
 - 화살표 = 순서·연결
-- 사람마다 다름 (자동 진단으로 확인)
+- 사람마다 다름
 
 </div>
 
-<div class="slide-card bg-blue-50 dark:bg-blue-900">
+<div class="slide-card bg-purple-50 dark:bg-purple-900">
 
-**이제 (같은 방식으로)**
+**이제 (FlowBuilder 게임)**
 
-- 박스 = **내 일의 입력·결과물**
+- 도형 = **내 일의 입력·결과물**
 - 화살표 = **작업 순서**
-- 내가 가장 잘 아는 내용
+- Mermaid 코드 **자동 생성** ✨
 
 </div>
 
 </div>
 
 <div class="mt-4 text-center text-xl">
-이번엔 토스트 말고 <span class="text-purple-500 font-bold">1교시에 고른 본인 업무</span>를 같은 방식으로 그려보세요.
+이번엔 토스트 말고 <span class="text-purple-500 font-bold">1교시에 고른 본인 업무</span>를 그리면<br>
+<span class="text-blue-600 font-bold">우측 패널에 Mermaid 코드가 실시간으로</span> 만들어집니다.
 </div>
 
 <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900 rounded text-center text-base">
-⚠ 거창하게 그리지 마세요. <span class="font-bold">5~8개 박스면 충분</span>합니다.<br>
-다 그린 다음에 mermaid.live로 옮길 거예요.
+⚠ 거창하게 그리지 마세요. <span class="font-bold">5~8개 도형이면 충분</span>합니다.
 </div>
 
 ---
 
-# ⏱ 실습 ②a — 종이에 본인 업무 그리기 (5분)
+# 🎨 FlowBuilder — 도형 4종 + 부서별 빠른 라벨
 
-<div class="exercise-instruction">5분 · A4 종이 + 펜 (또는 메모장 그림) · 1인 1장</div>
+<div class="exercise-instruction">디지털 흐름도 + Mermaid 코드 자동 생성기 — 종이·펜 불필요</div>
+
+<div class="grid grid-cols-2 gap-3 mt-2 text-sm">
+
+<div class="slide-card bg-blue-50 dark:bg-blue-900">
+
+**🔷 도형 4종**
+
+| 모양 | 뜻 | Mermaid |
+|:---:|:---|:---|
+| **▭ 과정** | 일반 작업 | `[ ]` |
+| **▢ 시작/끝** | 흐름의 시작·종료·문서 | `( )` |
+| **◇ 판단** | 예/아니오 분기 | `{ }` |
+| **⬭ 데이터** | 결과물·산출물 | `(( ))` |
+
+</div>
+
+<div class="slide-card bg-purple-50 dark:bg-purple-900">
+
+**⚡ 부서별 빠른 라벨 5탭**
+
+- 🏢 회계부 (7라벨)
+- 🏢 기획실 (7라벨)
+- 🏢 총무부 (7라벨)
+- 🏢 업무부 (7라벨)
+- 🌐 공통 (7라벨)
+
+1클릭으로 도형+텍스트 추가
+
+</div>
+
+</div>
+
+<div class="mt-3 text-center text-base">
+👉 <a href="https://baikhojun.github.io/flow-builder/" target="_blank" class="text-blue-600 font-bold underline text-lg">baikhojun.github.io/flow-builder</a> 열어주세요
+</div>
+
+---
+
+# 🎬 라이브 시연 — FlowBuilder로 회계부 흐름도
+
+<div class="slide-sub">강사 시연 5분 — 교육생분도 같이 클릭</div>
 
 <div class="grid grid-cols-2 gap-3 mt-2 text-sm">
 
 <div class="slide-card bg-blue-50 dark:bg-blue-900 border-l-4 border-blue-500">
 
-**📝 진행**
+**📋 시연 순서**
 
-1. 1교시에 고른 자동화 후보 1개 떠올리기
-2. A4 종이 가운데에 박스 하나: **"시작 — 받는 것은?"**
-3. 화살표로 단계 잇기
-4. 끝에 박스 하나: **"끝 — 만드는 것은?"**
-5. 5~8개 박스면 충분 (절대 더 그리지 마세요)
-
-</div>
-
-<div class="slide-card bg-green-50 dark:bg-green-900">
-
-**✅ 잘 안 그려져도 OK**
-
-- 손그림이라 막막하면 → 메모장에 화살표(`→`) 텍스트로
-- 단계가 너무 많으면 → 일부 합치기
-- 너무 추상적이면 → "받는 것"을 더 구체적으로
-
-→ 다음 슬라이드에서 AI가 도와줍니다.
+1. FlowBuilder 열기 + 닉네임 → 시작
+2. 좌측 **🏢 회계부** 탭 클릭
+3. **7개 라벨을 위에서 아래로 1클릭씩** → 자동 배치
+4. **🔗 연결모드** ON → 도형 A → B → 화살표
+5. ◇ 판단에서 **예/아니오** 라벨 추가 (화살표 클릭)
+6. 우측 패널의 **Mermaid 코드 실시간 생성** 확인 ✨
+7. **📋 코드 복사** → 🌐 mermaid.live → Ctrl+V → 끝
 
 </div>
 
-</div>
+<div class="slide-card bg-green-50 dark:bg-green-900 font-mono text-xs">
 
----
-
-# Mermaid란? + 최소 문법 (외울 필요 X)
-
-<div class="grid grid-cols-2 gap-3 mt-3 text-base">
-
-<div class="slide-card bg-gray-50 dark:bg-gray-800">
-
-**🎨 Mermaid = 텍스트로 그리는 그림**
-
-- PPT·Visio 대신 **메모장 + mermaid.live**
-- AI도 Mermaid를 **읽고 쓸 수 있음**
-- 오늘은 **flowchart 1종**만
-
-</div>
-
-<div class="slide-card bg-blue-50 dark:bg-blue-900 font-mono text-xs leading-snug">
-
-```
-flowchart TD                  ← 위→아래
-    A[받는 것]                ← 박스
-    B[하는 일]
-    C[만드는 것]
-    A --> B --> C            ← 화살표
-```
-
-</div>
-
-</div>
-
-<div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900 rounded text-center text-base">
-💡 이게 전부입니다. <span class="font-bold">외울 필요 0%</span>.<br>
-mermaid.live에 위 형식대로 쳐 보세요. 안 되면 AI한테 *"내 업무를 위 형식으로 그려줘"* 하면 됩니다.
-</div>
-
----
-
-# 🎬 라이브 시연 — 회계부 거래내역 → 전표 분개
-
-<div class="slide-sub">강사 시연 5분 — 교육생분도 같이 입력</div>
-
-<div class="grid grid-cols-2 gap-3 mt-2 text-sm">
-
-<div class="slide-card bg-gray-50 dark:bg-gray-800 font-mono text-xs">
-
-**① <a href="https://mermaid.live/" target="_blank" class="text-blue-500 underline">mermaid.live</a> 열기**
-
-**② 왼쪽에 붙여넣기**
+**자동 생성된 Mermaid (예시)**
 
 ```
 flowchart TD
-    A[거래내역 텍스트]
-    B[계정과목 판단]
-    C[차변/대변 분개]
-    D[부가세 자동 분리]
-    E[전표 양식 출력]
-    A --> B --> C --> D --> E
+    N1("거래내역 입력")
+    N2["계정과목 판단"]
+    N3{"부가세 대상?"}
+    N4["부가세 분리"]
+    N5(("전표 양식 출력"))
+
+    N1 --> N2
+    N2 --> N3
+    N3 -->|예| N4
+    N3 -->|아니오| N5
+    N4 --> N5
 ```
-
-**③ 오른쪽에 그림이 자동으로 나타남**
-
-</div>
-
-<div class="slide-card bg-blue-50 dark:bg-blue-900 text-sm font-sans">
-
-**확인 포인트**
-
-- `flowchart TD` — 방향
-- `[ ]` — 박스
-- `-->` — 화살표
-
-<div class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900 rounded text-xs">
-💡 본인 부서 시나리오로 **단어만 바꾸기** → 끝
-</div>
-
-<div class="mt-2 text-xs opacity-80">학생 모두 본인 자리에서 동시에 따라 입력</div>
 
 </div>
 
 </div>
 
 <!--
-[강사 노트 — 회계부 라이브 시연]
-1. mermaid.live 새 탭 열기
-2. 5노드 그대로 붙여넣기
-3. "A[거래내역 텍스트]"의 텍스트를 본인 업무로 바꿔 보세요 — 1분 대기
-4. TD → LR 바꿔 방향 변화 1번만 보여주기
-5. 5노드 완성된 그림 캡처 → "이게 오늘 손에 들어가는 것"
+[강사 노트 — FlowBuilder 라이브 시연]
+1. flow-builder 열기 + 회계부 시나리오 시연
+2. "한 클릭으로 7개 도형이 깔리는 거 보여주기"
+3. 연결모드 → 화살표 그리기
+4. ◇ 판단 노드에서 "예/아니오" 라벨 추가 (화살표 클릭)
+5. 우측 패널의 코드 실시간 갱신 강조
+6. "📋 복사 → mermaid.live → Ctrl+V → 그림 완성" 1초 시연
 -->
 
 ---
 
-# ⏱ 실습 ②b — mermaid.live에서 본인 업무 그리기 (20분)
+# ⏱ 실습 ② — FlowBuilder로 본인 업무 흐름도 (25분)
 
-<div class="exercise-instruction">20분 · mermaid.live + 본인 메모장 · 1인 1파일</div>
+<div class="exercise-instruction">25분 · FlowBuilder + mermaid.live 확인 · 1인 1흐름도</div>
 
 <div class="grid grid-cols-2 gap-3 mt-2 text-sm">
 
 <div class="slide-card bg-blue-50 dark:bg-blue-900 border-l-4 border-blue-500">
 
-**📝 진행**
+**📝 진행 (20분)**
 
-1. <a href="https://mermaid.live/" target="_blank" class="text-blue-500 underline">mermaid.live</a> 새 탭
-2. 종이에 그린 박스들을 텍스트로 옮기기
-3. 막히면 AI에 던지기:
-
-```markdown
-내 업무를 Mermaid flowchart로 그려줘.
-1회차에서 만든 업무 맥락 문서 첨부할게요.
-(붙여넣기)
-```
-
-4. 다 그리면 .md 파일로 저장
-   파일명: **`본인업무_흐름도.md`**
+1. <a href="https://baikhojun.github.io/flow-builder/" target="_blank" class="text-blue-600 font-bold underline">FlowBuilder 열기</a>
+2. 닉네임 = **본인 부서_이름** (예: `회계_백호준`)
+3. 본인 부서 탭 클릭 → 라벨 7개 자동 배치
+4. **본인 업무에 맞게 라벨 수정** (더블클릭)
+5. 🔗 연결모드 → 화살표 그리기
+6. **✅ 완성** → 자동 진단 5기준 확인
 
 </div>
 
 <div class="slide-card bg-green-50 dark:bg-green-900">
 
-**✅ 성공 기준**
+**🌐 mermaid.live 확인 (5분)**
 
-- [ ] 5~8노드 (8개 넘기지 마세요)
-- [ ] 시작과 끝이 명확
-- [ ] mermaid.live에서 그림 보임
-- [ ] 본인 메모장에 저장
+7. **📋 Mermaid 코드 복사** 버튼
+8. **🌐 mermaid.live 열기** 버튼 (자동으로 새 탭)
+9. **Ctrl+V** → 흐름도 그림 자동 표시
+10. 💾 **.md 파일 저장** (3교시 입력으로 사용)
 
-<div class="mt-2 text-xs opacity-80">
-괄호·따옴표 짝 안 맞아도 괜찮습니다.<br>
-AI에 보여주면 고쳐줘요.
+<div class="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900 rounded text-xs">
+✅ 5~8개 도형 + 모든 도형 연결 + 라벨 입력
 </div>
 
 </div>
@@ -912,7 +877,7 @@ AI에 보여주면 고쳐줘요.
 </div>
 
 <div class="exercise-lab-banner mt-2">
-🆘 정보시스템실 강사 2명이 자리 돌면서 도와드립니다
+🆘 정보시스템실 강사 2명이 자리 돌면서 도와드립니다 · <span class="font-bold">외울 필요 없어요</span>
 </div>
 
 ---

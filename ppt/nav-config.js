@@ -1,5 +1,5 @@
 // 슬라이드별 상단 목차·유형 — useNav().currentPage (1-based)
-// 5차 커리큘럼 (2026-06-02 ~ 06-09): 2회차 40장 + 3회차 1교시 16장 = 총 56장
+// 5차 커리큘럼 (2026-06-02 ~ 06-09): 2회차 39장 + 3회차 1교시 16장 = 총 55장
 // section: 0=2회차 도입, 1=1교시 후보발굴, 2=2교시 흐름도, 3=3교시 1차 프롬프트, 4=2회차 마무리,
 //          5=3회차 Ice Break, 6=3회차 6요소, 7=3회차 마무리
 // type: cover | break | thanks | section | hero | dense
@@ -29,56 +29,55 @@ export default {
 
   18: { type: 'break' },
 
-  // 2교시 — Draw Toast + 본인 업무 (8장 + 휴식)
+  // 2교시 — Draw Toast + FlowBuilder (7장 + 휴식)
   19: { type: 'section', section: 2, topic: '2교시 · 흐름도' },
-  20: { type: 'dense', section: 2, topic: 'Draw Toast 목적', step: 1, total: 8 },
-  21: { type: 'dense', section: 2, topic: '규칙', step: 2, total: 8 },
-  22: { type: 'dense', section: 2, topic: '🎮 Toast 게임', step: 3, total: 8 },
-  23: { type: 'dense', section: 2, topic: 'Toast→내 업무', step: 4, total: 8 },
-  24: { type: 'dense', section: 2, topic: '실습 ②a 종이', step: 5, total: 8 },
-  25: { type: 'dense', section: 2, topic: 'Mermaid 최소', step: 6, total: 8 },
-  26: { type: 'dense', section: 2, topic: '회계 라이브 시연', step: 7, total: 8 },
-  27: { type: 'dense', section: 2, topic: '실습 ②b 본인', step: 8, total: 8 },
+  20: { type: 'dense', section: 2, topic: 'Draw Toast 목적', step: 1, total: 7 },
+  21: { type: 'dense', section: 2, topic: '규칙', step: 2, total: 7 },
+  22: { type: 'dense', section: 2, topic: '🎮 Toast 게임', step: 3, total: 7 },
+  23: { type: 'dense', section: 2, topic: 'Toast→FlowBuilder', step: 4, total: 7 },
+  24: { type: 'dense', section: 2, topic: '🎨 FlowBuilder 소개', step: 5, total: 7 },
+  25: { type: 'dense', section: 2, topic: '🎬 FlowBuilder 시연', step: 6, total: 7 },
+  26: { type: 'dense', section: 2, topic: '실습 ② FlowBuilder', step: 7, total: 7 },
 
-  28: { type: 'break' },
+  27: { type: 'break' },
 
   // 3교시 — 1차 MD 프롬프트 (8장)
-  29: { type: 'section', section: 3, topic: '3교시 · 1차 프롬프트' },
-  30: { type: 'dense', section: 3, topic: '그림→글', step: 1, total: 7 },
-  31: { type: 'dense', section: 3, topic: '4단 구조', step: 2, total: 7 },
-  32: { type: 'dense', section: 3, topic: '🏢 회계 v1', step: 3, total: 7 },
-  33: { type: 'dense', section: 3, topic: '🏢 기획 v1', step: 4, total: 7 },
-  34: { type: 'dense', section: 3, topic: '🏢 총무 v1', step: 5, total: 7 },
-  35: { type: 'dense', section: 3, topic: '🏢 업무 v1', step: 6, total: 7 },
-  36: { type: 'dense', section: 3, topic: '실습 ③ v1', step: 7, total: 7 },
+  28: { type: 'section', section: 3, topic: '3교시 · 1차 프롬프트' },
+  29: { type: 'dense', section: 3, topic: '그림→글', step: 1, total: 7 },
+  30: { type: 'dense', section: 3, topic: '4단 구조', step: 2, total: 7 },
+  31: { type: 'dense', section: 3, topic: '🏢 회계 v1', step: 3, total: 7 },
+  32: { type: 'dense', section: 3, topic: '🏢 기획 v1', step: 4, total: 7 },
+  33: { type: 'dense', section: 3, topic: '🏢 총무 v1', step: 5, total: 7 },
+  34: { type: 'dense', section: 3, topic: '🏢 업무 v1', step: 6, total: 7 },
+  35: { type: 'dense', section: 3, topic: '실습 ③ v1', step: 7, total: 7 },
 
   // 2회차 마무리 (4장)
-  37: { type: 'dense', section: 4, topic: '5줄 정리', step: 1, total: 3 },
-  38: { type: 'dense', section: 4, topic: '과제 안내', step: 2, total: 3 },
-  39: { type: 'dense', section: 4, topic: '3회차 예고', step: 3, total: 3 },
-  40: { type: 'thanks' },
+  36: { type: 'dense', section: 4, topic: '5줄 정리', step: 1, total: 3 },
+  37: { type: 'dense', section: 4, topic: '과제 안내', step: 2, total: 3 },
+  38: { type: 'dense', section: 4, topic: '3회차 예고', step: 3, total: 3 },
+  39: { type: 'thanks' },
 
   // ── 3회차 1교시 ──
-  41: { type: 'cover' },
+  40: { type: 'cover' },
 
   // 3회차 Ice Break + 복습 (5장)
-  42: { type: 'dense', section: 5, topic: 'Ice Break 4개', step: 1, total: 5 },
-  43: { type: 'dense', section: 5, topic: '① NotebookLM', step: 2, total: 5 },
-  44: { type: 'dense', section: 5, topic: '② v0.dev', step: 3, total: 5 },
-  45: { type: 'dense', section: 5, topic: '③ Artifacts', step: 4, total: 5 },
-  46: { type: 'dense', section: 5, topic: '1·2회차 복습', step: 5, total: 5 },
+  41: { type: 'dense', section: 5, topic: 'Ice Break 4개', step: 1, total: 5 },
+  42: { type: 'dense', section: 5, topic: '① NotebookLM', step: 2, total: 5 },
+  43: { type: 'dense', section: 5, topic: '② v0.dev', step: 3, total: 5 },
+  44: { type: 'dense', section: 5, topic: '③ Artifacts', step: 4, total: 5 },
+  45: { type: 'dense', section: 5, topic: '1·2회차 복습', step: 5, total: 5 },
 
   // 6요소 + 부서별 v1→v2 (9장)
-  47: { type: 'section', section: 6, topic: '6요소 · v1→v2' },
-  48: { type: 'dense', section: 6, topic: 'v1 한계', step: 1, total: 8 },
-  49: { type: 'dense', section: 6, topic: '6요소 표', step: 2, total: 8 },
-  50: { type: 'dense', section: 6, topic: '🏢 회계 v2', step: 3, total: 8 },
-  51: { type: 'dense', section: 6, topic: '🏢 기획 v2', step: 4, total: 8 },
-  52: { type: 'dense', section: 6, topic: '🏢 총무 v2', step: 5, total: 8 },
-  53: { type: 'dense', section: 6, topic: '🏢 업무 v2', step: 6, total: 8 },
-  54: { type: 'dense', section: 6, topic: '실습 ④ v2', step: 7, total: 8 },
-  55: { type: 'dense', section: 6, topic: 'v1 vs v2 사례', step: 8, total: 8 },
+  46: { type: 'section', section: 6, topic: '6요소 · v1→v2' },
+  47: { type: 'dense', section: 6, topic: 'v1 한계', step: 1, total: 8 },
+  48: { type: 'dense', section: 6, topic: '6요소 표', step: 2, total: 8 },
+  49: { type: 'dense', section: 6, topic: '🏢 회계 v2', step: 3, total: 8 },
+  50: { type: 'dense', section: 6, topic: '🏢 기획 v2', step: 4, total: 8 },
+  51: { type: 'dense', section: 6, topic: '🏢 총무 v2', step: 5, total: 8 },
+  52: { type: 'dense', section: 6, topic: '🏢 업무 v2', step: 6, total: 8 },
+  53: { type: 'dense', section: 6, topic: '실습 ④ v2', step: 7, total: 8 },
+  54: { type: 'dense', section: 6, topic: 'v1 vs v2 사례', step: 8, total: 8 },
 
   // 3회차 1교시 마무리
-  56: { type: 'dense', section: 7, topic: '2~3교시 예고', step: 1, total: 1 },
+  55: { type: 'dense', section: 7, topic: '2~3교시 예고', step: 1, total: 1 },
 }
