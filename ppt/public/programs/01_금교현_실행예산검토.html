@@ -1,0 +1,1558 @@
+<!-- 이 파일의 역할: 금교현(기획실) 실행예산 검토 자동화 시스템 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>금교현 | 실행예산 검토 자동화 시스템</title>
+
+<!-- TailwindCSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- SheetJS XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- jsPDF + autoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg-grad-from: #0b1437;
+    --bg-grad-via: #1f1a4f;
+    --bg-grad-to: #4527a0;
+    --glass-bg: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.18);
+    --text-primary: #f1f5ff;
+    --text-secondary: #c1c7e0;
+    --accent: #7c5cff;
+    --accent2: #38e0ff;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #fb7185;
+  }
+  html.light-mode {
+    --bg-grad-from: #eef2ff;
+    --bg-grad-via: #e0e7ff;
+    --bg-grad-to: #f5f3ff;
+    --glass-bg: rgba(255,255,255,0.7);
+    --glass-border: rgba(99,102,241,0.18);
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --accent: #6366f1;
+    --accent2: #06b6d4;
+  }
+  * { font-family: 'Noto Sans KR', 'Pretendard', system-ui, sans-serif; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1100px 600px at 10% 10%, rgba(124,92,255,0.20), transparent 60%),
+      radial-gradient(900px 500px at 90% 20%, rgba(56,224,255,0.16), transparent 65%),
+      linear-gradient(135deg, var(--bg-grad-from), var(--bg-grad-via), var(--bg-grad-to));
+    background-attachment: fixed;
+    color: var(--text-primary);
+    overflow-x: hidden;
+  }
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  }
+  html.light-mode .glass {
+    box-shadow: 0 8px 28px rgba(99,102,241,0.10);
+  }
+  .glass-card { border-radius: 18px; }
+  .text-secondary { color: var(--text-secondary); }
+  .accent-text { background: linear-gradient(90deg, var(--accent2), var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .gradient-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; transition: all .25s ease; border:none;
+  }
+  .gradient-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(124,92,255,0.45); }
+  .gradient-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .nav-item {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px; border-radius:12px; cursor:pointer;
+    color: var(--text-secondary); transition: all .2s ease; position:relative;
+  }
+  .nav-item:hover { background: rgba(124,92,255,0.12); color: var(--text-primary); }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(124,92,255,0.28), rgba(56,224,255,0.18));
+    color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--glass-border);
+  }
+  .nav-item.active::before { content:""; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:3px; background: linear-gradient(180deg, var(--accent2), var(--accent)); }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:none;} }
+  @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(124,92,255,0.6);} 70%{box-shadow:0 0 0 14px rgba(124,92,255,0);} 100%{box-shadow:0 0 0 0 rgba(124,92,255,0);} }
+  .page { animation: fadeIn .35s ease both; }
+  .card-anim { animation: slideUp .45s ease both; }
+  .stat-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .input-base {
+    width:100%; padding:11px 14px; border-radius:12px;
+    background: rgba(255,255,255,0.05); border:1px solid var(--glass-border);
+    color: var(--text-primary); transition: all .2s ease;
+  }
+  html.light-mode .input-base { background: rgba(255,255,255,0.85); }
+  .input-base:focus { outline:none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,255,0.18); }
+  .badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; }
+  .badge-success { background: rgba(52,211,153,0.18); color: #6ee7b7; border:1px solid rgba(52,211,153,0.35); }
+  .badge-warning { background: rgba(251,191,36,0.18); color: #fcd34d; border:1px solid rgba(251,191,36,0.35); }
+  .badge-danger { background: rgba(251,113,133,0.18); color: #fda4af; border:1px solid rgba(251,113,133,0.35); }
+  .badge-info { background: rgba(56,224,255,0.18); color: #67e8f9; border:1px solid rgba(56,224,255,0.35); }
+  html.light-mode .badge-success { color:#047857; }
+  html.light-mode .badge-warning { color:#b45309; }
+  html.light-mode .badge-danger { color:#be123c; }
+  html.light-mode .badge-info { color:#0e7490; }
+  table.app-table { width:100%; border-collapse: separate; border-spacing:0; }
+  table.app-table th, table.app-table td { padding:12px 14px; text-align:left; font-size:13px; }
+  table.app-table thead th { background: rgba(255,255,255,0.06); color: var(--text-secondary); font-weight:600; text-transform: uppercase; letter-spacing:.5px; font-size:11px; }
+  table.app-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.06); transition: background .2s; }
+  table.app-table tbody tr:hover { background: rgba(124,92,255,0.08); }
+  .stepper { display:flex; align-items:center; gap:8px; flex-wrap: wrap; }
+  .step-circle {
+    width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-weight:700; background: rgba(255,255,255,0.08); border:2px solid var(--glass-border);
+    color: var(--text-secondary); transition: all .3s;
+  }
+  .step-circle.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color:white; border-color: transparent; animation: pulse-ring 1.6s infinite; }
+  .step-circle.done { background: rgba(52,211,153,0.30); color: #6ee7b7; border-color: rgba(52,211,153,0.5); }
+  .step-connector { flex:1; height:3px; background: rgba(255,255,255,0.12); border-radius:3px; min-width: 24px; }
+  .step-connector.done { background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+  .toast {
+    min-width:280px; padding:14px 16px; border-radius:14px; color:white;
+    display:flex; align-items:center; gap:12px;
+    animation: slideUp .3s ease both; backdrop-filter: blur(16px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  }
+  .toast-success { background: linear-gradient(135deg, #059669, #10b981); }
+  .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+  .toast-error   { background: linear-gradient(135deg, #be123c, #f43f5e); }
+  .toast-info    { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
+  .modal-backdrop { background: rgba(2,6,23,0.65); backdrop-filter: blur(6px); animation: fadeIn .25s ease; }
+  .hidden-x { display:none !important; }
+  .checkbox-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background: rgba(255,255,255,0.04); border:1px solid var(--glass-border); cursor:pointer; transition: all .2s; }
+  .checkbox-row:hover { background: rgba(124,92,255,0.10); }
+  .checkbox-row input { accent-color: var(--accent); width:18px; height:18px; }
+  .scrollbar::-webkit-scrollbar { width:8px; height:8px; }
+  .scrollbar::-webkit-scrollbar-thumb { background: rgba(124,92,255,0.45); border-radius:8px; }
+  .scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar { width: 260px; transition: transform .3s ease; }
+  @media (max-width: 1024px) {
+    .sidebar { position: fixed; top:0; left:0; height:100%; z-index:50; transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-shift { margin-left: 0 !important; }
+  }
+  .kpi-card { transition: transform .25s ease, box-shadow .25s ease; }
+  .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(0,0,0,0.30); }
+  .review-issue { background: rgba(251,113,133,0.10); border-left: 3px solid var(--danger); padding:10px 14px; border-radius: 8px; }
+  .review-ok { background: rgba(52,211,153,0.10); border-left: 3px solid var(--success); padding:10px 14px; border-radius: 8px; }
+  .review-warn { background: rgba(251,191,36,0.10); border-left: 3px solid var(--warning); padding:10px 14px; border-radius: 8px; }
+  .gradient-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--glass-border), transparent); margin: 12px 0; }
+  .printable { display: none; }
+  @media print {
+    body { background: white !important; color: black !important; }
+    .no-print { display: none !important; }
+    .printable { display: block; }
+    .glass { background: white; border: 1px solid #e2e8f0; box-shadow: none; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ===== LAYOUT ===== -->
+<div class="flex min-h-screen">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar glass m-3 rounded-2xl p-5 flex flex-col gap-2">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent), var(--accent2));">
+        <i class="fa-solid fa-coins text-white text-xl"></i>
+      </div>
+      <div>
+        <div class="font-bold text-lg leading-tight">실행예산 검토</div>
+        <div class="text-xs text-secondary">기획실 · 금교현</div>
+      </div>
+    </div>
+    <nav class="flex flex-col gap-1">
+      <div class="nav-item active" data-page="dashboard">
+        <i class="fa-solid fa-gauge-high w-5"></i><span>대시보드</span>
+      </div>
+      <div class="nav-item" data-page="register">
+        <i class="fa-solid fa-file-circle-plus w-5"></i><span>신규 검토 등록</span>
+      </div>
+      <div class="nav-item" data-page="review">
+        <i class="fa-solid fa-list-check w-5"></i><span>단계별 검토</span>
+      </div>
+      <div class="nav-item" data-page="result">
+        <i class="fa-solid fa-file-circle-check w-5"></i><span>검토 결과</span>
+      </div>
+      <div class="nav-item" data-page="history">
+        <i class="fa-solid fa-clock-rotate-left w-5"></i><span>검토 이력</span>
+      </div>
+    </nav>
+    <div class="mt-auto pt-4">
+      <div class="gradient-divider"></div>
+      <div class="glass-card glass p-3 mt-2 text-xs">
+        <div class="flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-shield-halved" style="color: var(--accent2);"></i>
+          <span class="font-semibold">시스템 정보</span>
+        </div>
+        <div class="text-secondary">v1.0.0 · LocalStorage</div>
+        <div class="text-secondary mt-1">전체 검토 데이터는<br/>브라우저에 저장됩니다</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 main-shift p-3 md:p-5">
+    <!-- HEADER -->
+    <header class="glass glass-card p-4 md:p-5 mb-5 flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-3">
+        <button id="menuBtn" class="lg:hidden glass glass-card p-2"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <div class="text-xs text-secondary">기획실 / 자동화 시스템</div>
+          <h1 id="pageTitle" class="text-xl md:text-2xl font-bold">대시보드</h1>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <div class="glass glass-card px-4 py-2 hidden md:flex items-center gap-2">
+          <i class="fa-solid fa-calendar-day" style="color: var(--accent2);"></i>
+          <span id="todayLabel" class="text-sm"></span>
+        </div>
+        <button id="seedBtn" title="샘플 데이터 로드" class="glass glass-card px-3 py-2 hover:opacity-90 transition">
+          <i class="fa-solid fa-database"></i><span class="ml-2 hidden md:inline text-sm">샘플</span>
+        </button>
+        <button id="themeBtn" class="glass glass-card px-3 py-2 hover:opacity-90 transition">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+        <div class="glass glass-card px-3 py-2 flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background: linear-gradient(135deg, var(--accent), var(--accent2)); color:white;">금</div>
+          <div class="hidden md:block leading-tight text-sm">
+            <div class="font-semibold">금교현</div>
+            <div class="text-xs text-secondary">기획실</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGES -->
+    <section id="page-dashboard" class="page"></section>
+    <section id="page-register" class="page hidden-x"></section>
+    <section id="page-review" class="page hidden-x"></section>
+    <section id="page-result" class="page hidden-x"></section>
+    <section id="page-history" class="page hidden-x"></section>
+  </main>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+<!-- MODAL -->
+<div id="modalRoot" class="fixed inset-0 modal-backdrop hidden-x items-center justify-center z-50 p-4 flex">
+  <div id="modalContent" class="glass glass-card p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto scrollbar"></div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================
+ * 유틸리티 + 상태 관리
+ * ========================================= */
+const STORAGE_KEY = "kgh_budget_review_v1";
+const STATE = {
+  page: "dashboard",
+  reviews: [],
+  current: null,   // 현재 검토 중인 객체
+  charts: {},
+};
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function fmtKRW(n) {
+  try {
+    const num = Number(n) || 0;
+    return num.toLocaleString("ko-KR") + " 원";
+  } catch (e) { return "0 원"; }
+}
+function fmtPct(n) { return (Number(n) || 0).toFixed(1) + "%"; }
+function uid() { return "RVW-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase(); }
+function todayStr(d) { d = d || new Date(); return d.toISOString().slice(0, 10); }
+function monthLabel(d) { return (d.getMonth() + 1) + "월"; }
+
+function loadAll() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    STATE.reviews = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error("LocalStorage 읽기 오류:", e);
+    STATE.reviews = [];
+    showToast("저장된 데이터를 불러오지 못했습니다", "error");
+  }
+}
+function saveAll() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE.reviews));
+  } catch (e) {
+    console.error("LocalStorage 저장 오류:", e);
+    showToast("데이터 저장 실패: " + e.message, "error");
+  }
+}
+
+/* =========================================
+ * Toast / Modal
+ * ========================================= */
+function showToast(msg, type = "info", duration = 3000) {
+  try {
+    const container = $("#toastContainer");
+    const t = document.createElement("div");
+    t.className = "toast toast-" + type;
+    const icons = { success: "circle-check", warning: "triangle-exclamation", error: "circle-xmark", info: "circle-info" };
+    t.innerHTML = `<i class="fa-solid fa-${icons[type] || "circle-info"}"></i><span class="text-sm font-medium">${escapeHTML(msg)}</span>`;
+    container.appendChild(t);
+    setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateX(20px)"; t.style.transition = "all .25s"; }, duration - 250);
+    setTimeout(() => t.remove(), duration);
+  } catch (e) { console.error(e); }
+}
+function showModal(html) {
+  const root = $("#modalRoot");
+  $("#modalContent").innerHTML = html;
+  root.classList.remove("hidden-x");
+  root.classList.add("flex");
+}
+function closeModal() {
+  const root = $("#modalRoot");
+  root.classList.add("hidden-x");
+  root.classList.remove("flex");
+}
+document.addEventListener("click", e => {
+  if (e.target.id === "modalRoot") closeModal();
+  if (e.target.matches("[data-close-modal]") || e.target.closest("[data-close-modal]")) closeModal();
+});
+
+/* =========================================
+ * 검토 자동 분석 엔진
+ * 입력값을 받아 검토 결과 + 보완 요청 문구 자동 생성
+ * ========================================= */
+function analyzeReview(r) {
+  const issues = [];
+  const checks = [];
+
+  // 1. 수행금액 일치
+  const diff = Number(r.amount_dept) - Number(r.amount_erp);
+  if (Math.abs(diff) >= 1) {
+    checks.push({ key:"amount", label:"수행금액 일치 여부", basis:"ERP/Y-한마당 금액과 일치", input: fmtKRW(r.amount_dept) + " / " + fmtKRW(r.amount_erp), result:`차이 ${fmtKRW(diff)}`, status:"문제", action:"부서 작성 수행금액과 ERP 금액이 일치하지 않습니다. 차이금액 및 반영 기준을 확인하여 보완자료 제출을 요청드립니다." });
+    issues.push("수행금액불일치");
+  } else {
+    checks.push({ key:"amount", label:"수행금액 일치 여부", basis:"ERP/Y-한마당 금액과 일치", input: fmtKRW(r.amount_dept), result:"일치", status:"정상", action:"-" });
+  }
+
+  // 2. 간접비 15%
+  const baseAmt = Number(r.amount_dept) || 0;
+  const expectedIndirect = Math.round(baseAmt * 0.15);
+  const indirectDiff = Number(r.indirect) - expectedIndirect;
+  const indirectRate = baseAmt ? (Number(r.indirect) / baseAmt * 100) : 0;
+  if (Math.abs(indirectRate - 15) > 0.5) {
+    checks.push({ key:"indirect", label:"간접비 15% 적용 여부", basis:"기준금액 × 15%", input: `${fmtKRW(r.indirect)} (${fmtPct(indirectRate)})`, result:`기준 ${fmtKRW(expectedIndirect)} 대비 ${fmtKRW(indirectDiff)}`, status:"문제", action:"간접비가 기준금액의 15%로 적용되었는지 확인이 필요합니다. 산출근거를 재확인하여 수정자료를 제출해 주시기 바랍니다." });
+    issues.push("간접비오류");
+  } else {
+    checks.push({ key:"indirect", label:"간접비 15% 적용 여부", basis:"기준금액 × 15%", input: `${fmtKRW(r.indirect)} (${fmtPct(indirectRate)})`, result:"정상 적용", status:"정상", action:"-" });
+  }
+
+  // 3. 외주비 원도급 금액 확인
+  const ratio = baseAmt ? (Number(r.outsource) / baseAmt * 100) : 0;
+  if (!r.outsource_origin || Number(r.outsource_origin) <= 0) {
+    checks.push({ key:"outsource_origin", label:"외주비 원도급 금액 확인", basis:"원도급 내역서 확인", input: fmtKRW(r.outsource), result:"원도급 금액 미입력", status:"확인 필요", action:"외주비 항목에 대한 원도급 금액 확인이 필요합니다. 원도급 내역서를 확인 후 근거자료를 제출해 주시기 바랍니다." });
+    issues.push("외주확인필요");
+  } else {
+    checks.push({ key:"outsource_origin", label:"외주비 원도급 금액 확인", basis:"원도급 내역서 확인", input: fmtKRW(r.outsource_origin), result:"확인 완료", status:"정상", action:"-" });
+  }
+
+  // 4. 외주비 비율
+  if (ratio > 60) {
+    checks.push({ key:"outsource_ratio", label:"외주비 원도급 대비율", basis:"원도급 대비 적정성", input: fmtPct(ratio), result:`60% 초과 (${fmtPct(ratio)})`, status:"확인 필요", action:"외주비 비율이 과도합니다. 원도급 대비 적정성 검토 후 PM 확인이 필요합니다." });
+    issues.push("외주비율과도");
+  } else {
+    checks.push({ key:"outsource_ratio", label:"외주비 원도급 대비율", basis:"원도급 대비 적정성", input: fmtPct(ratio), result:"적정", status:"정상", action:"-" });
+  }
+
+  // 5. 표준임률 적용
+  if (!r.std_rate_applied) {
+    checks.push({ key:"std_rate", label:"표준임률 적용 여부", basis:"회사 표준임률 적용", input: "미적용", result:"표준임률 미적용", status:"문제", action:"인건비 산정 시 적용된 임률이 회사 표준임률과 일치하는지 확인이 필요합니다. 적용 임률 및 산출근거를 재확인해 주시기 바랍니다." });
+    issues.push("표준임률문제");
+  } else {
+    checks.push({ key:"std_rate", label:"표준임률 적용 여부", basis:"회사 표준임률 적용", input: "적용 완료", result:"정상", status:"정상", action:"-" });
+  }
+
+  // 6. 월간 인력 투입계획
+  if (Number(r.monthly_input) > 110) {
+    checks.push({ key:"monthly_input", label:"월간 인력 투입계획", basis:"과도 투입 여부 확인", input: fmtPct(r.monthly_input), result:`110% 초과 (${fmtPct(r.monthly_input)})`, status:"확인 필요", action:"월간 인력 투입계획이 과도하게 산정되었는지 검토가 필요합니다." });
+    issues.push("투입과도");
+  } else {
+    checks.push({ key:"monthly_input", label:"월간 인력 투입계획", basis:"과도 투입 여부 확인", input: fmtPct(r.monthly_input), result:"적정", status:"정상", action:"-" });
+  }
+
+  // 7. 회의비 단가 기준
+  if (!r.meeting_standard) {
+    checks.push({ key:"meeting", label:"회의비 등 단가 기준", basis:"내부 기준 단가 적용", input: "기준 외", result:"기준 단가 외 적용", status:"문제", action:"회의비 등 정해진 단가 기준이 있는 항목은 내부 기준 단가와 비교가 필요합니다." });
+    issues.push("회의비기준");
+  } else {
+    checks.push({ key:"meeting", label:"회의비 등 단가 기준", basis:"내부 기준 단가 적용", input: "기준 적용", result:"정상", status:"정상", action:"-" });
+  }
+
+  // 8. 첨부자료 누락
+  const totalAtt = r.attachments ? Object.keys(r.attachments).length : 0;
+  const okAtt = r.attachments ? Object.values(r.attachments).filter(Boolean).length : 0;
+  if (okAtt < totalAtt) {
+    checks.push({ key:"attach", label:"첨부자료 누락 여부", basis:"필수자료 제출", input: `${okAtt}/${totalAtt} 종`, result:`${totalAtt - okAtt}건 누락`, status:"누락", action:"실행예산 검토에 필요한 첨부자료가 일부 누락된 것으로 보입니다. 누락 자료를 보완하여 재의뢰해 주시기 바랍니다." });
+    issues.push("첨부누락");
+  } else {
+    checks.push({ key:"attach", label:"첨부자료 누락 여부", basis:"필수자료 제출", input: `${okAtt}/${totalAtt} 종`, result:"전체 제출", status:"정상", action:"-" });
+  }
+
+  // 결재 라인 판단
+  const exec = Number(r.exec_rate) || 0;
+  const approvals = [];
+  approvals.push({ basis:"80% 초과", flag: exec > 80, role:"COO 결재", note: exec > 80 ? "실행률 80% 초과로 COO 결재 필요" : "실행률 80% 이하로 미해당" });
+  approvals.push({ basis:"90% 초과", flag: exec > 90, role:"CEO 결재", note: exec > 90 ? "실행률 90% 초과로 CEO 결재 필요" : "실행률 90% 이하로 미해당" });
+
+  // 단계별 진행 판단표
+  const issuesByStage = r.stageIssues || { s1:[], s2:[], s3:[] };
+  const stagePlan = [
+    { name:"1단계 실행예산 검토", content:"기본자료, 수행금액, 주요 산출내역 확인", pass: issuesByStage.s1.length === 0 },
+    { name:"2단계 실행예산 검토", content:"간접비, 외주비, 인건비 세부 검토", pass: issuesByStage.s2.length === 0 },
+    { name:"3단계 실행예산 검토", content:"최종 오류 및 결재라인 확인", pass: issuesByStage.s3.length === 0 },
+    { name:"PM 대면결재", content:"최종 결재 진행", pass: issuesByStage.s1.length + issuesByStage.s2.length + issuesByStage.s3.length === 0 },
+    { name:"시스템 등록 및 승인", content:"ERP/Y-한마당 반영 확인", pass: issuesByStage.s1.length + issuesByStage.s2.length + issuesByStage.s3.length === 0 }
+  ];
+
+  // 종합 판단
+  const totalIssues = issues.length;
+  let overall = "승인 가능";
+  if (totalIssues > 3) overall = "재검토 필요";
+  else if (totalIssues > 0) overall = "보완 필요";
+
+  return { checks, issues, approvals, stagePlan, overall };
+}
+
+/* =========================================
+ * 페이지 라우팅
+ * ========================================= */
+function navigate(page) {
+  STATE.page = page;
+  $$(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.page === page));
+  $$("section.page").forEach(s => s.classList.add("hidden-x"));
+  const el = $("#page-" + page);
+  el.classList.remove("hidden-x");
+
+  const titles = { dashboard:"대시보드", register:"신규 검토 등록", review:"단계별 검토 진행", result:"검토 결과 보고서", history:"검토 이력" };
+  $("#pageTitle").textContent = titles[page] || "";
+
+  // 모바일에서 클릭 후 사이드바 닫기
+  if (window.innerWidth < 1024) $("#sidebar").classList.remove("open");
+
+  // 렌더링
+  if (page === "dashboard") renderDashboard();
+  if (page === "register") renderRegister();
+  if (page === "review") renderReview();
+  if (page === "result") renderResult();
+  if (page === "history") renderHistory();
+}
+
+/* =========================================
+ * 대시보드 페이지
+ * ========================================= */
+function renderDashboard() {
+  const total = STATE.reviews.length;
+  const approved = STATE.reviews.filter(r => r.status === "승인 가능" || r.status === "승인").length;
+  const supplement = STATE.reviews.filter(r => r.status === "보완 필요" || r.status === "재검토 필요").length;
+  const passRate = total ? (approved / total * 100) : 0;
+  const avgTime = total ? Math.round(STATE.reviews.reduce((s, r) => s + (r.processMinutes || 30), 0) / total) : 0;
+
+  // 월별 추이 데이터
+  const monthMap = {};
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    monthMap[key] = { label: monthLabel(d), total: 0, approved: 0 };
+  }
+  STATE.reviews.forEach(r => {
+    const dt = r.applyDate ? new Date(r.applyDate) : new Date(r.createdAt);
+    const key = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
+    if (monthMap[key]) {
+      monthMap[key].total++;
+      if (r.status === "승인 가능" || r.status === "승인") monthMap[key].approved++;
+    }
+  });
+
+  // 도넛 데이터
+  const distApproved = STATE.reviews.filter(r => r.status === "승인 가능" || r.status === "승인").length;
+  const distSupplement = STATE.reviews.filter(r => r.status === "보완 필요").length;
+  const distReview = STATE.reviews.filter(r => r.status === "재검토 필요").length;
+
+  $("#page-dashboard").innerHTML = `
+    <!-- KPI 카드 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+      ${kpiCard("총 검토 건수", total + " 건", "fa-folder-open", "var(--accent2)", "이번 분기 누적")}
+      ${kpiCard("통과율", fmtPct(passRate), "fa-circle-check", "var(--success)", "최근 검토 기준")}
+      ${kpiCard("보완 요청", supplement + " 건", "fa-triangle-exclamation", "var(--warning)", "재의뢰 대기")}
+      ${kpiCard("평균 처리 시간", avgTime + "분", "fa-stopwatch", "var(--accent)", "1건 기준")}
+    </div>
+
+    <!-- 차트 -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-5">
+      <div class="glass glass-card p-5 card-anim xl:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-lg"><i class="fa-solid fa-chart-line mr-2" style="color: var(--accent2);"></i>월별 검토 추이</h3>
+          <span class="text-xs text-secondary">최근 6개월</span>
+        </div>
+        <div class="h-72"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="glass glass-card p-5 card-anim">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-lg"><i class="fa-solid fa-chart-pie mr-2" style="color: var(--accent);"></i>검토 결과 분포</h3>
+        </div>
+        <div class="h-72 flex items-center justify-center"><canvas id="distChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 최근 검토 5건 -->
+    <div class="glass glass-card p-5 card-anim">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg"><i class="fa-solid fa-clock mr-2" style="color: var(--accent2);"></i>최근 검토 5건</h3>
+        <button class="text-sm gradient-btn px-4 py-2 rounded-lg" onclick="navigate('history')"><i class="fa-solid fa-list mr-1"></i>전체 보기</button>
+      </div>
+      <div class="overflow-x-auto scrollbar">
+        <table class="app-table">
+          <thead><tr>
+            <th>검토번호</th><th>부서</th><th>사업명</th><th>PM</th><th class="text-right">수행금액</th><th>실행률</th><th>상태</th><th></th>
+          </tr></thead>
+          <tbody>${recentRowsHTML()}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  renderTrendChart(monthMap);
+  renderDistChart({ approved: distApproved, supplement: distSupplement, review: distReview });
+}
+
+function kpiCard(label, value, icon, color, sub) {
+  return `
+    <div class="kpi-card glass glass-card p-5 card-anim">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="text-secondary text-sm font-medium">${escapeHTML(label)}</div>
+          <div class="text-3xl font-bold mt-2">${escapeHTML(value)}</div>
+          <div class="text-xs text-secondary mt-1">${escapeHTML(sub)}</div>
+        </div>
+        <div class="stat-icon" style="background: ${color}22; color: ${color};">
+          <i class="fa-solid ${icon}"></i>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function recentRowsHTML() {
+  const list = [...STATE.reviews].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 5);
+  if (!list.length) return `<tr><td colspan="8" class="text-center text-secondary py-8">아직 검토 이력이 없습니다. 신규 검토 등록 페이지에서 시작하세요.</td></tr>`;
+  return list.map(r => `
+    <tr>
+      <td class="font-mono text-xs">${escapeHTML(r.id)}</td>
+      <td>${escapeHTML(r.dept)}</td>
+      <td class="max-w-xs truncate">${escapeHTML(r.project)}</td>
+      <td>${escapeHTML(r.pm)}</td>
+      <td class="text-right font-semibold">${fmtKRW(r.amount_dept)}</td>
+      <td>${fmtPct(r.exec_rate)}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td><button class="text-sm gradient-btn px-3 py-1 rounded-lg" onclick="openReviewFromHistory('${r.id}')"><i class="fa-solid fa-eye"></i></button></td>
+    </tr>
+  `).join("");
+}
+
+function statusBadge(s) {
+  if (!s) return `<span class="badge badge-info">대기</span>`;
+  if (s.includes("승인")) return `<span class="badge badge-success"><i class="fa-solid fa-check"></i>${escapeHTML(s)}</span>`;
+  if (s.includes("재검토")) return `<span class="badge badge-danger"><i class="fa-solid fa-rotate"></i>${escapeHTML(s)}</span>`;
+  if (s.includes("보완")) return `<span class="badge badge-warning"><i class="fa-solid fa-triangle-exclamation"></i>${escapeHTML(s)}</span>`;
+  return `<span class="badge badge-info">${escapeHTML(s)}</span>`;
+}
+
+/* =========================================
+ * Chart 렌더
+ * ========================================= */
+function destroyChart(key) {
+  if (STATE.charts[key]) { STATE.charts[key].destroy(); STATE.charts[key] = null; }
+}
+
+function renderTrendChart(monthMap) {
+  destroyChart("trend");
+  const ctx = $("#trendChart");
+  if (!ctx) return;
+  const labels = Object.values(monthMap).map(m => m.label);
+  const totals = Object.values(monthMap).map(m => m.total);
+  const approvals = Object.values(monthMap).map(m => m.approved);
+
+  const isLight = document.documentElement.classList.contains("light-mode");
+  const txtColor = isLight ? "#475569" : "#c1c7e0";
+  const gridColor = isLight ? "rgba(99,102,241,0.10)" : "rgba(255,255,255,0.08)";
+
+  STATE.charts.trend = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label:"총 검토", data: totals, borderColor:"#7c5cff", backgroundColor:"rgba(124,92,255,0.25)", fill:true, tension:.4, borderWidth:3, pointRadius:5, pointBackgroundColor:"#7c5cff" },
+        { label:"승인", data: approvals, borderColor:"#38e0ff", backgroundColor:"rgba(56,224,255,0.20)", fill:true, tension:.4, borderWidth:3, pointRadius:5, pointBackgroundColor:"#38e0ff" }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color: txtColor }}},
+      scales: {
+        x: { ticks:{ color: txtColor }, grid:{ color: gridColor }},
+        y: { ticks:{ color: txtColor }, grid:{ color: gridColor }, beginAtZero:true }
+      }
+    }
+  });
+}
+
+function renderDistChart(data) {
+  destroyChart("dist");
+  const ctx = $("#distChart");
+  if (!ctx) return;
+  const isLight = document.documentElement.classList.contains("light-mode");
+  const txtColor = isLight ? "#475569" : "#c1c7e0";
+  STATE.charts.dist = new Chart(ctx, {
+    type:"doughnut",
+    data: {
+      labels: ["승인 가능", "보완 필요", "재검토 필요"],
+      datasets: [{
+        data: [data.approved, data.supplement, data.review],
+        backgroundColor: ["rgba(52,211,153,0.85)", "rgba(251,191,36,0.85)", "rgba(251,113,133,0.85)"],
+        borderColor: ["#10b981", "#f59e0b", "#f43f5e"],
+        borderWidth: 2
+      }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ color: txtColor, padding:14 }}}, cutout:"60%" }
+  });
+}
+
+/* =========================================
+ * 신규 검토 등록 페이지
+ * ========================================= */
+const ATTACH_LIST = [
+  "사전검토 의뢰서",
+  "실행예산 산출 내역",
+  "수행금액 자료(ERP/Y-한마당)",
+  "외주비 세부 항목",
+  "인건비 및 표준임률 자료",
+  "간접비 산출 자료",
+  "원도급 내역서",
+  "PM 확인서"
+];
+
+function renderRegister() {
+  $("#page-register").innerHTML = `
+    <div class="glass glass-card p-5 md:p-6 card-anim">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent), var(--accent2));"><i class="fa-solid fa-file-circle-plus text-white text-xl"></i></div>
+        <div>
+          <h2 class="font-bold text-xl">신규 실행예산 검토 등록</h2>
+          <div class="text-sm text-secondary">부서 사전검토 의뢰 자료를 등록하고 검토를 시작합니다</div>
+        </div>
+      </div>
+
+      <form id="registerForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-semibold mb-2 block">부서명 <span style="color: var(--danger);">*</span></label>
+          <select required name="dept" class="input-base">
+            <option value="">선택하세요</option>
+            <option>토목사업부</option><option>건축사업부</option><option>환경사업부</option>
+            <option>도로교통팀</option><option>플랜트사업부</option><option>설계1팀</option>
+            <option>설계2팀</option><option>해외사업본부</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">사업명 <span style="color: var(--danger);">*</span></label>
+          <input required name="project" type="text" placeholder="예: 서울-청라 BRT 1공구 설계" class="input-base" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">PM <span style="color: var(--danger);">*</span></label>
+          <input required name="pm" type="text" placeholder="예: 김민수 차장" class="input-base" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">신청일 <span style="color: var(--danger);">*</span></label>
+          <input required name="applyDate" type="date" value="${todayStr()}" class="input-base" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">부서 작성 수행금액 (원) <span style="color: var(--danger);">*</span></label>
+          <input required name="amount_dept" type="number" min="0" placeholder="예: 1500000000" class="input-base" id="amountDept" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">ERP/Y-한마당 수행금액 (원) <span style="color: var(--danger);">*</span></label>
+          <input required name="amount_erp" type="number" min="0" placeholder="예: 1500000000" class="input-base" id="amountErp" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">간접비 (원)</label>
+          <input name="indirect" type="number" min="0" placeholder="자동계산: 수행금액 × 15%" class="input-base" id="indirect" />
+          <div class="text-xs text-secondary mt-1">권장값(15%): <span id="indirectHint" class="font-semibold accent-text">0 원</span></div>
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">외주비 (원)</label>
+          <input name="outsource" type="number" min="0" placeholder="외주 항목 합계" class="input-base" id="outsource" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">외주비 원도급 금액 (원)</label>
+          <input name="outsource_origin" type="number" min="0" placeholder="원도급 내역서 기준" class="input-base" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">월간 인력 투입률 (%)</label>
+          <input name="monthly_input" type="number" min="0" max="200" value="95" class="input-base" />
+        </div>
+        <div>
+          <label class="text-sm font-semibold mb-2 block">실행률 (%) <span class="text-xs text-secondary">- 자동계산 가능</span></label>
+          <input name="exec_rate" type="number" min="0" max="200" step="0.1" placeholder="예: 78.5" class="input-base" id="execRate" />
+          <div class="text-xs text-secondary mt-1" id="execHint">80% 초과 시 COO, 90% 초과 시 CEO 결재 필요</div>
+        </div>
+        <div class="flex items-center gap-3 md:col-span-1">
+          <label class="checkbox-row flex-1"><input type="checkbox" name="std_rate_applied" checked /><span>표준임률 적용</span></label>
+          <label class="checkbox-row flex-1"><input type="checkbox" name="meeting_standard" checked /><span>회의비 기준 단가</span></label>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="text-sm font-semibold mb-2 block">첨부자료 체크리스트 (8종)</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+            ${ATTACH_LIST.map((a, i) => `<label class="checkbox-row"><input type="checkbox" name="attach_${i}" checked /><span class="text-sm">${escapeHTML(a)}</span></label>`).join("")}
+          </div>
+        </div>
+
+        <div class="md:col-span-2 flex items-center gap-3 mt-2">
+          <button type="submit" class="gradient-btn px-6 py-3 rounded-xl font-bold">
+            <i class="fa-solid fa-play mr-2"></i>검토 시작
+          </button>
+          <button type="reset" class="glass glass-card px-6 py-3 rounded-xl">
+            <i class="fa-solid fa-arrow-rotate-left mr-2"></i>초기화
+          </button>
+          <div class="text-xs text-secondary ml-auto">필수항목(*)을 입력하고 검토를 시작하세요</div>
+        </div>
+      </form>
+    </div>
+  `;
+
+  // 자동 계산 바인딩
+  const amtDeptInput = $("#amountDept");
+  const indirectInput = $("#indirect");
+  const indirectHint = $("#indirectHint");
+  const execRate = $("#execRate");
+  const execHint = $("#execHint");
+
+  function updateIndirectHint() {
+    const v = Number(amtDeptInput.value) || 0;
+    const expected = Math.round(v * 0.15);
+    indirectHint.textContent = fmtKRW(expected);
+    if (!indirectInput.value) indirectInput.placeholder = `자동권장: ${fmtKRW(expected)}`;
+  }
+  amtDeptInput.addEventListener("input", updateIndirectHint);
+
+  execRate.addEventListener("input", () => {
+    const v = Number(execRate.value) || 0;
+    let msg = "80% 초과 시 COO, 90% 초과 시 CEO 결재 필요";
+    if (v > 90) msg = `<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> CEO 결재 필요 (${v}%)</span>`;
+    else if (v > 80) msg = `<span style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> COO 결재 필요 (${v}%)</span>`;
+    else msg = `<span style="color: var(--success);"><i class="fa-solid fa-check"></i> 기본 결재 라인 (${v}%)</span>`;
+    execHint.innerHTML = msg;
+  });
+
+  $("#registerForm").addEventListener("submit", e => {
+    e.preventDefault();
+    submitRegisterForm(e.target);
+  });
+}
+
+function submitRegisterForm(form) {
+  try {
+    const fd = new FormData(form);
+    const baseAmt = Number(fd.get("amount_dept")) || 0;
+    const indirect = Number(fd.get("indirect")) || Math.round(baseAmt * 0.15);
+    const attachments = {};
+    ATTACH_LIST.forEach((a, i) => { attachments[a] = fd.get("attach_" + i) === "on"; });
+
+    const review = {
+      id: uid(),
+      dept: fd.get("dept"),
+      project: fd.get("project"),
+      pm: fd.get("pm"),
+      applyDate: fd.get("applyDate"),
+      amount_dept: baseAmt,
+      amount_erp: Number(fd.get("amount_erp")) || 0,
+      indirect,
+      outsource: Number(fd.get("outsource")) || 0,
+      outsource_origin: Number(fd.get("outsource_origin")) || 0,
+      monthly_input: Number(fd.get("monthly_input")) || 0,
+      exec_rate: Number(fd.get("exec_rate")) || 0,
+      std_rate_applied: fd.get("std_rate_applied") === "on",
+      meeting_standard: fd.get("meeting_standard") === "on",
+      attachments,
+      currentStage: 1,
+      stageIssues: { s1:[], s2:[], s3:[] },
+      stageDone: { s1:false, s2:false, s3:false },
+      status: "검토 중",
+      createdAt: new Date().toISOString(),
+      processMinutes: 30
+    };
+
+    STATE.current = review;
+    STATE.reviews.unshift(review);
+    saveAll();
+    showToast("신규 검토 등록 완료 - 단계별 검토로 이동합니다", "success");
+    setTimeout(() => navigate("review"), 500);
+  } catch (e) {
+    console.error("등록 처리 오류:", e);
+    showToast("등록 처리 중 오류가 발생했습니다: " + e.message, "error");
+  }
+}
+
+/* =========================================
+ * 단계별 검토 페이지
+ * ========================================= */
+function renderReview() {
+  const r = STATE.current;
+  if (!r) {
+    $("#page-review").innerHTML = `
+      <div class="glass glass-card p-10 card-anim text-center">
+        <i class="fa-solid fa-folder-open text-5xl mb-4" style="color: var(--accent2);"></i>
+        <h3 class="text-xl font-bold mb-2">검토 중인 건이 없습니다</h3>
+        <p class="text-secondary mb-5">신규 검토를 등록하거나 검토 이력에서 항목을 선택하세요</p>
+        <div class="flex justify-center gap-3">
+          <button class="gradient-btn px-5 py-3 rounded-xl" onclick="navigate('register')"><i class="fa-solid fa-plus mr-2"></i>신규 등록</button>
+          <button class="glass glass-card px-5 py-3 rounded-xl" onclick="navigate('history')"><i class="fa-solid fa-list mr-2"></i>이력 보기</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const analysis = analyzeReview(r);
+
+  $("#page-review").innerHTML = `
+    <!-- Stepper -->
+    <div class="glass glass-card p-5 mb-5 card-anim">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div>
+          <div class="text-xs text-secondary font-mono">${escapeHTML(r.id)}</div>
+          <h3 class="font-bold text-lg">${escapeHTML(r.project)}</h3>
+          <div class="text-sm text-secondary">${escapeHTML(r.dept)} · PM ${escapeHTML(r.pm)} · ${escapeHTML(r.applyDate)}</div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <span class="badge badge-info"><i class="fa-solid fa-coins"></i>${fmtKRW(r.amount_dept)}</span>
+          <span class="badge badge-warning"><i class="fa-solid fa-percent"></i>실행률 ${fmtPct(r.exec_rate)}</span>
+        </div>
+      </div>
+      <div class="stepper">
+        ${renderStep(1, "사전검토 의뢰/접수", r.currentStage)}
+        <div class="step-connector ${r.currentStage > 1 ? 'done' : ''}"></div>
+        ${renderStep(2, "1단계 검토", r.currentStage, r.stageDone.s1)}
+        <div class="step-connector ${r.stageDone.s1 ? 'done' : ''}"></div>
+        ${renderStep(3, "2단계 검토", r.currentStage, r.stageDone.s2)}
+        <div class="step-connector ${r.stageDone.s2 ? 'done' : ''}"></div>
+        ${renderStep(4, "3단계 검토", r.currentStage, r.stageDone.s3)}
+        <div class="step-connector ${r.stageDone.s3 ? 'done' : ''}"></div>
+        ${renderStep(5, "대면결재·시스템 등록", r.currentStage)}
+      </div>
+    </div>
+
+    <!-- 결재 라인 알림 -->
+    ${approvalNotices(r)}
+
+    <!-- 검토 항목 -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div class="glass glass-card p-5 card-anim xl:col-span-2">
+        <h3 class="font-bold text-lg mb-3"><i class="fa-solid fa-list-check mr-2" style="color: var(--accent2);"></i>현재 단계 검토 항목 - <span class="accent-text">${stageLabel(r.currentStage)}</span></h3>
+        <div class="space-y-3" id="reviewItems">
+          ${renderStageItems(r, analysis)}
+        </div>
+      </div>
+      <div class="glass glass-card p-5 card-anim">
+        <h3 class="font-bold text-lg mb-3"><i class="fa-solid fa-clipboard-check mr-2" style="color: var(--accent);"></i>발견 사항</h3>
+        <div class="space-y-2 mb-4" id="issuesPanel">${issuesPanelHTML(analysis)}</div>
+        <div class="gradient-divider"></div>
+        <div class="space-y-2">
+          ${actionButtons(r, analysis)}
+        </div>
+      </div>
+    </div>
+  `;
+
+  bindReviewActions(r);
+}
+
+function renderStep(num, label, current, done) {
+  const cls = done ? "done" : (num === current ? "active" : (num < current ? "done" : ""));
+  const icon = done || num < current ? `<i class="fa-solid fa-check"></i>` : num;
+  return `
+    <div class="flex flex-col items-center gap-1" title="${escapeHTML(label)}">
+      <div class="step-circle ${cls}">${icon}</div>
+      <div class="text-xs text-secondary hidden md:block">${escapeHTML(label)}</div>
+    </div>
+  `;
+}
+
+function stageLabel(stage) {
+  if (stage === 1) return "사전 접수 단계";
+  if (stage === 2) return "1단계 검토 (기본 자료/수행금액)";
+  if (stage === 3) return "2단계 검토 (간접비·외주·인건비)";
+  if (stage === 4) return "3단계 검토 (최종 결재라인 확인)";
+  return "완료";
+}
+
+function renderStageItems(r, analysis) {
+  // 단계별 검토 항목 매핑
+  const stageMap = {
+    2: ["amount", "attach"],         // 1단계: 기본자료, 수행금액
+    3: ["indirect", "outsource_origin", "outsource_ratio", "std_rate", "monthly_input"], // 2단계
+    4: ["meeting", "amount", "indirect"] // 3단계: 최종 확인
+  };
+  const keys = stageMap[r.currentStage] || stageMap[2];
+
+  return analysis.checks.filter(c => keys.includes(c.key)).map(c => {
+    const isOk = c.status === "정상";
+    const cls = isOk ? "review-ok" : (c.status === "확인 필요" ? "review-warn" : "review-issue");
+    const icon = isOk ? "circle-check" : (c.status === "확인 필요" ? "circle-question" : "circle-exclamation");
+    return `
+      <div class="${cls}">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-semibold"><i class="fa-solid fa-${icon} mr-1"></i>${escapeHTML(c.label)}</div>
+            <div class="text-xs text-secondary mt-1">${escapeHTML(c.basis)}</div>
+            <div class="text-sm mt-1">입력: <span class="font-mono">${escapeHTML(c.input)}</span> · 결과: <span class="font-semibold">${escapeHTML(c.result)}</span></div>
+          </div>
+          <span class="badge ${isOk ? 'badge-success' : (c.status==='확인 필요' ? 'badge-warning' : 'badge-danger')}">${escapeHTML(c.status)}</span>
+        </div>
+      </div>
+    `;
+  }).join("") || `<div class="text-secondary text-sm">검토 항목이 없습니다.</div>`;
+}
+
+function issuesPanelHTML(analysis) {
+  const probs = analysis.checks.filter(c => c.status !== "정상");
+  if (!probs.length) return `<div class="review-ok"><i class="fa-solid fa-thumbs-up mr-1"></i>발견된 문제가 없습니다. 다음 단계로 진행 가능합니다.</div>`;
+  return probs.map(c => `
+    <div class="${c.status === '확인 필요' ? 'review-warn' : 'review-issue'} text-sm">
+      <div class="font-semibold">${escapeHTML(c.label)}</div>
+      <div class="text-xs mt-1">${escapeHTML(c.action)}</div>
+    </div>
+  `).join("");
+}
+
+function approvalNotices(r) {
+  const exec = Number(r.exec_rate) || 0;
+  let html = "";
+  if (exec > 90) {
+    html += `<div class="glass glass-card p-4 mb-4 card-anim" style="background: linear-gradient(135deg, rgba(251,113,133,0.15), rgba(251,113,133,0.05)); border-left: 4px solid var(--danger);">
+      <div class="flex items-center gap-3"><i class="fa-solid fa-triangle-exclamation text-2xl" style="color: var(--danger);"></i><div>
+      <div class="font-bold">CEO 결재 필요</div><div class="text-sm text-secondary">실행률 ${fmtPct(exec)} - 90% 초과로 CEO까지 결재 필요</div></div></div></div>`;
+  } else if (exec > 80) {
+    html += `<div class="glass glass-card p-4 mb-4 card-anim" style="background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.05)); border-left: 4px solid var(--warning);">
+      <div class="flex items-center gap-3"><i class="fa-solid fa-triangle-exclamation text-2xl" style="color: var(--warning);"></i><div>
+      <div class="font-bold">COO 결재 필요</div><div class="text-sm text-secondary">실행률 ${fmtPct(exec)} - 80% 초과로 COO까지 결재 필요</div></div></div></div>`;
+  }
+  return html;
+}
+
+function actionButtons(r, analysis) {
+  const probs = analysis.checks.filter(c => c.status !== "정상").length;
+  return `
+    <button class="gradient-btn w-full px-4 py-3 rounded-xl font-bold" data-action="next">
+      <i class="fa-solid fa-arrow-right mr-1"></i>${r.currentStage >= 4 ? '검토 완료 및 결과 보기' : '다음 단계 진행'} (문제 ${probs}건)
+    </button>
+    <button class="glass glass-card w-full px-4 py-3 rounded-xl" data-action="supplement">
+      <i class="fa-solid fa-arrow-rotate-left mr-1"></i>보완 요청 (재의뢰 회귀)
+    </button>
+    <button class="glass glass-card w-full px-4 py-3 rounded-xl" data-action="cancel" style="color: var(--danger);">
+      <i class="fa-solid fa-xmark mr-1"></i>검토 중단
+    </button>
+  `;
+}
+
+function bindReviewActions(r) {
+  $$("#page-review [data-action]").forEach(b => {
+    b.addEventListener("click", () => {
+      const act = b.dataset.action;
+      const analysis = analyzeReview(r);
+      const probs = analysis.checks.filter(c => c.status !== "정상").map(c => c.label);
+
+      if (act === "next") {
+        const stageKey = "s" + (r.currentStage - 1);
+        if (r.currentStage >= 2 && r.currentStage <= 4) {
+          r.stageIssues[stageKey] = probs;
+          r.stageDone[stageKey] = probs.length === 0;
+        }
+        if (r.currentStage >= 4) {
+          // 최종 결과 페이지
+          const final = analyzeReview(r);
+          r.status = final.overall;
+          saveAll();
+          showToast("3단계 검토 완료 - 결과 보고서로 이동합니다", "success");
+          setTimeout(() => navigate("result"), 400);
+          return;
+        }
+        r.currentStage++;
+        saveAll();
+        showToast(`${stageLabel(r.currentStage)}로 진행합니다`, "info");
+        renderReview();
+      }
+
+      if (act === "supplement") {
+        r.status = "보완 필요";
+        r.currentStage = 1;
+        saveAll();
+        showToast("보완 요청 - 사전검토 의뢰 단계로 회귀", "warning");
+        setTimeout(() => navigate("result"), 400);
+      }
+
+      if (act === "cancel") {
+        if (confirm("검토를 중단하시겠습니까? 진행 상태는 이력에 남습니다.")) {
+          r.status = "중단";
+          saveAll();
+          STATE.current = null;
+          navigate("history");
+        }
+      }
+    });
+  });
+}
+
+/* =========================================
+ * 검토 결과 페이지 (6개 표)
+ * ========================================= */
+function renderResult() {
+  const r = STATE.current;
+  if (!r) {
+    $("#page-result").innerHTML = `
+      <div class="glass glass-card p-10 card-anim text-center">
+        <i class="fa-solid fa-file-circle-question text-5xl mb-4" style="color: var(--accent2);"></i>
+        <h3 class="text-xl font-bold mb-2">표시할 검토 결과가 없습니다</h3>
+        <button class="gradient-btn px-5 py-3 rounded-xl mt-3" onclick="navigate('history')"><i class="fa-solid fa-list mr-2"></i>검토 이력 보기</button>
+      </div>
+    `;
+    return;
+  }
+
+  const a = analyzeReview(r);
+  r.status = a.overall;
+  saveAll();
+
+  $("#page-result").innerHTML = `
+    <div class="flex justify-between items-center mb-4 flex-wrap gap-2 no-print">
+      <div>
+        <div class="text-xs text-secondary font-mono">${escapeHTML(r.id)}</div>
+        <h2 class="font-bold text-xl">검토 결과 보고서</h2>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="glass glass-card px-4 py-2 rounded-lg" id="copyBtn"><i class="fa-solid fa-copy mr-1"></i>복사</button>
+        <button class="glass glass-card px-4 py-2 rounded-lg" id="excelBtn"><i class="fa-solid fa-file-excel mr-1"></i>엑셀</button>
+        <button class="glass glass-card px-4 py-2 rounded-lg" id="pdfBtn"><i class="fa-solid fa-file-pdf mr-1"></i>PDF</button>
+        <button class="glass glass-card px-4 py-2 rounded-lg" onclick="window.print()"><i class="fa-solid fa-print mr-1"></i>인쇄</button>
+      </div>
+    </div>
+
+    <div class="space-y-5" id="reportBody">
+      ${tableBasic(r, a)}
+      ${tableMain(a)}
+      ${tableApproval(a, r)}
+      ${tableStages(a, r)}
+      ${tableFinal(r, a)}
+      ${tableSupplements(a)}
+    </div>
+  `;
+
+  $("#copyBtn").addEventListener("click", copyReport);
+  $("#excelBtn").addEventListener("click", () => exportExcel(r, a));
+  $("#pdfBtn").addEventListener("click", () => exportPDF(r, a));
+}
+
+function tableBasic(r, a) {
+  const statusBg = a.overall === "승인 가능" ? "var(--success)" : (a.overall === "보완 필요" ? "var(--warning)" : "var(--danger)");
+  return `
+    <div class="glass glass-card p-5">
+      <h3 class="font-bold text-lg mb-3"><span class="accent-text">표 1.</span> 실행예산 기본정보 요약표</h3>
+      <table class="app-table">
+        <tbody>
+          <tr><th class="w-40">부서명</th><td>${escapeHTML(r.dept)}</td></tr>
+          <tr><th>사업명</th><td class="font-semibold">${escapeHTML(r.project)}</td></tr>
+          <tr><th>PM</th><td>${escapeHTML(r.pm)}</td></tr>
+          <tr><th>신청일</th><td>${escapeHTML(r.applyDate)}</td></tr>
+          <tr><th>검토 대상 수행금액</th><td class="font-bold text-lg">${fmtKRW(r.amount_dept)}</td></tr>
+          <tr><th>실행률</th><td>${fmtPct(r.exec_rate)}</td></tr>
+          <tr><th>검토 결과</th><td><span class="badge" style="background: ${statusBg}33; color: ${statusBg}; border:1px solid ${statusBg}66; font-size:13px; padding:6px 14px;"><i class="fa-solid fa-circle"></i>${escapeHTML(a.overall)}</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function tableMain(a) {
+  return `
+    <div class="glass glass-card p-5">
+      <h3 class="font-bold text-lg mb-3"><span class="accent-text">표 2.</span> 주요 검토 결과표</h3>
+      <div class="overflow-x-auto scrollbar">
+      <table class="app-table">
+        <thead><tr><th>검토 항목</th><th>확인 기준</th><th>입력값</th><th>검토 결과</th><th>문제 여부</th><th>보완 요청사항</th></tr></thead>
+        <tbody>
+          ${a.checks.map(c => `
+            <tr>
+              <td class="font-semibold">${escapeHTML(c.label)}</td>
+              <td class="text-secondary text-xs">${escapeHTML(c.basis)}</td>
+              <td class="font-mono text-xs">${escapeHTML(c.input)}</td>
+              <td>${escapeHTML(c.result)}</td>
+              <td>${c.status === '정상' ? `<span class="badge badge-success">정상</span>` : (c.status === '확인 필요' ? `<span class="badge badge-warning">확인 필요</span>` : `<span class="badge badge-danger">${escapeHTML(c.status)}</span>`)}</td>
+              <td class="text-xs">${escapeHTML(c.action)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  `;
+}
+
+function tableApproval(a, r) {
+  return `
+    <div class="glass glass-card p-5">
+      <h3 class="font-bold text-lg mb-3"><span class="accent-text">표 3.</span> 결재라인 확인표</h3>
+      <table class="app-table">
+        <thead><tr><th>실행률 기준</th><th>해당 여부</th><th>필요한 결재</th><th>검토 의견</th></tr></thead>
+        <tbody>
+          ${a.approvals.map(ap => `
+            <tr>
+              <td class="font-semibold">${escapeHTML(ap.basis)}</td>
+              <td>${ap.flag ? `<span class="badge badge-danger">예</span>` : `<span class="badge badge-success">아니오</span>`}</td>
+              <td>${escapeHTML(ap.role)}</td>
+              <td class="text-xs">${escapeHTML(ap.note)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function tableStages(a, r) {
+  return `
+    <div class="glass glass-card p-5">
+      <h3 class="font-bold text-lg mb-3"><span class="accent-text">표 4.</span> 단계별 진행 판단표</h3>
+      <table class="app-table">
+        <thead><tr><th>단계</th><th>검토 내용</th><th>판단 결과</th><th>다음 조치</th></tr></thead>
+        <tbody>
+          ${a.stagePlan.map((s, i) => `
+            <tr>
+              <td class="font-semibold">${escapeHTML(s.name)}</td>
+              <td class="text-xs">${escapeHTML(s.content)}</td>
+              <td>${s.pass ? `<span class="badge badge-success">통과</span>` : `<span class="badge badge-warning">보완 필요</span>`}</td>
+              <td class="text-xs">${stageNextAction(i, s.pass)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function stageNextAction(idx, pass) {
+  const map = [
+    pass ? "2단계 진행" : "사전검토 재의뢰",
+    pass ? "3단계 진행" : "사전검토 재의뢰",
+    pass ? "PM 대면결재" : "사전검토 재의뢰",
+    pass ? "시스템 등록" : "보완 요청",
+    pass ? "실행예산 완료" : "재확인"
+  ];
+  return map[idx] || "-";
+}
+
+function tableFinal(r, a) {
+  const probs = a.checks.filter(c => c.status === "문제").map(c => c.label).join(", ") || "없음";
+  const confirm = a.checks.filter(c => c.status === "확인 필요").map(c => c.label).join(", ") || "없음";
+  const supplement = a.checks.filter(c => c.status === "누락").map(c => c.label).join(", ") || "없음";
+  const exec = Number(r.exec_rate);
+  let appNote = "기본 결재 라인";
+  if (exec > 90) appNote = "CEO 결재 필요 (실행률 " + fmtPct(exec) + ")";
+  else if (exec > 80) appNote = "COO 결재 필요 (실행률 " + fmtPct(exec) + ")";
+  const lastAction = a.overall === "승인 가능" ? "PM 대면결재 진행" : (a.overall === "재검토 필요" ? "재검토 필요" : "부서 보완 요청");
+
+  return `
+    <div class="glass glass-card p-5">
+      <h3 class="font-bold text-lg mb-3"><span class="accent-text">표 5.</span> 최종 검토 의견</h3>
+      <table class="app-table">
+        <tbody>
+          <tr><th class="w-40">종합 판단</th><td><span class="badge ${a.overall==='승인 가능'?'badge-success':(a.overall==='보완 필요'?'badge-warning':'badge-danger')}">${escapeHTML(a.overall)}</span></td></tr>
+          <tr><th>주요 문제사항</th><td>${escapeHTML(probs)}</td></tr>
+          <tr><th>PM 확인 필요사항</th><td>${escapeHTML(confirm)}</td></tr>
+          <tr><th>해당 부서 보완 요청사항</th><td>${escapeHTML(supplement)}</td></tr>
+          <tr><th>추가 결재 필요 여부</th><td>${escapeHTML(appNote)}</td></tr>
+          <tr><th>최종 조치</th><td class="font-semibold">${escapeHTML(lastAction)}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function tableSupplements(a) {
+  const templates = {
+    "수행금액 불일치": "부서 작성 실행예산 자료의 수행금액과 Y-한마당 또는 ERP상 수행금액이 일치하지 않습니다. 차이금액 및 반영 기준을 확인하여 수정 또는 보완자료 제출을 요청드립니다.",
+    "간접비 오류": "간접비가 기준금액의 15%로 적용되었는지 확인이 필요합니다. 산출근거를 재확인하여 수정자료를 제출해 주시기 바랍니다.",
+    "외주비 확인 필요": "외주비 항목에 대한 원도급 금액 확인이 필요합니다. 원도급 내역서상 해당 항목이 확인되지 않는 경우 PM 확인 후 근거자료를 제출해 주시기 바랍니다.",
+    "표준임률 확인 필요": "인건비 산정 시 적용된 임률이 회사 표준임률과 일치하는지 확인이 필요합니다. 적용 임률 및 산출근거를 재확인해 주시기 바랍니다.",
+    "첨부자료 누락": "실행예산 검토에 필요한 첨부자료가 일부 누락된 것으로 보입니다. 누락 자료를 보완하여 재의뢰해 주시기 바랍니다."
+  };
+  return `
+    <div class="glass glass-card p-5">
+      <h3 class="font-bold text-lg mb-3"><span class="accent-text">표 6.</span> 보완 요청 문구 초안</h3>
+      <table class="app-table">
+        <thead><tr><th class="w-44">항목</th><th>보완 요청 문구</th><th class="w-20 no-print"></th></tr></thead>
+        <tbody>
+          ${Object.entries(templates).map(([k, v]) => `
+            <tr>
+              <td class="font-semibold">${escapeHTML(k)}</td>
+              <td class="text-sm" id="tpl-${escapeHTML(k)}">${escapeHTML(v)}</td>
+              <td class="no-print"><button class="text-xs glass glass-card px-2 py-1 rounded" onclick="copyText('${escapeHTML(v).replace(/'/g, "\\'")}')"><i class="fa-solid fa-copy"></i></button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function copyText(text) {
+  try {
+    navigator.clipboard.writeText(text).then(() => showToast("클립보드에 복사 완료", "success"));
+  } catch (e) { showToast("복사 실패: " + e.message, "error"); }
+}
+
+function copyReport() {
+  try {
+    const r = STATE.current;
+    const a = analyzeReview(r);
+    let txt = `실행예산 검토 결과 보고서\n${"=".repeat(40)}\n`;
+    txt += `검토번호: ${r.id}\n부서: ${r.dept}\n사업명: ${r.project}\nPM: ${r.pm}\n신청일: ${r.applyDate}\n수행금액: ${fmtKRW(r.amount_dept)}\n실행률: ${fmtPct(r.exec_rate)}\n종합판단: ${a.overall}\n\n[검토 항목]\n`;
+    a.checks.forEach(c => { txt += `- ${c.label}: ${c.status} (${c.result})\n`; });
+    navigator.clipboard.writeText(txt).then(() => showToast("보고서 전체 내용을 복사했습니다", "success"));
+  } catch (e) { showToast("복사 실패: " + e.message, "error"); }
+}
+
+/* =========================================
+ * 엑셀 / PDF 다운로드
+ * ========================================= */
+function exportExcel(r, a) {
+  try {
+    const wb = XLSX.utils.book_new();
+    const basic = [
+      ["구분", "내용"],
+      ["부서명", r.dept], ["사업명", r.project], ["PM", r.pm],
+      ["신청일", r.applyDate], ["수행금액(원)", r.amount_dept],
+      ["실행률(%)", r.exec_rate], ["검토 결과", a.overall]
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(basic), "기본정보");
+
+    const checks = [["검토항목", "기준", "입력값", "결과", "문제여부", "보완요청"]];
+    a.checks.forEach(c => checks.push([c.label, c.basis, c.input, c.result, c.status, c.action]));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(checks), "검토결과");
+
+    const approvals = [["기준", "해당여부", "결재", "의견"]];
+    a.approvals.forEach(ap => approvals.push([ap.basis, ap.flag ? "예" : "아니오", ap.role, ap.note]));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(approvals), "결재라인");
+
+    XLSX.writeFile(wb, `실행예산검토_${r.id}_${todayStr()}.xlsx`);
+    showToast("엑셀 다운로드 완료", "success");
+  } catch (e) {
+    console.error(e);
+    showToast("엑셀 생성 실패: " + e.message, "error");
+  }
+}
+
+function exportPDF(r, a) {
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text("Execution Budget Review Report", 14, 16);
+    doc.setFontSize(9);
+    doc.text(`ID: ${r.id}`, 14, 24);
+    doc.text(`Dept: ${r.dept} / Project: ${r.project}`, 14, 30);
+    doc.text(`PM: ${r.pm} / Date: ${r.applyDate} / Status: ${a.overall}`, 14, 36);
+
+    doc.autoTable({
+      startY: 42,
+      head: [["Item", "Basis", "Input", "Result", "Status"]],
+      body: a.checks.map(c => [c.label, c.basis, c.input, c.result, c.status]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [124, 92, 255] }
+    });
+
+    doc.save(`Budget_Review_${r.id}.pdf`);
+    showToast("PDF 다운로드 완료", "success");
+  } catch (e) {
+    console.error(e);
+    showToast("PDF 생성 실패: " + e.message, "error");
+  }
+}
+
+/* =========================================
+ * 검토 이력 페이지
+ * ========================================= */
+function renderHistory() {
+  $("#page-history").innerHTML = `
+    <div class="glass glass-card p-5 mb-4 card-anim">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <label class="text-xs text-secondary mb-1 block">검색 (사업명/부서/PM)</label>
+          <input id="histSearch" type="text" class="input-base" placeholder="검색어 입력..." />
+        </div>
+        <div>
+          <label class="text-xs text-secondary mb-1 block">상태 필터</label>
+          <select id="histFilter" class="input-base">
+            <option value="">전체</option>
+            <option>승인 가능</option><option>보완 필요</option><option>재검토 필요</option><option>검토 중</option><option>중단</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-secondary mb-1 block">정렬 기준</label>
+          <select id="histSort" class="input-base">
+            <option value="date_desc">최신순</option>
+            <option value="date_asc">오래된순</option>
+            <option value="amt_desc">금액 큰순</option>
+            <option value="amt_asc">금액 작은순</option>
+            <option value="status">상태순</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button class="gradient-btn w-full px-4 py-3 rounded-xl" id="histExport"><i class="fa-solid fa-download mr-2"></i>전체 엑셀</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass glass-card p-5 card-anim">
+      <div class="overflow-x-auto scrollbar">
+        <table class="app-table">
+          <thead><tr>
+            <th>검토번호</th><th>신청일</th><th>부서</th><th>사업명</th><th>PM</th>
+            <th class="text-right">수행금액</th><th>실행률</th><th>상태</th><th>액션</th>
+          </tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  const draw = () => {
+    const q = ($("#histSearch").value || "").toLowerCase();
+    const filter = $("#histFilter").value;
+    const sort = $("#histSort").value;
+    let list = [...STATE.reviews];
+    if (q) list = list.filter(r => (r.project + r.dept + r.pm).toLowerCase().includes(q));
+    if (filter) list = list.filter(r => r.status === filter);
+
+    if (sort === "date_desc") list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    if (sort === "date_asc") list.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+    if (sort === "amt_desc") list.sort((a, b) => b.amount_dept - a.amount_dept);
+    if (sort === "amt_asc") list.sort((a, b) => a.amount_dept - b.amount_dept);
+    if (sort === "status") list.sort((a, b) => (a.status || "").localeCompare(b.status || ""));
+
+    if (!list.length) {
+      $("#histBody").innerHTML = `<tr><td colspan="9" class="text-center text-secondary py-10">조건에 맞는 이력이 없습니다.</td></tr>`;
+      return;
+    }
+
+    $("#histBody").innerHTML = list.map(r => `
+      <tr>
+        <td class="font-mono text-xs">${escapeHTML(r.id)}</td>
+        <td>${escapeHTML(r.applyDate)}</td>
+        <td>${escapeHTML(r.dept)}</td>
+        <td class="max-w-xs truncate" title="${escapeHTML(r.project)}">${escapeHTML(r.project)}</td>
+        <td>${escapeHTML(r.pm)}</td>
+        <td class="text-right font-semibold">${fmtKRW(r.amount_dept)}</td>
+        <td>${fmtPct(r.exec_rate)}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>
+          <button class="text-xs gradient-btn px-2 py-1 rounded mr-1" onclick="openReviewFromHistory('${r.id}')"><i class="fa-solid fa-eye"></i></button>
+          <button class="text-xs glass glass-card px-2 py-1 rounded" onclick="deleteReview('${r.id}')"><i class="fa-solid fa-trash" style="color: var(--danger);"></i></button>
+        </td>
+      </tr>
+    `).join("");
+  };
+
+  $("#histSearch").addEventListener("input", draw);
+  $("#histFilter").addEventListener("change", draw);
+  $("#histSort").addEventListener("change", draw);
+  $("#histExport").addEventListener("click", exportAllExcel);
+  draw();
+}
+
+function openReviewFromHistory(id) {
+  const r = STATE.reviews.find(x => x.id === id);
+  if (!r) return showToast("해당 검토 건을 찾을 수 없습니다", "error");
+  STATE.current = r;
+  // 검토 중이면 검토 페이지로, 완료면 결과 페이지로
+  if (r.status === "검토 중") navigate("review");
+  else navigate("result");
+}
+
+function deleteReview(id) {
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+  STATE.reviews = STATE.reviews.filter(r => r.id !== id);
+  if (STATE.current && STATE.current.id === id) STATE.current = null;
+  saveAll();
+  showToast("삭제되었습니다", "success");
+  renderHistory();
+}
+
+function exportAllExcel() {
+  try {
+    const wb = XLSX.utils.book_new();
+    const head = [["검토번호", "신청일", "부서", "사업명", "PM", "수행금액", "ERP금액", "간접비", "외주비", "실행률(%)", "상태", "등록일"]];
+    const body = STATE.reviews.map(r => [r.id, r.applyDate, r.dept, r.project, r.pm, r.amount_dept, r.amount_erp, r.indirect, r.outsource, r.exec_rate, r.status, (r.createdAt || "").slice(0, 10)]);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([...head, ...body]), "검토이력");
+    XLSX.writeFile(wb, `실행예산검토_이력_${todayStr()}.xlsx`);
+    showToast("전체 이력 엑셀 다운로드 완료", "success");
+  } catch (e) {
+    showToast("내보내기 실패: " + e.message, "error");
+  }
+}
+
+/* =========================================
+ * 샘플 데이터 (하드코딩 10건+)
+ * ========================================= */
+function loadSampleData() {
+  const depts = ["토목사업부", "건축사업부", "환경사업부", "도로교통팀", "플랜트사업부", "설계1팀", "설계2팀", "해외사업본부"];
+  const projects = [
+    "서울-청라 BRT 1공구 기본설계", "GTX-D 노선 타당성조사", "송도신도시 환경영향평가",
+    "수도권제2순환 고속도로 실시설계", "베트남 호치민 메트로 9호선 설계용역", "부산항 신항만 토목 감리",
+    "세종시 행정타운 건축 설계", "남강댐 안전진단 용역", "대구 도시철도 1호선 연장",
+    "인천공항 4단계 확장 설계", "수도권 광역 정수장 정밀안전진단", "포항 영일만 항만 친환경 항만 조성"
+  ];
+  const pms = ["김민수 차장", "이정훈 부장", "박서연 과장", "최도현 차장", "장유리 과장", "한승호 부장", "윤지원 차장", "강민재 과장"];
+  const statuses = ["승인 가능", "승인 가능", "보완 필요", "재검토 필요", "승인 가능", "보완 필요"];
+
+  const samples = [];
+  for (let i = 0; i < 12; i++) {
+    const amt = (Math.floor(Math.random() * 50) + 1) * 100000000; // 1~50억
+    const indirect = Math.round(amt * (0.13 + Math.random() * 0.04)); // 13~17%
+    const outsource = Math.round(amt * (Math.random() * 0.5));
+    const exec = Math.round((60 + Math.random() * 40) * 10) / 10; // 60~100%
+    const d = new Date(); d.setDate(d.getDate() - Math.floor(Math.random() * 150));
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+    const attachments = {};
+    ATTACH_LIST.forEach(a => { attachments[a] = Math.random() > 0.15; });
+
+    samples.push({
+      id: uid(),
+      dept: depts[i % depts.length],
+      project: projects[i % projects.length],
+      pm: pms[i % pms.length],
+      applyDate: todayStr(d),
+      amount_dept: amt,
+      amount_erp: Math.random() > 0.7 ? amt - Math.round(amt * 0.02) : amt,
+      indirect,
+      outsource,
+      outsource_origin: Math.round(outsource * (0.85 + Math.random() * 0.3)),
+      monthly_input: Math.round(80 + Math.random() * 40),
+      exec_rate: exec,
+      std_rate_applied: Math.random() > 0.2,
+      meeting_standard: Math.random() > 0.2,
+      attachments,
+      currentStage: 5,
+      stageIssues: { s1:[], s2:[], s3:[] },
+      stageDone: { s1:true, s2:true, s3:true },
+      status,
+      createdAt: d.toISOString(),
+      processMinutes: 25 + Math.floor(Math.random() * 50)
+    });
+  }
+  STATE.reviews = samples;
+  saveAll();
+  showToast("샘플 데이터 " + samples.length + "건 로드 완료", "success");
+  navigate("dashboard");
+}
+
+/* =========================================
+ * 테마 토글
+ * ========================================= */
+function toggleTheme() {
+  const html = document.documentElement;
+  html.classList.toggle("light-mode");
+  const isLight = html.classList.contains("light-mode");
+  $("#themeIcon").className = isLight ? "fa-solid fa-sun" : "fa-solid fa-moon";
+  try { localStorage.setItem("kgh_theme", isLight ? "light" : "dark"); } catch (e) {}
+  // 차트 다시 그리기
+  if (STATE.page === "dashboard") renderDashboard();
+}
+
+/* =========================================
+ * 초기화
+ * ========================================= */
+function init() {
+  try {
+    // 테마 복원
+    try {
+      if (localStorage.getItem("kgh_theme") === "light") {
+        document.documentElement.classList.add("light-mode");
+        $("#themeIcon").className = "fa-solid fa-sun";
+      }
+    } catch (e) {}
+
+    // 날짜 표시
+    const d = new Date();
+    $("#todayLabel").textContent = d.getFullYear() + "년 " + (d.getMonth() + 1) + "월 " + d.getDate() + "일";
+
+    loadAll();
+    if (!STATE.reviews.length) loadSampleData();
+
+    // 네비게이션
+    $$(".nav-item").forEach(n => n.addEventListener("click", () => navigate(n.dataset.page)));
+    $("#themeBtn").addEventListener("click", toggleTheme);
+    $("#seedBtn").addEventListener("click", () => {
+      if (confirm("기존 데이터를 모두 삭제하고 샘플 데이터를 다시 로드하시겠습니까?")) loadSampleData();
+    });
+    $("#menuBtn").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
+
+    navigate("dashboard");
+  } catch (e) {
+    console.error("초기화 실패:", e);
+    showToast("시스템 초기화 실패: " + e.message, "error");
+  }
+}
+
+// DOM 로드 완료 후 실행
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+
+// 전역 노출 (HTML onclick 핸들러용)
+window.navigate = navigate;
+window.openReviewFromHistory = openReviewFromHistory;
+window.deleteReview = deleteReview;
+window.copyText = copyText;
+</script>
+</body>
+</html>

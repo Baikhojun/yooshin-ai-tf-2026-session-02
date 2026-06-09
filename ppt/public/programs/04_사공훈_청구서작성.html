@@ -1,0 +1,1535 @@
+<!-- 이 파일의 역할: 사공훈(업무부) 청구서 자동 작성 시스템 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사공훈 청구서 자동작성 시스템 | 유신 업무부</title>
+
+<!-- TailwindCSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- SheetJS -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- jsPDF AutoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- Google Fonts: Noto Sans KR + Pretendard -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Pretendard Variable','Pretendard','Noto Sans KR','sans-serif'],
+        },
+        colors: {
+          gold:   { 50:'#FFF8E1', 100:'#FFECB3', 300:'#FFD54F', 400:'#FFCA28', 500:'#FFC107', 600:'#FFB300', 700:'#FFA000', 800:'#FF8F00', 900:'#FF6F00' },
+          deepblue:{ 50:'#E8EAF6', 100:'#C5CAE9', 300:'#7986CB', 500:'#3F51B5', 700:'#303F9F', 900:'#1A237E', 950:'#0D1440' },
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  html,body{font-family:'Pretendard Variable','Pretendard','Noto Sans KR',sans-serif;}
+  /* 그라데이션 배경 */
+  .bg-luxury{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(255,193,7,0.18), transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, rgba(63,81,181,0.25), transparent 60%),
+      linear-gradient(135deg,#0D1440 0%,#1A237E 50%,#303F9F 100%);
+  }
+  .bg-luxury-light{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(255,193,7,0.20), transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, rgba(63,81,181,0.18), transparent 60%),
+      linear-gradient(135deg,#F8FAFF 0%,#EEF1FF 60%,#FFF8E1 100%);
+  }
+  /* 글래스모피즘 */
+  .glass{
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.45);
+    box-shadow: 0 8px 32px rgba(13,20,64,0.10);
+  }
+  .glass-dark{
+    background: rgba(20,28,68,0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  }
+  .gold-text{
+    background: linear-gradient(135deg,#FFD54F 0%,#FFA000 50%,#FF8F00 100%);
+    -webkit-background-clip: text; background-clip:text; color: transparent;
+  }
+  .gold-border{ border-image: linear-gradient(135deg,#FFD54F,#FFA000) 1; }
+  .btn-luxury{
+    background: linear-gradient(135deg,#FFC107 0%,#FFA000 100%);
+    color:#1A237E; font-weight:700; transition: all .2s ease; box-shadow: 0 6px 20px rgba(255,160,0,0.35);
+  }
+  .btn-luxury:hover{ transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,160,0,0.5); }
+  .btn-deep{
+    background: linear-gradient(135deg,#3F51B5 0%,#1A237E 100%);
+    color:#FFECB3; font-weight:700; transition: all .2s ease; box-shadow: 0 6px 20px rgba(26,35,126,0.35);
+  }
+  .btn-deep:hover{ transform: translateY(-2px); box-shadow: 0 10px 28px rgba(26,35,126,0.5); }
+  /* 사이드바 */
+  .sb-item{ transition: all .2s ease; }
+  .sb-item:hover{ background: rgba(255,193,7,0.12); transform: translateX(4px); }
+  .sb-item.active{
+    background: linear-gradient(135deg, rgba(255,193,7,0.20), rgba(255,160,0,0.10));
+    border-left: 4px solid #FFC107;
+  }
+  /* 토스트 */
+  .toast{ animation: toastIn .35s ease-out; }
+  @keyframes toastIn{ from{transform:translateY(-20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+  /* 카드 호버 */
+  .hover-lift{ transition: all .25s ease; }
+  .hover-lift:hover{ transform: translateY(-4px); box-shadow: 0 20px 40px rgba(13,20,64,0.18); }
+  /* 위저드 스텝 */
+  .step-dot{ transition: all .3s ease; }
+  .step-dot.active{ background: linear-gradient(135deg,#FFC107,#FFA000); color:#1A237E; }
+  .step-dot.done{ background: linear-gradient(135deg,#43A047,#1B5E20); color:#fff; }
+  .step-line{ height:3px; background:#E0E0E0; }
+  .step-line.done{ background: linear-gradient(90deg,#43A047,#FFC107); }
+  /* 인쇄 */
+  @media print{
+    body * { visibility: hidden !important; }
+    #printArea, #printArea * { visibility: visible !important; }
+    #printArea { position: absolute; left:0; top:0; width:100%; padding:30px; background:#fff !important; color:#000 !important;}
+    .no-print{ display:none !important; }
+  }
+  /* 스크롤바 */
+  ::-webkit-scrollbar{ width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{ background: linear-gradient(135deg,#FFC107,#FFA000); border-radius:8px;}
+  ::-webkit-scrollbar-track{ background: transparent;}
+  /* 입력 폼 다크 모드 */
+  .dark .form-input{ background: rgba(255,255,255,0.08); color:#F5F5F5; border-color: rgba(255,255,255,0.18);}
+  .form-input{
+    width:100%; padding:.65rem .9rem; border:1.5px solid #D8DDE8; border-radius:.7rem; background:#fff; color:#1A237E;
+    transition: all .2s ease; font-size:.95rem;
+  }
+  .form-input:focus{ outline:none; border-color:#FFC107; box-shadow:0 0 0 4px rgba(255,193,7,0.18);}
+  .form-label{ display:block; margin-bottom:.4rem; font-weight:600; color:#1A237E; font-size:.9rem;}
+  .dark .form-label{ color:#FFD54F;}
+  .badge{ display:inline-flex; align-items:center; padding:.2rem .6rem; border-radius:9999px; font-size:.75rem; font-weight:700;}
+  .badge-gold{ background:#FFF8E1; color:#FF8F00;}
+  .badge-blue{ background:#E8EAF6; color:#303F9F;}
+  .badge-green{ background:#E8F5E9; color:#2E7D32;}
+  .badge-red{ background:#FFEBEE; color:#C62828;}
+  .dark .badge-gold{ background: rgba(255,193,7,0.18); color:#FFD54F;}
+  .dark .badge-blue{ background: rgba(121,134,203,0.18); color:#C5CAE9;}
+  .dark .badge-green{ background: rgba(67,160,71,0.18); color:#A5D6A7;}
+  .dark .badge-red{ background: rgba(198,40,40,0.18); color:#EF9A9A;}
+</style>
+</head>
+
+<body class="bg-luxury-light dark:bg-luxury min-h-screen text-slate-800 dark:text-slate-100 transition-colors">
+
+<!-- 토스트 컨테이너 -->
+<div id="toastWrap" class="fixed top-5 right-5 z-[100] space-y-2"></div>
+
+<!-- 모달 -->
+<div id="modal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/50 p-4">
+  <div class="glass dark:glass-dark rounded-2xl max-w-2xl w-full p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="modalTitle" class="text-xl font-bold gold-text"></h3>
+      <button onclick="closeModal()" class="text-2xl hover:text-gold-500"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="modalBody" class="max-h-[70vh] overflow-y-auto"></div>
+  </div>
+</div>
+
+<!-- 헤더 -->
+<header class="sticky top-0 z-40 glass dark:glass-dark border-b border-white/30 dark:border-white/10">
+  <div class="flex items-center justify-between px-5 py-3">
+    <div class="flex items-center gap-3">
+      <button id="sbToggle" class="md:hidden text-2xl text-deepblue-900 dark:text-gold-300"><i class="fa-solid fa-bars"></i></button>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br from-gold-400 to-gold-700 shadow-lg">
+        <i class="fa-solid fa-file-invoice-dollar text-deepblue-900 text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-lg md:text-xl font-extrabold gold-text leading-tight">청구서 자동작성 시스템</h1>
+        <p class="text-xs text-deepblue-900/70 dark:text-gold-100/70">YOOSHIN 업무부 · 사공훈</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 dark:bg-white/10 text-xs font-semibold">
+        <i class="fa-solid fa-calendar-day text-gold-600"></i>
+        <span id="todayDate">-</span>
+      </div>
+      <button id="themeBtn" class="w-10 h-10 rounded-full bg-white/60 dark:bg-white/10 hover:bg-gold-100 transition flex items-center justify-center" title="다크/라이트 모드">
+        <i id="themeIcon" class="fa-solid fa-moon text-deepblue-900 dark:text-gold-300"></i>
+      </button>
+      <div class="hidden md:flex items-center gap-2 pl-3 ml-1 border-l border-white/40 dark:border-white/10">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-deepblue-500 to-deepblue-900 flex items-center justify-center text-gold-300 font-bold">사</div>
+        <div class="leading-tight">
+          <div class="text-sm font-bold text-deepblue-900 dark:text-gold-200">사공훈 차장</div>
+          <div class="text-[10px] text-deepblue-900/60 dark:text-gold-100/60">계약·청구</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="flex">
+  <!-- 사이드바 -->
+  <aside id="sidebar" class="w-64 hidden md:block sticky top-[68px] h-[calc(100vh-68px)] glass dark:glass-dark border-r border-white/30 dark:border-white/10 p-3">
+    <nav class="space-y-1">
+      <button data-view="dashboard" class="nav-btn sb-item active w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left">
+        <i class="fa-solid fa-chart-line text-gold-600 w-5"></i><span class="font-semibold">대시보드</span>
+      </button>
+      <button data-view="wizard" class="nav-btn sb-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left">
+        <i class="fa-solid fa-wand-magic-sparkles text-gold-600 w-5"></i><span class="font-semibold">신규 청구서 작성</span>
+      </button>
+      <button data-view="history" class="nav-btn sb-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left">
+        <i class="fa-solid fa-clock-rotate-left text-gold-600 w-5"></i><span class="font-semibold">청구 이력</span>
+      </button>
+      <button data-view="checklist" class="nav-btn sb-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left">
+        <i class="fa-solid fa-square-check text-gold-600 w-5"></i><span class="font-semibold">증빙 체크리스트</span>
+      </button>
+      <button data-view="guide" class="nav-btn sb-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left">
+        <i class="fa-solid fa-circle-info text-gold-600 w-5"></i><span class="font-semibold">업무 가이드</span>
+      </button>
+    </nav>
+
+    <div class="mt-6 p-4 rounded-2xl bg-gradient-to-br from-gold-400/30 to-deepblue-500/20 border border-white/40 dark:border-white/10">
+      <div class="flex items-center gap-2 mb-2 text-deepblue-900 dark:text-gold-200 font-bold">
+        <i class="fa-solid fa-lightbulb text-gold-600"></i>오늘의 팁
+      </div>
+      <p class="text-xs text-deepblue-900/80 dark:text-gold-100/80 leading-relaxed">
+        선금청구는 <b>감독확인</b>이 필요한 경우가 많습니다. 양식 5종을 먼저 챙기세요.
+      </p>
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="flex-1 p-4 md:p-8 max-w-[1400px] mx-auto">
+
+    <!-- ========== 대시보드 ========== -->
+    <section id="view-dashboard" class="view-section space-y-6">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 class="text-3xl font-extrabold gold-text">대시보드</h2>
+          <p class="text-sm text-deepblue-900/70 dark:text-gold-100/70 mt-1">이번 달 청구 현황 한눈에 보기</p>
+        </div>
+        <button onclick="goView('wizard')" class="btn-luxury px-5 py-3 rounded-xl">
+          <i class="fa-solid fa-plus mr-2"></i>새 청구서 작성
+        </button>
+      </div>
+
+      <!-- KPI 카드 -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass dark:glass-dark rounded-2xl p-5 hover-lift">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-deepblue-900/70 dark:text-gold-100/70 font-semibold">이번달 청구 건수</p>
+              <p id="kpiCount" class="text-3xl font-extrabold gold-text mt-1">0</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-300 to-gold-700 flex items-center justify-center text-deepblue-900">
+              <i class="fa-solid fa-file-invoice text-xl"></i>
+            </div>
+          </div>
+          <p class="text-[11px] mt-3 text-deepblue-900/60 dark:text-gold-100/60"><i class="fa-solid fa-arrow-trend-up text-green-500"></i> 전월 대비 안정</p>
+        </div>
+
+        <div class="glass dark:glass-dark rounded-2xl p-5 hover-lift">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-deepblue-900/70 dark:text-gold-100/70 font-semibold">선금/기성/준공 비율</p>
+              <p id="kpiRatio" class="text-base font-bold text-deepblue-900 dark:text-gold-200 mt-1">- / - / -</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-deepblue-300 to-deepblue-900 flex items-center justify-center text-gold-200">
+              <i class="fa-solid fa-chart-pie text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass dark:glass-dark rounded-2xl p-5 hover-lift">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-deepblue-900/70 dark:text-gold-100/70 font-semibold">총 청구액(이번달)</p>
+              <p id="kpiAmount" class="text-2xl font-extrabold gold-text mt-1">₩0</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-300 to-gold-700 flex items-center justify-center text-deepblue-900">
+              <i class="fa-solid fa-coins text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass dark:glass-dark rounded-2xl p-5 hover-lift">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-deepblue-900/70 dark:text-gold-100/70 font-semibold">누적 청구건</p>
+              <p id="kpiTotal" class="text-3xl font-extrabold text-deepblue-900 dark:text-gold-200 mt-1">0</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-deepblue-300 to-deepblue-900 flex items-center justify-center text-gold-200">
+              <i class="fa-solid fa-database text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 차트 -->
+      <div class="grid lg:grid-cols-3 gap-4">
+        <div class="glass dark:glass-dark rounded-2xl p-5 lg:col-span-2">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-chart-column text-gold-600 mr-2"></i>월별 청구 추이</h3>
+            <span class="badge badge-gold">최근 6개월</span>
+          </div>
+          <div class="h-72"><canvas id="chartMonthly"></canvas></div>
+        </div>
+        <div class="glass dark:glass-dark rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-chart-pie text-gold-600 mr-2"></i>청구 유형 분포</h3>
+            <span class="badge badge-blue">전체</span>
+          </div>
+          <div class="h-72"><canvas id="chartPie"></canvas></div>
+        </div>
+      </div>
+
+      <!-- 최근 청구 -->
+      <div class="glass dark:glass-dark rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-list-ul text-gold-600 mr-2"></i>최근 청구 내역</h3>
+          <button onclick="goView('history')" class="text-sm font-semibold text-deepblue-700 dark:text-gold-300 hover:underline">전체보기 <i class="fa-solid fa-angle-right"></i></button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wider text-deepblue-900/70 dark:text-gold-100/70 border-b border-white/40 dark:border-white/10">
+                <th class="py-2 px-2">청구일</th>
+                <th class="py-2 px-2">용역명</th>
+                <th class="py-2 px-2">유형</th>
+                <th class="py-2 px-2 text-right">청구금액</th>
+                <th class="py-2 px-2">상태</th>
+              </tr>
+            </thead>
+            <tbody id="recentTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 위저드 ========== -->
+    <section id="view-wizard" class="view-section hidden space-y-5">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 class="text-3xl font-extrabold gold-text">신규 청구서 작성</h2>
+          <p class="text-sm text-deepblue-900/70 dark:text-gold-100/70 mt-1">단계별로 정확하게 작성합니다 (5단계)</p>
+        </div>
+        <button onclick="resetWizard()" class="px-4 py-2 rounded-xl bg-white/70 dark:bg-white/10 font-semibold hover:bg-white">
+          <i class="fa-solid fa-rotate-left mr-1"></i>초기화
+        </button>
+      </div>
+
+      <!-- 스텝 표시 -->
+      <div class="glass dark:glass-dark rounded-2xl p-5">
+        <div class="flex items-center justify-between">
+          <!-- 동적 생성 -->
+          <div id="stepBar" class="flex items-center justify-between w-full"></div>
+        </div>
+      </div>
+
+      <!-- Step 1: 청구 유형 -->
+      <div class="wstep" data-step="1">
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <h3 class="text-xl font-bold mb-4 text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-tags mr-2 text-gold-600"></i>Step 1. 청구 유형 선택</h3>
+          <div class="grid md:grid-cols-3 gap-4">
+            <button onclick="selectType('선금')" data-type-btn="선금" class="type-card group glass rounded-2xl p-6 text-left hover-lift border-2 border-transparent">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold-300 to-gold-700 flex items-center justify-center text-deepblue-900 mb-3"><i class="fa-solid fa-money-bill-trend-up text-2xl"></i></div>
+              <div class="text-lg font-extrabold text-deepblue-900">선금청구</div>
+              <p class="text-xs text-deepblue-900/70 mt-1">착수 전 선금지급비율에 따른 청구. 양식 5종·감독확인 필요.</p>
+              <span class="badge badge-gold mt-3"><i class="fa-solid fa-circle-info mr-1"></i>선금보증서 발급 필수</span>
+            </button>
+            <button onclick="selectType('기성')" data-type-btn="기성" class="type-card group glass rounded-2xl p-6 text-left hover-lift border-2 border-transparent">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-deepblue-300 to-deepblue-900 flex items-center justify-center text-gold-200 mb-3"><i class="fa-solid fa-coins text-2xl"></i></div>
+              <div class="text-lg font-extrabold text-deepblue-900">기성청구</div>
+              <p class="text-xs text-deepblue-900/70 mt-1">완료된 기성에 대한 청구. 선금정산 여부에 따라 분기.</p>
+              <span class="badge badge-blue mt-3"><i class="fa-solid fa-circle-info mr-1"></i>채권/증명서 확인</span>
+            </button>
+            <button onclick="selectType('준공')" data-type-btn="준공" class="type-card group glass rounded-2xl p-6 text-left hover-lift border-2 border-transparent">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold-300 to-deepblue-900 flex items-center justify-center text-gold-200 mb-3"><i class="fa-solid fa-flag-checkered text-2xl"></i></div>
+              <div class="text-lg font-extrabold text-deepblue-900">준공청구</div>
+              <p class="text-xs text-deepblue-900/70 mt-1">준공금액·기수금액 확인 후, 하자보증/손배증권 검토.</p>
+              <span class="badge badge-green mt-3"><i class="fa-solid fa-circle-info mr-1"></i>하자/손해배상보증</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: 계약 정보 -->
+      <div class="wstep hidden" data-step="2">
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <h3 class="text-xl font-bold mb-4 text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-file-contract mr-2 text-gold-600"></i>Step 2. 계약 정보 입력</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">용역명 <span class="text-red-500">*</span></label>
+              <input id="f_name" class="form-input" placeholder="예) ○○고속도로 설계용역">
+            </div>
+            <div>
+              <label class="form-label">발주처</label>
+              <input id="f_client" class="form-input" placeholder="예) 한국도로공사">
+            </div>
+            <div>
+              <label class="form-label">계약 시작일 <span class="text-red-500">*</span></label>
+              <input id="f_start" type="date" class="form-input">
+            </div>
+            <div>
+              <label class="form-label">계약 종료일 <span class="text-red-500">*</span></label>
+              <input id="f_end" type="date" class="form-input">
+            </div>
+            <div>
+              <label class="form-label">총 계약금액(원) <span class="text-red-500">*</span></label>
+              <input id="f_total" type="number" class="form-input" placeholder="예) 1500000000">
+            </div>
+            <div>
+              <label class="form-label">계약번호</label>
+              <input id="f_contractNo" class="form-input" placeholder="예) 2026-도로-024">
+            </div>
+            <div class="md:col-span-2">
+              <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input id="f_isJoint" type="checkbox" class="w-5 h-5 accent-gold-600">
+                <span class="font-semibold">공동도급 여부</span>
+              </label>
+              <div id="jointBox" class="hidden mt-3 grid md:grid-cols-2 gap-4">
+                <div>
+                  <label class="form-label">지분율(%)</label>
+                  <input id="f_share" type="number" max="100" min="0" class="form-input" placeholder="예) 55">
+                </div>
+                <div>
+                  <label class="form-label">공동도급사</label>
+                  <input id="f_partner" class="form-input" placeholder="예) (주)○○엔지니어링">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: 유형별 상세 -->
+      <div class="wstep hidden" data-step="3">
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <h3 class="text-xl font-bold mb-4 text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-calculator mr-2 text-gold-600"></i>Step 3. 유형별 상세 입력</h3>
+
+          <!-- 선금 -->
+          <div id="detail_선금" class="hidden space-y-4">
+            <div class="bg-gold-50 dark:bg-white/5 border border-gold-300 rounded-xl p-4 text-sm text-deepblue-900 dark:text-gold-100">
+              <i class="fa-solid fa-circle-info text-gold-600 mr-2"></i>선금청구는 선금비율 확인 → 선금신청서(양식 5종) → 감독확인 → 발주처 제출 흐름입니다.
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">선금지급비율(%)</label>
+                <input id="f_advRate" type="number" max="80" min="0" step="0.1" class="form-input" placeholder="예) 30" oninput="calcRealtime()">
+              </div>
+              <div>
+                <label class="form-label">선금액(자동 계산)</label>
+                <input id="f_advAmt" class="form-input bg-gold-50 dark:bg-white/5" readonly>
+              </div>
+              <div class="md:col-span-2">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input id="f_advNeedSup" type="checkbox" class="w-5 h-5 accent-gold-600" checked>
+                  <span class="font-semibold">감독확인 필요</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 기성 -->
+          <div id="detail_기성" class="hidden space-y-4">
+            <div class="bg-deepblue-50 dark:bg-white/5 border border-deepblue-300 rounded-xl p-4 text-sm text-deepblue-900 dark:text-gold-100">
+              <i class="fa-solid fa-circle-info text-deepblue-700 mr-2"></i>기성청구는 선금수령여부 확인 후, 선금정산액을 포함/제외하여 산출합니다.
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="md:col-span-2">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input id="f_advReceived" type="checkbox" class="w-5 h-5 accent-deepblue-700" onchange="toggleOffset()">
+                  <span class="font-semibold">선금 수령 여부</span>
+                </label>
+              </div>
+              <div>
+                <label class="form-label">기성회차</label>
+                <input id="f_step" type="number" min="1" class="form-input" placeholder="예) 3">
+              </div>
+              <div>
+                <label class="form-label">기성금액(원)</label>
+                <input id="f_progAmt" type="number" class="form-input" placeholder="예) 450000000" oninput="calcRealtime()">
+              </div>
+              <div id="offsetWrap" class="hidden">
+                <label class="form-label">선금정산액(원)</label>
+                <input id="f_offset" type="number" class="form-input" placeholder="예) 90000000" oninput="calcRealtime()">
+              </div>
+              <div>
+                <label class="form-label">실 청구액(자동)</label>
+                <input id="f_progReal" class="form-input bg-deepblue-50 dark:bg-white/5" readonly>
+              </div>
+            </div>
+          </div>
+
+          <!-- 준공 -->
+          <div id="detail_준공" class="hidden space-y-4">
+            <div class="bg-green-50 dark:bg-white/5 border border-green-300 rounded-xl p-4 text-sm text-deepblue-900 dark:text-gold-100">
+              <i class="fa-solid fa-circle-info text-green-700 mr-2"></i>준공청구는 준공금액·기수금액 → 하자보증/손해배상 필요 여부 → 가입금액·기간 확인입니다.
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">준공금액(원)</label>
+                <input id="f_finalAmt" type="number" class="form-input" placeholder="예) 1500000000" oninput="calcRealtime()">
+              </div>
+              <div>
+                <label class="form-label">기수금액(원)</label>
+                <input id="f_prevAmt" type="number" class="form-input" placeholder="예) 1200000000" oninput="calcRealtime()">
+              </div>
+              <div>
+                <label class="form-label">준공 잔액(자동)</label>
+                <input id="f_finalReal" class="form-input bg-green-50 dark:bg-white/5" readonly>
+              </div>
+              <div></div>
+              <div class="md:col-span-2">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input id="f_needIns" type="checkbox" class="w-5 h-5 accent-green-700" onchange="toggleInsurance()">
+                  <span class="font-semibold">하자보증·손해배상보험 필요</span>
+                </label>
+              </div>
+              <div id="insWrap" class="hidden md:col-span-2 grid md:grid-cols-2 gap-4">
+                <div>
+                  <label class="form-label">하자보증 가입금액(원)</label>
+                  <input id="f_warrAmt" type="number" class="form-input" placeholder="예) 45000000">
+                </div>
+                <div>
+                  <label class="form-label">하자보증 기간(개월)</label>
+                  <input id="f_warrTerm" type="number" class="form-input" placeholder="예) 24">
+                </div>
+                <div>
+                  <label class="form-label">손해배상 가입금액(원)</label>
+                  <input id="f_liabAmt" type="number" class="form-input" placeholder="예) 150000000">
+                </div>
+                <div>
+                  <label class="form-label">손해배상 기간(개월)</label>
+                  <input id="f_liabTerm" type="number" class="form-input" placeholder="예) 36">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: 체크리스트 -->
+      <div class="wstep hidden" data-step="4">
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <h3 class="text-xl font-bold mb-4 text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-square-check mr-2 text-gold-600"></i>Step 4. 증빙·보증서 체크리스트</h3>
+          <p class="text-sm text-deepblue-900/70 dark:text-gold-100/70 mb-4">청구 유형에 따라 자동으로 체크 항목이 구성됩니다. 진행률을 확인하세요.</p>
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-1 text-sm font-semibold">
+              <span><i class="fa-solid fa-list-check text-gold-600 mr-1"></i>완료 진행률</span>
+              <span id="checkPct">0%</span>
+            </div>
+            <div class="w-full bg-white/60 dark:bg-white/10 rounded-full h-3 overflow-hidden">
+              <div id="checkBar" class="h-3 rounded-full bg-gradient-to-r from-gold-400 to-gold-700 transition-all" style="width:0%"></div>
+            </div>
+          </div>
+          <div id="checklistBox" class="grid md:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
+
+      <!-- Step 5: 미리보기 -->
+      <div class="wstep hidden" data-step="5">
+        <div class="glass dark:glass-dark rounded-2xl p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h3 class="text-xl font-bold text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-file-lines mr-2 text-gold-600"></i>Step 5. 청구서 미리보기 (HWP 양식 모사)</h3>
+            <div class="flex flex-wrap gap-2 no-print">
+              <button onclick="downloadPDF()" class="btn-luxury px-4 py-2 rounded-xl text-sm"><i class="fa-solid fa-file-pdf mr-1"></i>PDF</button>
+              <button onclick="downloadXLSX()" class="btn-deep px-4 py-2 rounded-xl text-sm"><i class="fa-solid fa-file-excel mr-1"></i>엑셀</button>
+              <button onclick="copyHWP()" class="px-4 py-2 rounded-xl text-sm bg-white/70 dark:bg-white/10 font-semibold hover:bg-white"><i class="fa-regular fa-copy mr-1"></i>HWP 복사</button>
+              <button onclick="window.print()" class="px-4 py-2 rounded-xl text-sm bg-white/70 dark:bg-white/10 font-semibold hover:bg-white"><i class="fa-solid fa-print mr-1"></i>인쇄</button>
+              <button onclick="saveBilling()" class="px-4 py-2 rounded-xl text-sm bg-gradient-to-r from-green-500 to-green-700 text-white font-bold hover:opacity-90"><i class="fa-solid fa-floppy-disk mr-1"></i>저장</button>
+            </div>
+          </div>
+
+          <div id="printArea" class="rounded-xl border border-deepblue-300 bg-white text-slate-900 p-6 md:p-10 leading-relaxed">
+            <div id="previewBody"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 네비 -->
+      <div class="flex items-center justify-between">
+        <button id="prevBtn" onclick="prevStep()" class="px-5 py-3 rounded-xl bg-white/70 dark:bg-white/10 font-semibold hover:bg-white"><i class="fa-solid fa-angle-left mr-1"></i>이전</button>
+        <button id="nextBtn" onclick="nextStep()" class="btn-luxury px-6 py-3 rounded-xl">다음 <i class="fa-solid fa-angle-right ml-1"></i></button>
+      </div>
+    </section>
+
+    <!-- ========== 이력 ========== -->
+    <section id="view-history" class="view-section hidden space-y-5">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 class="text-3xl font-extrabold gold-text">청구 이력</h2>
+          <p class="text-sm text-deepblue-900/70 dark:text-gold-100/70 mt-1">저장된 청구서를 검색/필터/재사용</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportAllXLSX()" class="btn-deep px-4 py-2 rounded-xl text-sm"><i class="fa-solid fa-file-excel mr-1"></i>전체 엑셀</button>
+          <button onclick="clearAll()" class="px-4 py-2 rounded-xl text-sm bg-red-500/90 text-white font-semibold hover:bg-red-600"><i class="fa-solid fa-trash mr-1"></i>전체 삭제</button>
+        </div>
+      </div>
+
+      <div class="glass dark:glass-dark rounded-2xl p-5">
+        <div class="grid md:grid-cols-4 gap-3 mb-4">
+          <input id="searchInput" oninput="renderHistory()" placeholder="용역명 검색..." class="form-input">
+          <select id="filterType" onchange="renderHistory()" class="form-input">
+            <option value="">유형 전체</option>
+            <option value="선금">선금</option>
+            <option value="기성">기성</option>
+            <option value="준공">준공</option>
+          </select>
+          <input id="filterDate" type="month" onchange="renderHistory()" class="form-input">
+          <select id="sortBy" onchange="renderHistory()" class="form-input">
+            <option value="dateDesc">최신순</option>
+            <option value="dateAsc">오래된순</option>
+            <option value="amtDesc">금액 큰순</option>
+            <option value="amtAsc">금액 작은순</option>
+          </select>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wider text-deepblue-900/70 dark:text-gold-100/70 border-b border-white/40 dark:border-white/10">
+                <th class="py-2 px-2">청구일</th>
+                <th class="py-2 px-2">용역명</th>
+                <th class="py-2 px-2">유형</th>
+                <th class="py-2 px-2 text-right">계약금액</th>
+                <th class="py-2 px-2 text-right">청구금액</th>
+                <th class="py-2 px-2">상태</th>
+                <th class="py-2 px-2 text-right">관리</th>
+              </tr>
+            </thead>
+            <tbody id="historyTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 체크리스트 가이드 ========== -->
+    <section id="view-checklist" class="view-section hidden space-y-5">
+      <div>
+        <h2 class="text-3xl font-extrabold gold-text">증빙 체크리스트 가이드</h2>
+        <p class="text-sm text-deepblue-900/70 dark:text-gold-100/70 mt-1">유형별 필수 서류와 발급처를 한눈에</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="glass dark:glass-dark rounded-2xl p-5">
+          <div class="flex items-center gap-2 mb-3 text-gold-700"><i class="fa-solid fa-money-bill-trend-up text-xl"></i><h3 class="font-bold text-lg">선금청구</h3></div>
+          <ul id="cl_선금" class="space-y-2 text-sm text-deepblue-900/90 dark:text-gold-100/90"></ul>
+        </div>
+        <div class="glass dark:glass-dark rounded-2xl p-5">
+          <div class="flex items-center gap-2 mb-3 text-deepblue-700"><i class="fa-solid fa-coins text-xl"></i><h3 class="font-bold text-lg">기성청구</h3></div>
+          <ul id="cl_기성" class="space-y-2 text-sm text-deepblue-900/90 dark:text-gold-100/90"></ul>
+        </div>
+        <div class="glass dark:glass-dark rounded-2xl p-5">
+          <div class="flex items-center gap-2 mb-3 text-green-700"><i class="fa-solid fa-flag-checkered text-xl"></i><h3 class="font-bold text-lg">준공청구</h3></div>
+          <ul id="cl_준공" class="space-y-2 text-sm text-deepblue-900/90 dark:text-gold-100/90"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 업무 가이드 ========== -->
+    <section id="view-guide" class="view-section hidden space-y-5">
+      <h2 class="text-3xl font-extrabold gold-text">업무 가이드</h2>
+      <div class="glass dark:glass-dark rounded-2xl p-6 space-y-4 text-sm leading-relaxed text-deepblue-900/90 dark:text-gold-100/90">
+        <h3 class="text-xl font-bold text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-diagram-project mr-2 text-gold-600"></i>전체 흐름</h3>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>사업부서로부터 검사 자료 수신 (HWP/Excel/PDF)</li>
+          <li>청구 유형 판단 → 선금/기성/준공 분기</li>
+          <li>유형별 필수 항목 입력 및 계산</li>
+          <li>증빙·보증서 발급 (채권, 증명서, 보증서)</li>
+          <li>선금 청구 시: 감독확인 → 발주처 제출</li>
+          <li>발주처 제출 및 세금계산서 발행</li>
+        </ol>
+
+        <h3 class="text-xl font-bold mt-4 text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-calculator mr-2 text-gold-600"></i>계산식</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li><b>선금액</b> = 총계약금액 × 선금지급비율(%)</li>
+          <li><b>기성 실 청구액</b> = 기성금액 − 선금정산액(수령 시)</li>
+          <li><b>준공 잔액</b> = 준공금액 − 기수금액</li>
+          <li>공동도급 시 모든 금액에 <b>지분율</b>을 곱하여 자사 청구분 산정</li>
+        </ul>
+
+        <h3 class="text-xl font-bold mt-4 text-deepblue-900 dark:text-gold-200"><i class="fa-solid fa-triangle-exclamation mr-2 text-gold-600"></i>유의사항</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li>선금청구는 양식 5종이 모두 갖춰져야 진행 가능</li>
+          <li>준공 시 하자/손해배상 보험 가입금액·기간 누락 시 발주처 반려</li>
+          <li>세금계산서는 발주처 승인 후 발행 (일자 일치)</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ===================== 전역 상태 ===================== */
+const STORAGE_KEY = 'sgh_billing_v1';
+const state = {
+  step: 1,
+  type: null, // 선금/기성/준공
+  data: {},
+  checklist: [],
+  editingId: null,
+};
+
+/* ===================== 안전 유틸 ===================== */
+function esc(s){
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmt(n){
+  if (n === null || n === undefined || isNaN(Number(n))) return '0';
+  return Number(n).toLocaleString('ko-KR');
+}
+function won(n){ return '₩' + fmt(n); }
+function toast(msg, type='info'){
+  try{
+    const colors = { info:'from-deepblue-500 to-deepblue-900', success:'from-green-500 to-green-700', warn:'from-gold-500 to-gold-700', error:'from-red-500 to-red-700'};
+    const icons = { info:'fa-circle-info', success:'fa-circle-check', warn:'fa-triangle-exclamation', error:'fa-circle-xmark'};
+    const el = document.createElement('div');
+    el.className = `toast px-4 py-3 rounded-xl text-white font-semibold shadow-2xl bg-gradient-to-r ${colors[type]||colors.info} flex items-center gap-2`;
+    el.innerHTML = `<i class="fa-solid ${icons[type]||icons.info}"></i><span>${esc(msg)}</span>`;
+    document.getElementById('toastWrap').appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>el.remove(), 400);}, 2600);
+  } catch(e){ console.error('toast 에러', e); }
+}
+function openModal(title, html){
+  document.getElementById('modalTitle').innerHTML = title;
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('modal').classList.add('flex');
+}
+function closeModal(){
+  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('modal').classList.remove('flex');
+}
+
+/* ===================== 저장소 ===================== */
+function loadAll(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) { seedSamples(); return loadAll(); }
+    return JSON.parse(raw);
+  } catch(e){
+    console.error('loadAll 에러', e);
+    return [];
+  }
+}
+function saveAll(list){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+  catch(e){ console.error('saveAll 에러', e); toast('저장 실패','error'); }
+}
+
+/* ===================== 샘플 데이터 ===================== */
+function seedSamples(){
+  const now = new Date();
+  const ym = (n) => {
+    const d = new Date(now.getFullYear(), now.getMonth()-n, 5);
+    return d.toISOString().slice(0,10);
+  };
+  const samples = [
+    {id:uid(), type:'선금', name:'호남고속도로 확장 설계용역', client:'한국도로공사', start:'2026-01-15', end:'2027-06-30', total:1850000000, contractNo:'2026-도로-024', isJoint:true, share:55, partner:'(주)대지엔지니어링', advRate:30, advAmt:1850000000*0.30, billDate:ym(0), status:'발주처 제출완료'},
+    {id:uid(), type:'선금', name:'대구상수도 관리감독 용역',     client:'대구시상수도사업본부', start:'2026-02-01', end:'2026-12-30', total:980000000, contractNo:'2026-수도-008', isJoint:false, advRate:25, advAmt:980000000*0.25, billDate:ym(1), status:'감독확인 진행중'},
+    {id:uid(), type:'선금', name:'영남내륙철도 기본설계',         client:'국가철도공단', start:'2026-03-10', end:'2027-12-30', total:3200000000, contractNo:'2026-철도-011', isJoint:true, share:60, partner:'(주)철도엔지니어링', advRate:20, advAmt:3200000000*0.20, billDate:ym(2), status:'완료'},
+    {id:uid(), type:'기성', name:'세종시 도시계획 수립용역',     client:'세종특별자치시', start:'2025-09-01', end:'2026-08-31', total:850000000, contractNo:'2025-도계-019', isJoint:false, step:3, progAmt:255000000, advReceived:true, offset:42500000, progReal:212500000, billDate:ym(0), status:'발주처 승인'},
+    {id:uid(), type:'기성', name:'부산항 신항 부두축조 감리',     client:'부산항만공사', start:'2024-04-01', end:'2026-03-30', total:4200000000, contractNo:'2024-항만-007', isJoint:true, share:50, partner:'(주)해양종합', step:7, progAmt:600000000, advReceived:true, offset:120000000, progReal:480000000, billDate:ym(1), status:'세금계산서 발행'},
+    {id:uid(), type:'기성', name:'경기도 하천정비 기본계획',     client:'경기도청', start:'2025-11-15', end:'2026-11-14', total:520000000, contractNo:'2025-하천-031', isJoint:false, step:2, progAmt:156000000, advReceived:false, progReal:156000000, billDate:ym(2), status:'발주처 제출완료'},
+    {id:uid(), type:'준공', name:'평택 산업단지 진입도로 설계',  client:'평택시청', start:'2024-06-01', end:'2025-12-31', total:1500000000, contractNo:'2024-산단-013', isJoint:false, finalAmt:1500000000, prevAmt:1200000000, finalReal:300000000, needIns:true, warrAmt:45000000, warrTerm:24, liabAmt:150000000, liabTerm:36, billDate:ym(0), status:'완료'},
+    {id:uid(), type:'준공', name:'강원도 폐기물처리시설 실시설계', client:'강원도청', start:'2024-08-01', end:'2026-04-30', total:780000000, contractNo:'2024-환경-005', isJoint:true, share:70, partner:'(주)환경기술', finalAmt:780000000, prevAmt:624000000, finalReal:156000000, needIns:true, warrAmt:23400000, warrTerm:24, liabAmt:78000000, liabTerm:36, billDate:ym(1), status:'세금계산서 발행'},
+  ];
+  saveAll(samples);
+}
+function uid(){ return 'B' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+/* ===================== 라우팅 ===================== */
+function goView(name){
+  document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+  const el = document.getElementById('view-'+name);
+  if (el) el.classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === name);
+  });
+  if (name==='dashboard') renderDashboard();
+  if (name==='history') renderHistory();
+  if (name==='checklist') renderChecklistGuide();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ===================== 대시보드 ===================== */
+let chartMonthlyRef = null, chartPieRef = null;
+function renderDashboard(){
+  try{
+    const list = loadAll();
+    const now = new Date();
+    const thisMonth = list.filter(b => {
+      const d = new Date(b.billDate);
+      return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+    });
+    document.getElementById('kpiCount').textContent = thisMonth.length;
+    document.getElementById('kpiTotal').textContent = list.length;
+    document.getElementById('kpiAmount').textContent = won(thisMonth.reduce((s,b)=> s + getBillAmount(b), 0));
+    const cnt = {선금:0, 기성:0, 준공:0};
+    list.forEach(b => cnt[b.type] = (cnt[b.type]||0) + 1);
+    document.getElementById('kpiRatio').textContent = `${cnt['선금']} / ${cnt['기성']} / ${cnt['준공']}`;
+
+    // 최근 5건
+    const recent = [...list].sort((a,b)=> new Date(b.billDate) - new Date(a.billDate)).slice(0,5);
+    document.getElementById('recentTable').innerHTML = recent.map(b => `
+      <tr class="border-b border-white/20 dark:border-white/5 hover:bg-white/40 dark:hover:bg-white/5">
+        <td class="py-2 px-2">${esc(b.billDate)}</td>
+        <td class="py-2 px-2 font-semibold">${esc(b.name)}</td>
+        <td class="py-2 px-2"><span class="badge ${typeBadge(b.type)}">${esc(b.type)}</span></td>
+        <td class="py-2 px-2 text-right font-bold">${won(getBillAmount(b))}</td>
+        <td class="py-2 px-2"><span class="badge badge-green">${esc(b.status||'-')}</span></td>
+      </tr>
+    `).join('') || `<tr><td colspan="5" class="text-center py-6 text-deepblue-900/60 dark:text-gold-100/60">아직 청구 내역이 없습니다.</td></tr>`;
+
+    // 차트
+    drawMonthlyChart(list);
+    drawPieChart(cnt);
+  } catch(e){
+    console.error('renderDashboard 에러', e);
+    toast('대시보드 렌더 실패','error');
+  }
+}
+function getBillAmount(b){
+  if (b.type==='선금') return Number(b.advAmt||0);
+  if (b.type==='기성') return Number(b.progReal||0);
+  if (b.type==='준공') return Number(b.finalReal||0);
+  return 0;
+}
+function typeBadge(t){ return ({선금:'badge-gold', 기성:'badge-blue', 준공:'badge-green'}[t]||'badge-blue'); }
+
+function drawMonthlyChart(list){
+  try{
+    const labels = [];
+    const map = {};
+    const now = new Date();
+    for (let i=5;i>=0;i--){
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      labels.push(`${d.getMonth()+1}월`);
+      map[key] = {선금:0, 기성:0, 준공:0};
+    }
+    list.forEach(b => {
+      const d = new Date(b.billDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      if (map[key]) map[key][b.type] += getBillAmount(b);
+    });
+    const arr = Object.values(map);
+    const dataAdv = arr.map(m => m.선금/1e6);
+    const dataPrg = arr.map(m => m.기성/1e6);
+    const dataFin = arr.map(m => m.준공/1e6);
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(13,20,64,0.08)';
+    const tickColor = isDark ? '#FFD54F' : '#1A237E';
+    if (chartMonthlyRef) chartMonthlyRef.destroy();
+    const ctx = document.getElementById('chartMonthly').getContext('2d');
+    chartMonthlyRef = new Chart(ctx, {
+      type:'bar',
+      data:{ labels, datasets:[
+        { label:'선금', data:dataAdv, backgroundColor:'#FFC107' },
+        { label:'기성', data:dataPrg, backgroundColor:'#3F51B5' },
+        { label:'준공', data:dataFin, backgroundColor:'#43A047' },
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:tickColor, font:{ weight:'bold' }}},
+          tooltip:{ callbacks:{ label:(ctx)=> ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}백만원` }}},
+        scales:{
+          x:{ ticks:{ color:tickColor }, grid:{ color:gridColor }},
+          y:{ ticks:{ color:tickColor, callback:(v)=> v+'M' }, grid:{ color:gridColor }, beginAtZero:true},
+        }
+      }
+    });
+  } catch(e){ console.error('drawMonthlyChart 에러', e);}
+}
+function drawPieChart(cnt){
+  try{
+    const isDark = document.documentElement.classList.contains('dark');
+    const tickColor = isDark ? '#FFD54F' : '#1A237E';
+    if (chartPieRef) chartPieRef.destroy();
+    const ctx = document.getElementById('chartPie').getContext('2d');
+    chartPieRef = new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels:['선금','기성','준공'],
+        datasets:[{ data:[cnt.선금, cnt.기성, cnt.준공],
+          backgroundColor:['#FFC107','#3F51B5','#43A047'],
+          borderColor:'rgba(255,255,255,0.6)', borderWidth:2 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+        plugins:{ legend:{ position:'bottom', labels:{ color:tickColor, font:{ weight:'bold' }}}}}
+    });
+  } catch(e){ console.error('drawPieChart 에러', e);}
+}
+
+/* ===================== 위저드 ===================== */
+function buildStepBar(){
+  const steps = [
+    {n:1, label:'청구유형', icon:'fa-tags'},
+    {n:2, label:'계약정보', icon:'fa-file-contract'},
+    {n:3, label:'상세입력', icon:'fa-calculator'},
+    {n:4, label:'체크리스트', icon:'fa-square-check'},
+    {n:5, label:'미리보기', icon:'fa-file-lines'},
+  ];
+  document.getElementById('stepBar').innerHTML = steps.map((s,i)=> `
+    <div class="flex-1 flex items-center">
+      <div class="flex flex-col items-center flex-shrink-0">
+        <div data-stepdot="${s.n}" class="step-dot w-11 h-11 rounded-full bg-white/70 dark:bg-white/10 flex items-center justify-center font-bold text-deepblue-900 dark:text-gold-200 border-2 border-white/60">
+          <i class="fa-solid ${s.icon}"></i>
+        </div>
+        <span class="text-[11px] mt-1 font-semibold text-deepblue-900 dark:text-gold-200">${s.label}</span>
+      </div>
+      ${i<steps.length-1 ? `<div data-stepline="${s.n}" class="step-line flex-1 mx-2 rounded-full"></div>` : ''}
+    </div>
+  `).join('');
+}
+function refreshStepBar(){
+  for (let i=1; i<=5; i++){
+    const dot = document.querySelector(`[data-stepdot="${i}"]`);
+    if (!dot) continue;
+    dot.classList.remove('active','done');
+    if (i < state.step) dot.classList.add('done');
+    else if (i === state.step) dot.classList.add('active');
+    const line = document.querySelector(`[data-stepline="${i}"]`);
+    if (line){ line.classList.toggle('done', i < state.step); }
+  }
+}
+function showWstep(){
+  document.querySelectorAll('.wstep').forEach(el => el.classList.add('hidden'));
+  document.querySelector(`.wstep[data-step="${state.step}"]`).classList.remove('hidden');
+  document.getElementById('prevBtn').style.visibility = state.step===1 ? 'hidden':'visible';
+  document.getElementById('nextBtn').innerHTML = state.step===5 ? '<i class="fa-solid fa-floppy-disk mr-1"></i>저장하기' : '다음 <i class="fa-solid fa-angle-right ml-1"></i>';
+  refreshStepBar();
+}
+function selectType(t){
+  state.type = t;
+  document.querySelectorAll('[data-type-btn]').forEach(b => {
+    b.classList.toggle('border-gold-500', b.dataset.typeBtn===t);
+    b.classList.toggle('bg-gold-50', b.dataset.typeBtn===t);
+  });
+  toast(`${t}청구를 선택했습니다`, 'success');
+}
+function nextStep(){
+  if (state.step===1 && !state.type){ toast('청구 유형을 선택해 주세요','warn'); return; }
+  if (state.step===2 && !validateContract()) return;
+  if (state.step===3){ calcRealtime(); }
+  if (state.step===4){ buildPreview(); }
+  if (state.step===5){ saveBilling(); return; }
+  state.step++;
+  if (state.step===3) showDetail();
+  if (state.step===4) buildChecklist();
+  if (state.step===5) buildPreview();
+  showWstep();
+}
+function prevStep(){
+  if (state.step>1){ state.step--; showWstep(); }
+}
+function resetWizard(){
+  state.step=1; state.type=null; state.data={}; state.checklist=[]; state.editingId=null;
+  document.querySelectorAll('#view-wizard input').forEach(el => {
+    if (el.type==='checkbox') el.checked = (el.id==='f_advNeedSup');
+    else el.value='';
+  });
+  document.querySelectorAll('[data-type-btn]').forEach(b => b.classList.remove('border-gold-500','bg-gold-50'));
+  showWstep();
+  toast('초기화 했습니다','info');
+}
+function validateContract(){
+  const name = document.getElementById('f_name').value.trim();
+  const start = document.getElementById('f_start').value;
+  const end = document.getElementById('f_end').value;
+  const total = Number(document.getElementById('f_total').value);
+  if (!name){ toast('용역명을 입력하세요','warn'); return false; }
+  if (!start || !end){ toast('계약기간을 입력하세요','warn'); return false; }
+  if (!total || total<=0){ toast('총 계약금액을 입력하세요','warn'); return false; }
+  if (new Date(start) > new Date(end)){ toast('종료일이 시작일보다 빨라요','warn'); return false; }
+  return true;
+}
+function showDetail(){
+  ['선금','기성','준공'].forEach(t => document.getElementById('detail_'+t).classList.add('hidden'));
+  document.getElementById('detail_'+state.type).classList.remove('hidden');
+}
+function toggleOffset(){
+  document.getElementById('offsetWrap').classList.toggle('hidden', !document.getElementById('f_advReceived').checked);
+  calcRealtime();
+}
+function toggleInsurance(){
+  document.getElementById('insWrap').classList.toggle('hidden', !document.getElementById('f_needIns').checked);
+}
+function calcRealtime(){
+  try{
+    const total = Number(document.getElementById('f_total').value)||0;
+    if (state.type==='선금'){
+      const rate = Number(document.getElementById('f_advRate').value)||0;
+      const amt = Math.round(total * rate / 100);
+      document.getElementById('f_advAmt').value = fmt(amt);
+    }
+    if (state.type==='기성'){
+      const prog = Number(document.getElementById('f_progAmt').value)||0;
+      const got = document.getElementById('f_advReceived').checked;
+      const off = got ? (Number(document.getElementById('f_offset').value)||0) : 0;
+      const real = prog - off;
+      document.getElementById('f_progReal').value = fmt(real);
+    }
+    if (state.type==='준공'){
+      const fin = Number(document.getElementById('f_finalAmt').value)||0;
+      const prev = Number(document.getElementById('f_prevAmt').value)||0;
+      const real = fin - prev;
+      document.getElementById('f_finalReal').value = fmt(real);
+    }
+  } catch(e){ console.error('calcRealtime 에러', e);}
+}
+
+/* ===================== 체크리스트 ===================== */
+const CHECKLISTS = {
+  선금:[
+    {k:'선금보증서 발급', d:'공제조합/보증보험 등에서 발급'},
+    {k:'선금지급비율 확인', d:'계약서 또는 발주처 공문'},
+    {k:'선금신청서 작성 (양식 5종)', d:'신청서·보증서·계좌·증명서·인감'},
+    {k:'감독확인 (필요시)', d:'발주처 담당 감독관 확인'},
+    {k:'채권/증명서', d:'국세·지방세 완납, 사업자등록증'},
+    {k:'법인 통장 사본', d:'세금계산서 발행처 일치'},
+  ],
+  기성:[
+    {k:'기성검사 자료', d:'사업부서 제출 자료(HWP/Excel/PDF)'},
+    {k:'기성 산출 내역서', d:'기성회차/금액 명시'},
+    {k:'선금정산 내역', d:'선금 수령 시 정산액 산정'},
+    {k:'채권/증명서', d:'국세·지방세 완납 확인'},
+    {k:'세금계산서 발행 준비', d:'발주처 승인 후 발행'},
+    {k:'법인 통장 사본', d:'대금 입금 계좌'},
+  ],
+  준공:[
+    {k:'준공검사 자료', d:'준공계, 준공보고서'},
+    {k:'기수금액·준공잔액 확인', d:'정산표 작성'},
+    {k:'하자보증증권', d:'가입금액·기간 확인 (보통 2년)'},
+    {k:'손해배상공제증권', d:'가입금액·기간 확인 (보통 3년)'},
+    {k:'채권/증명서', d:'국세·지방세 완납'},
+    {k:'세금계산서 발행 준비', d:'발주처 승인 후 발행'},
+  ],
+};
+function buildChecklist(){
+  const items = CHECKLISTS[state.type]||[];
+  if (state.checklist.length===0 || state.checklist.length !== items.length){
+    state.checklist = items.map(i => ({...i, done:false}));
+  }
+  const box = document.getElementById('checklistBox');
+  box.innerHTML = state.checklist.map((c,i)=> `
+    <label class="flex items-start gap-3 p-4 rounded-xl bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/10 hover:bg-white/80 cursor-pointer">
+      <input type="checkbox" ${c.done?'checked':''} onchange="toggleCheck(${i})" class="mt-1 w-5 h-5 accent-gold-600">
+      <div>
+        <div class="font-bold text-deepblue-900 dark:text-gold-200">${esc(c.k)}</div>
+        <div class="text-xs text-deepblue-900/70 dark:text-gold-100/70">${esc(c.d)}</div>
+      </div>
+    </label>
+  `).join('');
+  updateCheckBar();
+}
+function toggleCheck(i){
+  state.checklist[i].done = !state.checklist[i].done;
+  updateCheckBar();
+}
+function updateCheckBar(){
+  const total = state.checklist.length||1;
+  const done = state.checklist.filter(c=>c.done).length;
+  const pct = Math.round(done/total*100);
+  document.getElementById('checkBar').style.width = pct+'%';
+  document.getElementById('checkPct').textContent = pct+'%';
+}
+
+/* ===================== 데이터 수집 ===================== */
+function collectFormData(){
+  const v = id => document.getElementById(id).value;
+  const c = id => document.getElementById(id).checked;
+  const d = {
+    id: state.editingId || uid(),
+    type: state.type,
+    name: v('f_name'),
+    client: v('f_client'),
+    start: v('f_start'),
+    end: v('f_end'),
+    total: Number(v('f_total'))||0,
+    contractNo: v('f_contractNo'),
+    isJoint: c('f_isJoint'),
+    share: Number(v('f_share'))||0,
+    partner: v('f_partner'),
+    billDate: new Date().toISOString().slice(0,10),
+    status: '작성중',
+    checklist: state.checklist,
+  };
+  if (state.type==='선금'){
+    d.advRate = Number(v('f_advRate'))||0;
+    d.advAmt = Math.round(d.total * d.advRate / 100);
+    d.advNeedSup = c('f_advNeedSup');
+  }
+  if (state.type==='기성'){
+    d.step = Number(v('f_step'))||0;
+    d.progAmt = Number(v('f_progAmt'))||0;
+    d.advReceived = c('f_advReceived');
+    d.offset = d.advReceived ? (Number(v('f_offset'))||0) : 0;
+    d.progReal = d.progAmt - d.offset;
+  }
+  if (state.type==='준공'){
+    d.finalAmt = Number(v('f_finalAmt'))||0;
+    d.prevAmt = Number(v('f_prevAmt'))||0;
+    d.finalReal = d.finalAmt - d.prevAmt;
+    d.needIns = c('f_needIns');
+    if (d.needIns){
+      d.warrAmt = Number(v('f_warrAmt'))||0;
+      d.warrTerm = Number(v('f_warrTerm'))||0;
+      d.liabAmt = Number(v('f_liabAmt'))||0;
+      d.liabTerm = Number(v('f_liabTerm'))||0;
+    }
+  }
+  state.data = d;
+  return d;
+}
+
+/* ===================== 미리보기 ===================== */
+function buildPreview(){
+  const d = collectFormData();
+  const periodDays = (new Date(d.end) - new Date(d.start))/(1000*60*60*24);
+  let typeDetail = '';
+  if (d.type==='선금'){
+    typeDetail = `
+      <table class="w-full border border-slate-400 text-sm mt-2">
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2 w-1/3">총 계약금액</td><td class="border border-slate-400 px-3 py-2 text-right">${won(d.total)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">선금지급비율</td><td class="border border-slate-400 px-3 py-2 text-right">${d.advRate}%</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">선금 청구액</td><td class="border border-slate-400 px-3 py-2 text-right font-bold">${won(d.advAmt)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">계산식</td><td class="border border-slate-400 px-3 py-2">${fmt(d.total)} × ${d.advRate}% = ${fmt(d.advAmt)}</td></tr>
+      </table>`;
+  }
+  if (d.type==='기성'){
+    typeDetail = `
+      <table class="w-full border border-slate-400 text-sm mt-2">
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2 w-1/3">총 계약금액</td><td class="border border-slate-400 px-3 py-2 text-right">${won(d.total)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">기성 회차</td><td class="border border-slate-400 px-3 py-2 text-right">제 ${d.step} 회</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">기성금액</td><td class="border border-slate-400 px-3 py-2 text-right">${won(d.progAmt)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">선금 수령여부</td><td class="border border-slate-400 px-3 py-2">${d.advReceived?'예':'아니오'}</td></tr>
+        ${d.advReceived?`<tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">선금 정산액</td><td class="border border-slate-400 px-3 py-2 text-right">${won(d.offset)}</td></tr>`:''}
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">실 청구액</td><td class="border border-slate-400 px-3 py-2 text-right font-bold">${won(d.progReal)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">계산식</td><td class="border border-slate-400 px-3 py-2">${fmt(d.progAmt)} − ${fmt(d.offset)} = ${fmt(d.progReal)}</td></tr>
+      </table>`;
+  }
+  if (d.type==='준공'){
+    typeDetail = `
+      <table class="w-full border border-slate-400 text-sm mt-2">
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2 w-1/3">총 계약금액</td><td class="border border-slate-400 px-3 py-2 text-right">${won(d.total)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">준공금액</td><td class="border border-slate-400 px-3 py-2 text-right">${won(d.finalAmt)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">기수금액</td><td class="border border-slate-400 px-3 py-2 text-right">${won(d.prevAmt)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">준공 잔액</td><td class="border border-slate-400 px-3 py-2 text-right font-bold">${won(d.finalReal)}</td></tr>
+        <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">계산식</td><td class="border border-slate-400 px-3 py-2">${fmt(d.finalAmt)} − ${fmt(d.prevAmt)} = ${fmt(d.finalReal)}</td></tr>
+        ${d.needIns?`
+          <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">하자보증</td><td class="border border-slate-400 px-3 py-2">가입금액 ${won(d.warrAmt)} · 기간 ${d.warrTerm}개월</td></tr>
+          <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">손해배상</td><td class="border border-slate-400 px-3 py-2">가입금액 ${won(d.liabAmt)} · 기간 ${d.liabTerm}개월</td></tr>
+        `:''}
+      </table>`;
+  }
+
+  const billAmt = getBillAmount(d);
+  const checks = state.checklist.map(c => `<li class="${c.done?'text-slate-900':'text-slate-500'}"><i class="fa-${c.done?'solid':'regular'} fa-square-${c.done?'check':''}"></i> ${esc(c.k)} <span class="text-xs text-slate-500">(${esc(c.d)})</span></li>`).join('');
+
+  document.getElementById('previewBody').innerHTML = `
+    <div class="text-center mb-6">
+      <div class="text-xs tracking-widest text-slate-500">[주]유신 · 업무부</div>
+      <h2 class="text-3xl font-extrabold tracking-wider mt-1">${esc(d.type)} 청 구 서</h2>
+      <div class="mt-2 text-sm text-slate-600">청구일: ${esc(d.billDate)} | 청구번호: ${esc('YS-'+d.id.toUpperCase().slice(1,9))}</div>
+    </div>
+
+    <h3 class="font-bold text-lg mb-2 border-b-2 border-slate-800 pb-1">1. 청구 개요</h3>
+    <table class="w-full border border-slate-400 text-sm">
+      <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2 w-1/4">용역명</td><td class="border border-slate-400 px-3 py-2" colspan="3">${esc(d.name)}</td></tr>
+      <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">발주처</td><td class="border border-slate-400 px-3 py-2">${esc(d.client||'-')}</td>
+          <td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2 w-1/6">계약번호</td><td class="border border-slate-400 px-3 py-2">${esc(d.contractNo||'-')}</td></tr>
+      <tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">계약기간</td><td class="border border-slate-400 px-3 py-2">${esc(d.start)} ~ ${esc(d.end)} (${isNaN(periodDays)?'-':Math.round(periodDays)}일)</td>
+          <td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">계약금액</td><td class="border border-slate-400 px-3 py-2 font-bold">${won(d.total)}</td></tr>
+      ${d.isJoint?`<tr><td class="border border-slate-400 bg-slate-100 font-bold px-3 py-2">공동도급</td><td class="border border-slate-400 px-3 py-2" colspan="3">${esc(d.partner||'-')} · 자사지분율 ${d.share}%</td></tr>`:''}
+    </table>
+
+    <h3 class="font-bold text-lg mb-2 mt-5 border-b-2 border-slate-800 pb-1">2. 청구 상세 내역 (${esc(d.type)})</h3>
+    ${typeDetail}
+
+    <div class="mt-4 p-4 bg-amber-50 border-2 border-amber-500 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="font-bold text-lg">금회 청구 금액</div>
+        <div class="text-2xl font-extrabold text-amber-700">${won(billAmt)}</div>
+      </div>
+      ${d.isJoint?`<div class="text-xs text-slate-600 mt-1">※ 자사 지분(${d.share}%) 적용 금액: <b>${won(Math.round(billAmt*d.share/100))}</b></div>`:''}
+    </div>
+
+    <h3 class="font-bold text-lg mb-2 mt-5 border-b-2 border-slate-800 pb-1">3. 첨부 서류 목록</h3>
+    <ul class="list-none space-y-1 text-sm pl-1">${checks}</ul>
+
+    <h3 class="font-bold text-lg mb-2 mt-5 border-b-2 border-slate-800 pb-1">4. 비고</h3>
+    <div class="text-sm leading-relaxed">
+      ${d.type==='선금'?`· 본 청구는 ${d.advNeedSup?'<b>감독 확인 절차 필요</b>':'감독확인 면제'} 건입니다.<br>· 선금보증서 발급 후 부서 전달 → 발주처 제출 순으로 진행합니다.`:''}
+      ${d.type==='기성'?`· 본 청구는 제 ${d.step}회차 기성청구 건입니다.<br>· ${d.advReceived?'선금 정산을 반영하여 산정했습니다.':'선금 정산 없음.'}`:''}
+      ${d.type==='준공'?`· 본 청구는 준공청구 건입니다.<br>· ${d.needIns?'하자보증 및 손해배상공제증권 가입 후 제출합니다.':'보증·공제증권 면제 건입니다.'}`:''}
+    </div>
+
+    <div class="mt-8 text-center">
+      <div class="text-base">위 금액을 정히 청구합니다.</div>
+      <div class="mt-6 text-lg font-extrabold">청 구 인 : (주)유 신   대표이사 (인)</div>
+      <div class="mt-1 text-sm text-slate-600">담당자 : 업무부 사공훈</div>
+    </div>
+  `;
+}
+
+/* ===================== 저장 ===================== */
+function saveBilling(){
+  try{
+    const d = collectFormData();
+    if (state.step<5){ // 위저드 외 호출일 때 미리보기 갱신
+      buildPreview();
+    }
+    d.status = '저장완료';
+    const list = loadAll();
+    const idx = list.findIndex(x => x.id === d.id);
+    if (idx >= 0) list[idx] = d; else list.push(d);
+    saveAll(list);
+    toast('청구서가 저장되었습니다','success');
+    state.editingId = d.id;
+  } catch(e){
+    console.error('saveBilling 에러', e); toast('저장 중 오류','error');
+  }
+}
+
+/* ===================== 다운로드 ===================== */
+function downloadPDF(){
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:'p', unit:'pt', format:'a4'});
+    const d = state.data;
+    if (!d || !d.name){ toast('청구서 데이터를 먼저 입력하세요','warn'); return; }
+    doc.setFontSize(18);
+    doc.text(`[${d.type}] Billing Statement`, 40, 50);
+    doc.setFontSize(10);
+    doc.text(`Yooshin Co., Ltd. - Contract & Billing Team (Sa Gong-hun)`, 40, 70);
+    doc.text(`Bill Date: ${d.billDate}`, 40, 86);
+
+    const body = [
+      ['Service Name', d.name],
+      ['Client', d.client||'-'],
+      ['Contract No.', d.contractNo||'-'],
+      ['Period', `${d.start} ~ ${d.end}`],
+      ['Contract Amount (KRW)', fmt(d.total)],
+    ];
+    if (d.type==='선금'){
+      body.push(['Advance Rate', d.advRate+'%']);
+      body.push(['Advance Amount', fmt(d.advAmt)]);
+    }
+    if (d.type==='기성'){
+      body.push(['Progress No.', d.step]);
+      body.push(['Progress Amount', fmt(d.progAmt)]);
+      body.push(['Advance Offset', fmt(d.offset)]);
+      body.push(['Net Billing', fmt(d.progReal)]);
+    }
+    if (d.type==='준공'){
+      body.push(['Final Amount', fmt(d.finalAmt)]);
+      body.push(['Previous Paid', fmt(d.prevAmt)]);
+      body.push(['Final Net', fmt(d.finalReal)]);
+      if (d.needIns){
+        body.push(['Warranty', `${fmt(d.warrAmt)} / ${d.warrTerm} months`]);
+        body.push(['Liability', `${fmt(d.liabAmt)} / ${d.liabTerm} months`]);
+      }
+    }
+    doc.autoTable({ startY: 110, head:[['Field','Value']], body, theme:'grid', styles:{font:'helvetica', fontSize:10}});
+    doc.save(`청구서_${d.type}_${(d.name||'untitled').slice(0,20)}.pdf`);
+    toast('PDF 다운로드 완료','success');
+  } catch(e){
+    console.error('downloadPDF 에러', e); toast('PDF 다운로드 실패','error');
+  }
+}
+function downloadXLSX(){
+  try{
+    const d = state.data;
+    if (!d || !d.name){ toast('청구서 데이터를 먼저 입력하세요','warn'); return; }
+    const rows = [
+      ['항목','값'],
+      ['청구유형', d.type],
+      ['용역명', d.name],
+      ['발주처', d.client||''],
+      ['계약번호', d.contractNo||''],
+      ['계약기간', `${d.start} ~ ${d.end}`],
+      ['총 계약금액', d.total],
+      ['청구일', d.billDate],
+      ['공동도급', d.isJoint?'예':'아니오'],
+      ['자사지분율(%)', d.share||0],
+    ];
+    if (d.type==='선금') rows.push(['선금비율(%)', d.advRate],['선금액', d.advAmt]);
+    if (d.type==='기성') rows.push(['기성회차', d.step],['기성금액', d.progAmt],['선금수령', d.advReceived?'예':'아니오'],['선금정산액', d.offset],['실 청구액', d.progReal]);
+    if (d.type==='준공'){
+      rows.push(['준공금액', d.finalAmt],['기수금액', d.prevAmt],['준공잔액', d.finalReal]);
+      if (d.needIns) rows.push(['하자보증금', d.warrAmt],['하자기간(월)', d.warrTerm],['손해배상금', d.liabAmt],['손배기간(월)', d.liabTerm]);
+    }
+    rows.push([],['첨부서류']);
+    state.checklist.forEach(c => rows.push([c.k, c.done?'완료':'미완료']));
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:20},{wch:45}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '청구서');
+    XLSX.writeFile(wb, `청구서_${d.type}_${(d.name||'untitled').slice(0,20)}.xlsx`);
+    toast('엑셀 다운로드 완료','success');
+  } catch(e){
+    console.error('downloadXLSX 에러', e); toast('엑셀 다운로드 실패','error');
+  }
+}
+function copyHWP(){
+  try{
+    const d = state.data;
+    if (!d || !d.name){ toast('청구서 데이터를 먼저 입력하세요','warn'); return; }
+    const lines = [
+      `[${d.type}] 청 구 서`,
+      `청구일: ${d.billDate}    청구번호: YS-${d.id.toUpperCase().slice(1,9)}`,
+      ``,
+      `1. 청구 개요`,
+      ` - 용역명     : ${d.name}`,
+      ` - 발주처     : ${d.client||'-'}`,
+      ` - 계약번호   : ${d.contractNo||'-'}`,
+      ` - 계약기간   : ${d.start} ~ ${d.end}`,
+      ` - 계약금액   : ${won(d.total)}`,
+      d.isJoint ? ` - 공동도급   : ${d.partner||'-'} (자사지분율 ${d.share}%)` : '',
+      ``,
+      `2. 청구 상세 내역`,
+    ].filter(Boolean);
+    if (d.type==='선금'){
+      lines.push(` - 선금지급비율 : ${d.advRate}%`);
+      lines.push(` - 선금 청구액 : ${won(d.advAmt)}`);
+      lines.push(` - 계산식       : ${fmt(d.total)} × ${d.advRate}% = ${fmt(d.advAmt)}`);
+    }
+    if (d.type==='기성'){
+      lines.push(` - 기성 회차    : 제 ${d.step} 회`);
+      lines.push(` - 기성 금액    : ${won(d.progAmt)}`);
+      if (d.advReceived) lines.push(` - 선금 정산액 : ${won(d.offset)}`);
+      lines.push(` - 실 청구액    : ${won(d.progReal)}`);
+      lines.push(` - 계산식        : ${fmt(d.progAmt)} − ${fmt(d.offset)} = ${fmt(d.progReal)}`);
+    }
+    if (d.type==='준공'){
+      lines.push(` - 준공 금액    : ${won(d.finalAmt)}`);
+      lines.push(` - 기수 금액    : ${won(d.prevAmt)}`);
+      lines.push(` - 준공 잔액    : ${won(d.finalReal)}`);
+      lines.push(` - 계산식        : ${fmt(d.finalAmt)} − ${fmt(d.prevAmt)} = ${fmt(d.finalReal)}`);
+      if (d.needIns){
+        lines.push(` - 하자보증     : ${won(d.warrAmt)} / ${d.warrTerm}개월`);
+        lines.push(` - 손해배상     : ${won(d.liabAmt)} / ${d.liabTerm}개월`);
+      }
+    }
+    lines.push(``, `3. 첨부 서류 목록`);
+    state.checklist.forEach(c => lines.push(` - [${c.done?'V':' '}] ${c.k} (${c.d})`));
+    lines.push(``, `4. 비고`);
+    if (d.type==='선금') lines.push(`  · ${d.advNeedSup?'감독 확인 필요':'감독확인 면제'}`);
+    if (d.type==='기성') lines.push(`  · 제 ${d.step}회차 기성청구`);
+    if (d.type==='준공') lines.push(`  · ${d.needIns?'하자보증·손해배상 가입':'보증·공제증권 면제'}`);
+    lines.push(``, `위 금액을 정히 청구합니다.`, `청 구 인 : (주)유신 / 담당자: 업무부 사공훈`);
+    const text = lines.join('\n');
+    navigator.clipboard.writeText(text).then(()=>{
+      toast('HWP 붙여넣기 가능 형식으로 복사했습니다','success');
+    }).catch(()=>{
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+      toast('클립보드에 복사 (fallback)','info');
+    });
+  } catch(e){ console.error('copyHWP 에러', e); toast('복사 실패','error');}
+}
+
+/* ===================== 이력 ===================== */
+function renderHistory(){
+  try{
+    let list = loadAll();
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    const ft = document.getElementById('filterType').value;
+    const fd = document.getElementById('filterDate').value; // yyyy-mm
+    const sort = document.getElementById('sortBy').value;
+    if (q) list = list.filter(b => (b.name||'').toLowerCase().includes(q));
+    if (ft) list = list.filter(b => b.type===ft);
+    if (fd) list = list.filter(b => (b.billDate||'').startsWith(fd));
+    list.sort((a,b)=>{
+      if (sort==='dateDesc') return new Date(b.billDate)-new Date(a.billDate);
+      if (sort==='dateAsc')  return new Date(a.billDate)-new Date(b.billDate);
+      if (sort==='amtDesc')  return getBillAmount(b) - getBillAmount(a);
+      if (sort==='amtAsc')   return getBillAmount(a) - getBillAmount(b);
+      return 0;
+    });
+    document.getElementById('historyTable').innerHTML = list.map(b => `
+      <tr class="border-b border-white/20 dark:border-white/5 hover:bg-white/40 dark:hover:bg-white/5">
+        <td class="py-2 px-2">${esc(b.billDate)}</td>
+        <td class="py-2 px-2 font-semibold">${esc(b.name)}</td>
+        <td class="py-2 px-2"><span class="badge ${typeBadge(b.type)}">${esc(b.type)}</span></td>
+        <td class="py-2 px-2 text-right">${won(b.total)}</td>
+        <td class="py-2 px-2 text-right font-bold">${won(getBillAmount(b))}</td>
+        <td class="py-2 px-2"><span class="badge badge-green">${esc(b.status||'-')}</span></td>
+        <td class="py-2 px-2 text-right space-x-1">
+          <button onclick="viewBilling('${esc(b.id)}')" class="px-2 py-1 rounded-md bg-deepblue-500 text-white text-xs"><i class="fa-solid fa-eye"></i></button>
+          <button onclick="cloneBilling('${esc(b.id)}')" class="px-2 py-1 rounded-md bg-gold-500 text-deepblue-900 text-xs"><i class="fa-solid fa-copy"></i></button>
+          <button onclick="deleteBilling('${esc(b.id)}')" class="px-2 py-1 rounded-md bg-red-500 text-white text-xs"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `).join('') || `<tr><td colspan="7" class="text-center py-6 text-deepblue-900/60 dark:text-gold-100/60">조건에 맞는 청구서가 없습니다.</td></tr>`;
+  } catch(e){ console.error('renderHistory 에러', e);}
+}
+function viewBilling(id){
+  const b = loadAll().find(x=>x.id===id);
+  if (!b) return;
+  const html = `
+    <div class="space-y-3 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="badge ${typeBadge(b.type)}">${esc(b.type)}</span>
+        <h4 class="text-lg font-bold">${esc(b.name)}</h4>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><b>발주처:</b> ${esc(b.client||'-')}</div>
+        <div><b>계약번호:</b> ${esc(b.contractNo||'-')}</div>
+        <div><b>계약기간:</b> ${esc(b.start)} ~ ${esc(b.end)}</div>
+        <div><b>계약금액:</b> ${won(b.total)}</div>
+        <div><b>청구일:</b> ${esc(b.billDate)}</div>
+        <div><b>상태:</b> ${esc(b.status||'-')}</div>
+      </div>
+      <hr class="my-2 border-white/30">
+      <div class="font-bold">금회 청구 금액: <span class="text-gold-600">${won(getBillAmount(b))}</span></div>
+    </div>`;
+  openModal('<i class="fa-solid fa-file-invoice mr-2"></i>청구서 상세', html);
+}
+function cloneBilling(id){
+  const b = loadAll().find(x=>x.id===id);
+  if (!b) return;
+  // 위저드 데이터 채우기
+  state.type = b.type;
+  state.step = 1;
+  state.editingId = null;
+  state.checklist = (b.checklist||[]).map(c=>({...c, done:false}));
+  setTimeout(()=>{
+    document.getElementById('f_name').value = b.name;
+    document.getElementById('f_client').value = b.client||'';
+    document.getElementById('f_start').value = b.start||'';
+    document.getElementById('f_end').value = b.end||'';
+    document.getElementById('f_total').value = b.total||'';
+    document.getElementById('f_contractNo').value = b.contractNo||'';
+    document.getElementById('f_isJoint').checked = !!b.isJoint;
+    if (b.isJoint){ document.getElementById('jointBox').classList.remove('hidden');
+      document.getElementById('f_share').value = b.share||'';
+      document.getElementById('f_partner').value = b.partner||''; }
+    selectType(b.type);
+    if (b.type==='선금'){ document.getElementById('f_advRate').value = b.advRate||''; document.getElementById('f_advNeedSup').checked = !!b.advNeedSup; }
+    if (b.type==='기성'){
+      document.getElementById('f_step').value = b.step||'';
+      document.getElementById('f_progAmt').value = b.progAmt||'';
+      document.getElementById('f_advReceived').checked = !!b.advReceived;
+      if (b.advReceived){ document.getElementById('offsetWrap').classList.remove('hidden'); document.getElementById('f_offset').value = b.offset||'';}
+    }
+    if (b.type==='준공'){
+      document.getElementById('f_finalAmt').value = b.finalAmt||'';
+      document.getElementById('f_prevAmt').value = b.prevAmt||'';
+      document.getElementById('f_needIns').checked = !!b.needIns;
+      if (b.needIns){ document.getElementById('insWrap').classList.remove('hidden');
+        document.getElementById('f_warrAmt').value = b.warrAmt||''; document.getElementById('f_warrTerm').value = b.warrTerm||'';
+        document.getElementById('f_liabAmt').value = b.liabAmt||''; document.getElementById('f_liabTerm').value = b.liabTerm||'';}
+    }
+    calcRealtime();
+  }, 50);
+  goView('wizard');
+  toast('이전 청구서를 복제했습니다','success');
+}
+function deleteBilling(id){
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  saveAll(loadAll().filter(b=>b.id!==id));
+  renderHistory();
+  toast('삭제 완료','success');
+}
+function clearAll(){
+  if (!confirm('모든 청구 이력을 삭제합니다. 계속하시겠습니까?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  seedSamples();
+  renderHistory();
+  toast('초기화 완료 (샘플 8건 복원)','info');
+}
+function exportAllXLSX(){
+  try{
+    const list = loadAll();
+    const rows = list.map(b=>({
+      청구일:b.billDate, 유형:b.type, 용역명:b.name, 발주처:b.client||'',
+      계약번호:b.contractNo||'', 계약기간:`${b.start}~${b.end}`, 계약금액:b.total,
+      청구금액:getBillAmount(b), 공동도급:b.isJoint?'예':'아니오', 지분율:b.share||0, 상태:b.status||''
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:11},{wch:6},{wch:32},{wch:18},{wch:16},{wch:24},{wch:14},{wch:14},{wch:8},{wch:6},{wch:18}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '청구이력');
+    XLSX.writeFile(wb, `청구이력_전체_${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast('전체 엑셀 다운로드 완료','success');
+  } catch(e){ console.error('exportAllXLSX 에러', e); toast('엑셀 실패','error');}
+}
+
+/* ===================== 가이드 ===================== */
+function renderChecklistGuide(){
+  ['선금','기성','준공'].forEach(t => {
+    const el = document.getElementById('cl_'+t);
+    if (!el) return;
+    el.innerHTML = CHECKLISTS[t].map(c => `
+      <li class="flex items-start gap-2">
+        <i class="fa-solid fa-circle-check text-gold-600 mt-1"></i>
+        <div><b>${esc(c.k)}</b> <span class="text-xs text-deepblue-900/70 dark:text-gold-100/70">— ${esc(c.d)}</span></div>
+      </li>
+    `).join('');
+  });
+}
+
+/* ===================== 초기화 ===================== */
+function initTheme(){
+  const saved = localStorage.getItem('sgh_theme');
+  if (saved==='dark') document.documentElement.classList.add('dark');
+  document.getElementById('themeIcon').className = document.documentElement.classList.contains('dark') ? 'fa-solid fa-sun text-gold-300' : 'fa-solid fa-moon text-deepblue-900';
+}
+function bindEvents(){
+  document.getElementById('themeBtn').addEventListener('click', ()=>{
+    document.documentElement.classList.toggle('dark');
+    localStorage.setItem('sgh_theme', document.documentElement.classList.contains('dark') ? 'dark':'light');
+    document.getElementById('themeIcon').className = document.documentElement.classList.contains('dark') ? 'fa-solid fa-sun text-gold-300' : 'fa-solid fa-moon text-deepblue-900';
+    renderDashboard();
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', ()=> goView(b.dataset.view)));
+  document.getElementById('f_isJoint').addEventListener('change', e => {
+    document.getElementById('jointBox').classList.toggle('hidden', !e.target.checked);
+  });
+  document.getElementById('sbToggle').addEventListener('click', ()=>{
+    document.getElementById('sidebar').classList.toggle('hidden');
+  });
+  document.getElementById('modal').addEventListener('click', (e)=>{
+    if (e.target.id==='modal') closeModal();
+  });
+}
+function init(){
+  try{
+    const t = new Date();
+    document.getElementById('todayDate').textContent = `${t.getFullYear()}.${String(t.getMonth()+1).padStart(2,'0')}.${String(t.getDate()).padStart(2,'0')}`;
+    initTheme();
+    bindEvents();
+    buildStepBar();
+    showWstep();
+    if (!localStorage.getItem(STORAGE_KEY)) seedSamples();
+    renderDashboard();
+    renderChecklistGuide();
+  } catch(e){ console.error('init 에러', e); toast('초기화 실패','error');}
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

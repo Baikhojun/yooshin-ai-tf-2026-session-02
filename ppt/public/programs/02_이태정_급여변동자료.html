@@ -1,0 +1,1708 @@
+<!-- 이 파일의 역할: 이태정(총무부 인사팀) 급여변동자료 자동 생성 시스템 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>급여변동자료 자동 생성 시스템 | 이태정 - 총무부 인사팀</title>
+
+<!-- TailwindCSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- SheetJS XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Noto Sans KR', 'Pretendard', 'system-ui', 'sans-serif'] },
+        colors: {
+          rose1: '#fdf2f8',
+          rose2: '#fbcfe8',
+          rose3: '#f472b6',
+          rose4: '#db2777',
+          purple1: '#f5f3ff',
+          purple2: '#c4b5fd',
+          purple3: '#8b5cf6',
+          purple4: '#6d28d9',
+        },
+        boxShadow: {
+          glass: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          glow: '0 0 24px rgba(236, 72, 153, 0.35)',
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  :root {
+    --bg-grad-light: linear-gradient(135deg, #fdf2f8 0%, #f5f3ff 50%, #ede9fe 100%);
+    --bg-grad-dark: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 50%, #1e1338 100%);
+  }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg-grad-light);
+    min-height: 100vh;
+    transition: background 0.5s ease;
+  }
+  body.dark {
+    background: var(--bg-grad-dark);
+  }
+  /* Glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px rgba(219, 39, 119, 0.08);
+  }
+  .dark .glass {
+    background: rgba(40, 22, 60, 0.6);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  }
+  .glass-soft {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  .dark .glass-soft {
+    background: rgba(40, 22, 60, 0.45);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+  }
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .fade-in-up { animation: fadeInUp 0.6s ease both; }
+  .slide-in-right { animation: slideInRight 0.4s ease both; }
+  .pulse-soft { animation: pulse-soft 2s infinite; }
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(90deg, #db2777, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .text-gradient-vivid {
+    background: linear-gradient(90deg, #ec4899, #a855f7, #6366f1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  /* Sidebar nav */
+  .nav-item {
+    transition: all 0.25s ease;
+    position: relative;
+  }
+  .nav-item:hover {
+    transform: translateX(4px);
+  }
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.18), rgba(139, 92, 246, 0.18));
+    border-left: 3px solid #db2777;
+  }
+  .dark .nav-item.active {
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.28), rgba(139, 92, 246, 0.28));
+    border-left: 3px solid #f472b6;
+  }
+  /* Card hover */
+  .stat-card {
+    transition: all 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(219, 39, 119, 0.15);
+  }
+  /* Toast */
+  .toast {
+    animation: slideInRight 0.3s ease both;
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(219, 39, 119, 0.3); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(219, 39, 119, 0.5); }
+
+  /* Table */
+  .pretty-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .pretty-table th {
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.08), rgba(139, 92, 246, 0.08));
+    color: #831843;
+    font-weight: 600;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(219, 39, 119, 0.18);
+    white-space: nowrap;
+  }
+  .dark .pretty-table th {
+    color: #fbcfe8;
+    border-bottom: 1px solid rgba(244, 114, 182, 0.25);
+  }
+  .pretty-table td {
+    padding: 12px 14px;
+    font-size: 13.5px;
+    border-bottom: 1px solid rgba(219, 39, 119, 0.08);
+    color: #4c1d4d;
+  }
+  .dark .pretty-table td {
+    color: #f3e8ff;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+  }
+  .pretty-table tr:hover td {
+    background: rgba(236, 72, 153, 0.05);
+  }
+  .dark .pretty-table tr:hover td {
+    background: rgba(244, 114, 182, 0.08);
+  }
+  .inline-input {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 8px;
+    width: 100%;
+    font-size: 13.5px;
+    color: inherit;
+  }
+  .inline-input:hover {
+    background: rgba(236, 72, 153, 0.05);
+  }
+  .inline-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.8);
+    border-color: #db2777;
+  }
+  .dark .inline-input:focus {
+    background: rgba(40, 22, 60, 0.9);
+    border-color: #f472b6;
+  }
+  /* Modal */
+  .modal-backdrop {
+    background: rgba(20, 5, 30, 0.55);
+    backdrop-filter: blur(6px);
+  }
+  /* File drop */
+  .drop-zone {
+    border: 2.5px dashed rgba(219, 39, 119, 0.4);
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.25s ease;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: #db2777;
+    background: rgba(236, 72, 153, 0.08);
+    transform: scale(1.005);
+  }
+  .dark .drop-zone {
+    border-color: rgba(244, 114, 182, 0.45);
+    background: rgba(40, 22, 60, 0.3);
+  }
+  /* Buttons */
+  .btn-primary {
+    background: linear-gradient(90deg, #db2777, #8b5cf6);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(219, 39, 119, 0.3);
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(219, 39, 119, 0.45);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.6);
+    color: #831843;
+    border: 1px solid rgba(219, 39, 119, 0.25);
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13.5px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .dark .btn-ghost {
+    background: rgba(60, 30, 90, 0.5);
+    color: #fbcfe8;
+    border-color: rgba(244, 114, 182, 0.3);
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(219, 39, 119, 0.45);
+  }
+  .dark .btn-ghost:hover {
+    background: rgba(80, 40, 110, 0.6);
+  }
+  .btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 12.5px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+  /* Tabs */
+  .tab-btn {
+    padding: 12px 20px;
+    font-weight: 600;
+    color: #6b7280;
+    border-bottom: 3px solid transparent;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab-btn:hover {
+    color: #db2777;
+    background: rgba(236, 72, 153, 0.05);
+  }
+  .tab-btn.active {
+    color: #db2777;
+    border-bottom-color: #db2777;
+    background: linear-gradient(180deg, transparent, rgba(236, 72, 153, 0.06));
+  }
+  .dark .tab-btn { color: #9ca3af; }
+  .dark .tab-btn:hover { color: #f472b6; }
+  .dark .tab-btn.active {
+    color: #f472b6;
+    border-bottom-color: #f472b6;
+  }
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .badge-rose { background: rgba(236, 72, 153, 0.12); color: #be185d; }
+  .badge-purple { background: rgba(139, 92, 246, 0.12); color: #6d28d9; }
+  .badge-sky { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
+  .badge-amber { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+  .badge-emerald { background: rgba(16, 185, 129, 0.12); color: #047857; }
+  .badge-gray { background: rgba(107, 114, 128, 0.12); color: #374151; }
+  .dark .badge-rose { background: rgba(244, 114, 182, 0.2); color: #fbcfe8; }
+  .dark .badge-purple { background: rgba(167, 139, 250, 0.2); color: #ddd6fe; }
+  .dark .badge-sky { background: rgba(56, 189, 248, 0.2); color: #bae6fd; }
+  .dark .badge-amber { background: rgba(251, 191, 36, 0.2); color: #fde68a; }
+  .dark .badge-emerald { background: rgba(52, 211, 153, 0.2); color: #a7f3d0; }
+  .dark .badge-gray { background: rgba(156, 163, 175, 0.2); color: #e5e7eb; }
+  /* Input */
+  .input {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(219, 39, 119, 0.18);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    width: 100%;
+    transition: all 0.2s ease;
+    color: #4c1d4d;
+  }
+  .dark .input {
+    background: rgba(40, 22, 60, 0.55);
+    border-color: rgba(244, 114, 182, 0.25);
+    color: #f3e8ff;
+  }
+  .input:focus {
+    outline: none;
+    border-color: #db2777;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.12);
+  }
+  /* Decorative orbs */
+  .bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.4;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .orb1 { width: 380px; height: 380px; background: #f9a8d4; top: -120px; right: -100px; }
+  .orb2 { width: 320px; height: 320px; background: #c4b5fd; bottom: -100px; left: 200px; }
+  .dark .orb1 { background: #be185d; opacity: 0.25; }
+  .dark .orb2 { background: #6d28d9; opacity: 0.25; }
+  /* Hidden scroll for tabs */
+  .tab-scroll { overflow-x: auto; }
+  .tab-scroll::-webkit-scrollbar { height: 4px; }
+</style>
+</head>
+
+<body class="text-slate-800 dark:text-slate-100 antialiased">
+
+<!-- Background orbs -->
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<!-- Toast container -->
+<div id="toastContainer" class="fixed top-6 right-6 z-[100] space-y-3"></div>
+
+<!-- Main Layout -->
+<div class="relative z-10 flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-64 flex-shrink-0 hidden md:flex flex-col py-6 px-4 glass-soft rounded-r-3xl m-2 mr-0">
+    <div class="flex items-center gap-3 px-2 mb-8">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center shadow-lg">
+        <i class="fa-solid fa-user-tie text-white text-lg"></i>
+      </div>
+      <div>
+        <div class="font-bold text-base text-gradient">HR Auto</div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">총무부 인사팀</div>
+      </div>
+    </div>
+
+    <nav class="space-y-1 flex-1">
+      <a data-view="dashboard" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm font-medium">
+        <i class="fa-solid fa-gauge-high w-5 text-rose-500"></i>
+        <span>대시보드</span>
+      </a>
+      <a data-view="upload" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm font-medium">
+        <i class="fa-solid fa-cloud-arrow-up w-5 text-purple-500"></i>
+        <span>ERP 업로드</span>
+      </a>
+      <a data-view="classify" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm font-medium">
+        <i class="fa-solid fa-layer-group w-5 text-pink-500"></i>
+        <span>자동 분류</span>
+      </a>
+      <a data-view="generate" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm font-medium">
+        <i class="fa-solid fa-file-excel w-5 text-emerald-500"></i>
+        <span>종합파일 생성</span>
+      </a>
+      <a data-view="deliver" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm font-medium">
+        <i class="fa-solid fa-paper-plane w-5 text-sky-500"></i>
+        <span>회계부 전달</span>
+      </a>
+      <a data-view="history" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm font-medium">
+        <i class="fa-solid fa-clock-rotate-left w-5 text-amber-500"></i>
+        <span>전달 이력</span>
+      </a>
+    </nav>
+
+    <div class="mt-4 p-4 rounded-2xl glass">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose3 to-purple3 flex items-center justify-center shadow">
+          <i class="fa-solid fa-user text-white"></i>
+        </div>
+        <div>
+          <div class="text-sm font-semibold">이태정 과장</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400">총무부 인사팀</div>
+        </div>
+      </div>
+      <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+        매월 인사발령을 정리하여<br/>회계부에 급여변동자료를<br/>전달합니다.
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 min-w-0 p-4 md:p-6">
+    <!-- Header -->
+    <header class="glass rounded-2xl p-4 md:p-5 mb-6 flex flex-wrap items-center gap-4">
+      <button id="mobileMenuBtn" class="md:hidden btn-ghost !p-2 !rounded-xl">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="flex-1 min-w-[180px]">
+        <h1 class="text-lg md:text-2xl font-extrabold text-gradient-vivid leading-tight">급여변동자료 자동 생성 시스템</h1>
+        <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <i class="fa-regular fa-calendar mr-1"></i>
+          <span id="todayLabel"></span>
+          <span class="mx-2">·</span>
+          <i class="fa-solid fa-coins mr-1"></i>
+          대상월: <span id="targetMonthLabel" class="font-semibold text-rose4 dark:text-rose3"></span>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 ml-auto">
+        <input id="globalSearch" placeholder="사번/성명/부서로 검색"
+          class="input !w-56 md:!w-64 !py-2 hidden md:block" />
+        <button id="themeToggle" class="btn-ghost !px-3 !py-2 !rounded-xl" title="테마 전환">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+        <button id="quickAddBtn" class="btn-primary !py-2">
+          <i class="fa-solid fa-plus mr-1.5"></i> 빠른 추가
+        </button>
+      </div>
+    </header>
+
+    <!-- Views container -->
+    <div id="viewContainer"></div>
+  </main>
+</div>
+
+<!-- Mobile sidebar overlay (simple) -->
+
+<!-- Modal -->
+<div id="modal" class="fixed inset-0 z-[90] hidden modal-backdrop items-center justify-center p-4">
+  <div class="glass rounded-3xl max-w-4xl w-full max-h-[88vh] overflow-hidden flex flex-col fade-in-up">
+    <div class="px-6 py-4 border-b border-rose-200/30 dark:border-purple-500/20 flex items-center justify-between">
+      <h3 id="modalTitle" class="text-lg font-bold text-gradient">제목</h3>
+      <button id="modalClose" class="btn-ghost !p-2 !rounded-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div id="modalBody" class="p-6 overflow-y-auto flex-1"></div>
+    <div id="modalFooter" class="px-6 py-4 border-t border-rose-200/30 dark:border-purple-500/20 flex items-center justify-end gap-2"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   이 파일의 역할: 이태정(총무부 인사팀) 급여변동자료 자동 생성 시스템
+   - ERP 인사발령 → 자동 분류(신규/퇴사/육아휴직/기타) → 종합 엑셀 → 회계부 전달
+   ============================================================ */
+
+// ============== 상수 / 키 ==============
+const STORAGE_KEY = 'ltj_salary_change_v1';
+const HISTORY_KEY = 'ltj_salary_history_v1';
+
+// ============== 유틸 ==============
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function uid(prefix='id') { return prefix + '_' + Math.random().toString(36).slice(2, 10); }
+function fmtDate(d) {
+  if (!d) return '';
+  try { const dt = new Date(d); if (isNaN(dt)) return d;
+    const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),da=String(dt.getDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  } catch(e) { return d; }
+}
+function todayStr() { return fmtDate(new Date()); }
+function nowStamp() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function currentTargetMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+// ============== 토스트 ==============
+function toast(msg, type='info', timeout=2800) {
+  try {
+    const container = document.getElementById('toastContainer');
+    const colors = {
+      success: { ic: 'fa-circle-check', bg: 'from-emerald-400 to-emerald-600' },
+      error:   { ic: 'fa-circle-exclamation', bg: 'from-rose-400 to-rose-600' },
+      warn:    { ic: 'fa-triangle-exclamation', bg: 'from-amber-400 to-amber-600' },
+      info:    { ic: 'fa-circle-info', bg: 'from-purple-400 to-purple-600' },
+    };
+    const c = colors[type] || colors.info;
+    const div = document.createElement('div');
+    div.className = `toast glass rounded-2xl px-5 py-3.5 flex items-center gap-3 max-w-sm shadow-glass`;
+    div.innerHTML = `
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br ${c.bg} flex items-center justify-center text-white flex-shrink-0">
+        <i class="fa-solid ${c.ic}"></i>
+      </div>
+      <div class="text-sm font-medium leading-snug">${escapeHTML(msg)}</div>`;
+    container.appendChild(div);
+    setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translateX(40px)'; setTimeout(()=>div.remove(), 350); }, timeout);
+  } catch(e) { console.error('toast 실패', e); }
+}
+
+// ============== 모달 ==============
+function openModal({title, bodyHtml, footerHtml=''}) {
+  const modal = document.getElementById('modal');
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalFooter').innerHTML = footerHtml;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.classList.add('hidden'); modal.classList.remove('flex');
+}
+document.getElementById('modalClose').onclick = closeModal;
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// ============== 상태 / 샘플 데이터 ==============
+const SAMPLE_DATA = {
+  targetMonth: currentTargetMonth(),
+  // 신규입사자
+  newcomers: [
+    { id: uid('n'), empNo:'Y14901', name:'김민준', dept:'토목사업부',  position:'사원',   joinDate:'2026-06-01', account:'국민 123456-78-901234', license:'토목기사', healthCheck:'완료', memo:'정규직' },
+    { id: uid('n'), empNo:'Y14902', name:'이서연', dept:'건축사업부',  position:'대리',   joinDate:'2026-06-03', account:'신한 110-456-789012',    license:'건축기사', healthCheck:'완료', memo:'경력 5년' },
+    { id: uid('n'), empNo:'Y14903', name:'박지훈', dept:'설계본부',    position:'사원',   joinDate:'2026-06-05', account:'우리 1002-345-678901',   license:'-',         healthCheck:'예정', memo:'신입' },
+    { id: uid('n'), empNo:'Y14904', name:'최예린', dept:'총무부',      position:'주임',   joinDate:'2026-06-10', account:'국민 999-12-345678',     license:'사회복지사1급', healthCheck:'완료', memo:'경력직' },
+    { id: uid('n'), empNo:'Y14905', name:'정도윤', dept:'인사팀',      position:'사원',   joinDate:'2026-06-15', account:'카카오 3333-12-345678',  license:'-',         healthCheck:'완료', memo:'정규직' },
+  ],
+  // 퇴사자
+  leavers: [
+    { id: uid('l'), empNo:'Y10231', name:'한지원', dept:'건축사업부',  position:'과장',   leaveDate:'2026-06-30', reason:'개인사유',     memo:'퇴직금 정산 필요' },
+    { id: uid('l'), empNo:'Y09812', name:'송재현', dept:'토목사업부',  position:'차장',   leaveDate:'2026-06-15', reason:'이직',         memo:'잔여 연차 12일' },
+    { id: uid('l'), empNo:'Y11045', name:'윤미래', dept:'설계본부',    position:'사원',   leaveDate:'2026-06-25', reason:'정년퇴직',     memo:'-' },
+  ],
+  // 육아휴직자
+  parental: [
+    { id: uid('p'), empNo:'Y08921', name:'장수빈', dept:'총무부',      position:'대리',   startDate:'2026-06-01', endDate:'2027-05-31', months:12, memo:'첫째 출산' },
+    { id: uid('p'), empNo:'Y09134', name:'배은영', dept:'인사팀',      position:'주임',   startDate:'2026-06-15', endDate:'2027-06-14', months:12, memo:'둘째 출산' },
+  ],
+  // 기타발령
+  others: [
+    { id: uid('o'), empNo:'Y09988', name:'오현우', dept:'건축사업부',  category:'정직',     startDate:'2026-06-01', endDate:'2026-06-30', detail:'근무규정 위반', memo:'1개월 정직' },
+    { id: uid('o'), empNo:'Y10456', name:'강민호', dept:'설계본부',    category:'전보',     startDate:'2026-06-01', endDate:'',           detail:'설계본부 → 토목사업부', memo:'본인 희망' },
+  ],
+  history: [
+    { date: '2026-05-31 17:20', month: '2026-05', count: 11, status: '전달완료', method: '이메일' },
+    { date: '2026-04-30 16:48', month: '2026-04', count: 9,  status: '전달완료', method: '이메일' },
+  ]
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) { console.error('localStorage 로드 실패', e); }
+  return JSON.parse(JSON.stringify(SAMPLE_DATA));
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e) { console.error('localStorage 저장 실패', e); toast('저장 실패', 'error'); }
+}
+let state = loadState();
+// 보강
+if (!state.targetMonth) state.targetMonth = currentTargetMonth();
+['newcomers','leavers','parental','others','history'].forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
+
+// ============== 라우터 ==============
+let currentView = 'dashboard';
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === view);
+  });
+  renderView();
+}
+function renderView() {
+  const container = document.getElementById('viewContainer');
+  container.innerHTML = '';
+  container.classList.add('fade-in-up');
+  switch(currentView) {
+    case 'dashboard': renderDashboard(container); break;
+    case 'upload':    renderUpload(container);    break;
+    case 'classify':  renderClassify(container);  break;
+    case 'generate':  renderGenerate(container);  break;
+    case 'deliver':   renderDeliver(container);   break;
+    case 'history':   renderHistory(container);   break;
+  }
+  // remove anim trigger
+  setTimeout(()=>container.classList.remove('fade-in-up'), 700);
+}
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => setView(el.dataset.view));
+});
+
+// ============== 다크모드 ==============
+function applyTheme(mode) {
+  const isDark = mode === 'dark';
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  localStorage.setItem('ltj_theme', mode);
+  // re-render charts (color update)
+  if (currentView === 'dashboard') renderView();
+}
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isDark = document.body.classList.contains('dark');
+  applyTheme(isDark ? 'light' : 'dark');
+});
+applyTheme(localStorage.getItem('ltj_theme') || 'light');
+
+// 헤더 라벨
+document.getElementById('todayLabel').textContent = todayStr();
+document.getElementById('targetMonthLabel').textContent = state.targetMonth;
+
+// ============================================================
+// 1. 대시보드
+// ============================================================
+function totalCount() {
+  return state.newcomers.length + state.leavers.length + state.parental.length + state.others.length;
+}
+function renderDashboard(root) {
+  const total = totalCount();
+  const stats = [
+    { label: '이번달 총 변동', value: total, ic: 'fa-arrows-rotate', grad: 'from-rose-500 to-pink-600', tag: state.targetMonth },
+    { label: '신규입사', value: state.newcomers.length, ic: 'fa-user-plus', grad: 'from-emerald-500 to-teal-600', tag: '신규' },
+    { label: '퇴사자', value: state.leavers.length, ic: 'fa-user-minus', grad: 'from-amber-500 to-orange-600', tag: '정산' },
+    { label: '육아휴직', value: state.parental.length, ic: 'fa-baby', grad: 'from-purple-500 to-fuchsia-600', tag: '휴직' },
+    { label: '기타 발령', value: state.others.length, ic: 'fa-shuffle', grad: 'from-sky-500 to-blue-600', tag: '전보/정직' },
+  ];
+
+  root.innerHTML = `
+    <!-- KPI Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+      ${stats.map((s, i) => `
+        <div class="stat-card glass rounded-2xl p-5" style="animation: fadeInUp 0.5s ${i*0.07}s ease both">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br ${s.grad} flex items-center justify-center shadow-lg">
+              <i class="fa-solid ${s.ic} text-white"></i>
+            </div>
+            <span class="badge badge-rose">${escapeHTML(s.tag)}</span>
+          </div>
+          <div class="text-3xl font-extrabold text-gradient-vivid">${s.value}<span class="text-sm font-medium text-slate-500 dark:text-slate-400 ml-1">명</span></div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">${escapeHTML(s.label)}</div>
+        </div>
+      `).join('')}
+    </section>
+
+    <!-- Charts -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5 lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-base flex items-center gap-2">
+            <i class="fa-solid fa-chart-column text-rose4 dark:text-rose3"></i> 월별 입퇴사 추이
+          </h3>
+          <span class="badge badge-purple">최근 6개월</span>
+        </div>
+        <div style="height: 280px"><canvas id="chartMonthly"></canvas></div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-base flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-purple-500"></i> 변동 유형 분포
+          </h3>
+          <span class="badge badge-rose">${state.targetMonth}</span>
+        </div>
+        <div style="height: 280px"><canvas id="chartType"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Quick actions -->
+    <section class="glass rounded-2xl p-5 mb-6">
+      <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-bolt text-amber-500"></i> 빠른 작업
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        ${[
+          {ic:'fa-cloud-arrow-up', label:'ERP 엑셀 업로드', target:'upload', g:'from-purple-500 to-fuchsia-600'},
+          {ic:'fa-layer-group', label:'분류 시트 열기', target:'classify', g:'from-pink-500 to-rose-600'},
+          {ic:'fa-file-excel', label:'종합파일 생성', target:'generate', g:'from-emerald-500 to-green-600'},
+          {ic:'fa-paper-plane', label:'회계부 전달', target:'deliver', g:'from-sky-500 to-blue-600'},
+        ].map(a => `
+          <button data-go="${a.target}" class="quick-go group glass-soft rounded-2xl p-4 text-left transition hover:scale-[1.02]">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${a.g} flex items-center justify-center mb-3">
+              <i class="fa-solid ${a.ic} text-white"></i>
+            </div>
+            <div class="font-semibold text-sm">${a.label}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">바로가기 <i class="fa-solid fa-arrow-right ml-1"></i></div>
+          </button>
+        `).join('')}
+      </div>
+    </section>
+
+    <!-- Recent change preview -->
+    <section class="glass rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-rose4 dark:text-rose3"></i> 최근 변동 미리보기
+        </h3>
+        <button class="btn-ghost !py-1.5 !text-xs" onclick="setView('classify')">
+          <i class="fa-solid fa-arrow-right mr-1"></i> 전체보기
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="pretty-table">
+          <thead><tr>
+            <th>구분</th><th>사번</th><th>성명</th><th>부서</th><th>관련일자</th><th>비고</th>
+          </tr></thead>
+          <tbody>${recentPreviewRows()}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
+  root.querySelectorAll('.quick-go').forEach(b => b.addEventListener('click', () => setView(b.dataset.go)));
+  drawCharts();
+}
+
+function recentPreviewRows() {
+  const rows = [];
+  state.newcomers.slice(0,3).forEach(r => rows.push({type:'신규입사', cls:'badge-emerald', empNo:r.empNo, name:r.name, dept:r.dept, date:r.joinDate, memo:r.memo}));
+  state.leavers.slice(0,2).forEach(r => rows.push({type:'퇴사',     cls:'badge-amber',   empNo:r.empNo, name:r.name, dept:r.dept, date:r.leaveDate, memo:r.memo}));
+  state.parental.slice(0,2).forEach(r => rows.push({type:'육아휴직', cls:'badge-purple',  empNo:r.empNo, name:r.name, dept:r.dept, date:r.startDate, memo:r.memo}));
+  state.others.slice(0,2).forEach(r => rows.push({type:r.category,   cls:'badge-rose',    empNo:r.empNo, name:r.name, dept:r.dept, date:r.startDate, memo:r.memo}));
+  if (rows.length === 0) return `<tr><td colspan="6" class="text-center py-8 text-slate-400">데이터 없음</td></tr>`;
+  return rows.map(r => `
+    <tr>
+      <td><span class="badge ${r.cls}">${escapeHTML(r.type)}</span></td>
+      <td class="font-mono text-[12.5px]">${escapeHTML(r.empNo)}</td>
+      <td class="font-semibold">${escapeHTML(r.name)}</td>
+      <td>${escapeHTML(r.dept)}</td>
+      <td>${escapeHTML(r.date)}</td>
+      <td class="text-slate-500 dark:text-slate-400">${escapeHTML(r.memo||'-')}</td>
+    </tr>`).join('');
+}
+
+let _charts = {};
+function drawCharts() {
+  try {
+    const isDark = document.body.classList.contains('dark');
+    const txt = isDark ? '#f3e8ff' : '#4c1d4d';
+    const grid = isDark ? 'rgba(244,114,182,0.15)' : 'rgba(219,39,119,0.12)';
+    // destroy old
+    Object.values(_charts).forEach(c => { try { c.destroy(); } catch(e){} });
+
+    // monthly trend (mock + 현재)
+    const months = [];
+    const join = [];
+    const leave = [];
+    const today = new Date();
+    for (let i=5; i>=0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
+      const lbl = `${d.getMonth()+1}월`;
+      months.push(lbl);
+      // mock: 0~i 추정, 현재월은 실제 데이터
+      if (i === 0) { join.push(state.newcomers.length); leave.push(state.leavers.length); }
+      else { join.push(3 + ((i*7+2)%6)); leave.push(2 + ((i*5+1)%5)); }
+    }
+    const ctxM = document.getElementById('chartMonthly').getContext('2d');
+    _charts.monthly = new Chart(ctxM, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { label:'입사', data: join, backgroundColor: 'rgba(236,72,153,0.85)', borderRadius:8 },
+          { label:'퇴사', data: leave, backgroundColor: 'rgba(139,92,246,0.85)', borderRadius:8 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{labels:{color: txt, font:{family:'Noto Sans KR'}}}, tooltip:{ bodyFont:{family:'Noto Sans KR'} } },
+        scales: {
+          x:{ ticks:{color:txt}, grid:{color:'transparent'}},
+          y:{ ticks:{color:txt}, grid:{color:grid}, beginAtZero:true, precision:0 }
+        }
+      }
+    });
+
+    // type distribution
+    const ctxT = document.getElementById('chartType').getContext('2d');
+    _charts.type = new Chart(ctxT, {
+      type: 'doughnut',
+      data: {
+        labels: ['신규입사', '퇴사', '육아휴직', '기타'],
+        datasets: [{
+          data: [state.newcomers.length, state.leavers.length, state.parental.length, state.others.length],
+          backgroundColor: ['#10b981', '#f59e0b', '#a855f7', '#0ea5e9'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '62%',
+        plugins:{ legend:{position:'bottom', labels:{color:txt, font:{family:'Noto Sans KR', size:12}, boxWidth:12, padding:14}} }
+      }
+    });
+  } catch (e) { console.error('차트 그리기 실패', e); toast('차트 렌더 실패', 'error'); }
+}
+
+// ============================================================
+// 2. ERP 업로드 / 수동 입력
+// ============================================================
+function renderUpload(root) {
+  root.innerHTML = `
+    <section class="glass rounded-2xl p-6 mb-6">
+      <div class="flex items-start gap-4 mb-2">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-cloud-arrow-up text-white text-lg"></i>
+        </div>
+        <div class="flex-1">
+          <h2 class="font-bold text-lg">ERP 인사발령 데이터 업로드</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            ERP에서 다운로드한 인사발령 엑셀(.xlsx, .xls, .csv)을 업로드하세요. 자동으로 분류·정리됩니다.
+          </p>
+        </div>
+      </div>
+
+      <div id="dropZone" class="drop-zone rounded-2xl p-10 text-center mt-4 cursor-pointer">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-purple-500 mx-auto flex items-center justify-center mb-4 shadow-glow">
+          <i class="fa-solid fa-file-arrow-up text-white text-2xl"></i>
+        </div>
+        <div class="font-semibold mb-1">엑셀 파일을 끌어다 놓거나 클릭</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          필수 컬럼: 사번, 성명, 부서, 발령일, 발령구분, 비고
+        </div>
+        <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
+      </div>
+
+      <div class="mt-4 flex flex-wrap gap-3 justify-between">
+        <div class="flex gap-2">
+          <button id="downloadTemplate" class="btn-ghost">
+            <i class="fa-solid fa-download mr-1.5"></i> 양식 다운로드
+          </button>
+          <button id="loadSample" class="btn-ghost">
+            <i class="fa-solid fa-flask mr-1.5"></i> 샘플 데이터 불러오기
+          </button>
+        </div>
+        <button id="openManualForm" class="btn-primary">
+          <i class="fa-solid fa-keyboard mr-1.5"></i> 수동 입력
+        </button>
+      </div>
+    </section>
+
+    <!-- Preview -->
+    <section id="previewSection" class="glass rounded-2xl p-6 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-table-list text-purple-500"></i> 파싱 결과 미리보기
+        </h3>
+        <button id="applyImport" class="btn-primary !py-2">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> 자동 분류 적용
+        </button>
+      </div>
+      <div class="overflow-x-auto max-h-[500px]">
+        <table class="pretty-table" id="previewTable"></table>
+      </div>
+    </section>
+
+    <!-- Manual form -->
+    <section id="manualSection" class="glass rounded-2xl p-6 hidden">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fa-solid fa-pen-to-square text-rose4"></i>
+        <h3 class="font-bold text-base">수동 입력</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div><label class="text-xs font-semibold mb-1 block">사번</label><input id="m_empNo" class="input" placeholder="예: Y14906" /></div>
+        <div><label class="text-xs font-semibold mb-1 block">성명</label><input id="m_name" class="input" placeholder="홍길동" /></div>
+        <div><label class="text-xs font-semibold mb-1 block">부서</label><input id="m_dept" class="input" placeholder="총무부" /></div>
+        <div><label class="text-xs font-semibold mb-1 block">발령일</label><input id="m_date" type="date" class="input" /></div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block">발령구분</label>
+          <select id="m_category" class="input">
+            <option value="신규입사">신규입사</option>
+            <option value="퇴사">퇴사</option>
+            <option value="육아휴직">육아휴직</option>
+            <option value="전보">전보</option>
+            <option value="정직">정직</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+        <div><label class="text-xs font-semibold mb-1 block">비고</label><input id="m_memo" class="input" placeholder="비고 사항" /></div>
+      </div>
+      <button id="addManual" class="btn-primary"><i class="fa-solid fa-plus mr-1.5"></i> 추가하기</button>
+    </section>
+  `;
+
+  // 드롭존 이벤트
+  const dropZone = root.querySelector('#dropZone');
+  const fileInput = root.querySelector('#fileInput');
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+  root.querySelector('#downloadTemplate').onclick = downloadTemplate;
+  root.querySelector('#loadSample').onclick = () => {
+    state = JSON.parse(JSON.stringify(SAMPLE_DATA)); state.targetMonth = currentTargetMonth();
+    saveState();
+    toast('샘플 데이터를 불러왔습니다', 'success');
+    setView('classify');
+  };
+  root.querySelector('#openManualForm').onclick = () => {
+    document.getElementById('manualSection').classList.toggle('hidden');
+  };
+  root.querySelector('#addManual').onclick = addManualEntry;
+}
+
+let _previewRows = [];
+function handleFile(file) {
+  try {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        _previewRows = rows;
+        renderPreview(rows);
+        toast(`${rows.length}건을 파싱했습니다`, 'success');
+      } catch (err) {
+        console.error(err); toast('엑셀 파싱 실패: ' + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } catch(e) { console.error(e); toast('파일 읽기 실패', 'error'); }
+}
+
+function renderPreview(rows) {
+  const sec = document.getElementById('previewSection');
+  if (!rows.length) { sec.classList.add('hidden'); return; }
+  sec.classList.remove('hidden');
+  const headers = Object.keys(rows[0]);
+  const table = document.getElementById('previewTable');
+  table.innerHTML = `
+    <thead><tr>${headers.map(h => `<th>${escapeHTML(h)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.slice(0,30).map(r => `
+      <tr>${headers.map(h => `<td>${escapeHTML(r[h])}</td>`).join('')}</tr>`).join('')}
+      ${rows.length>30 ? `<tr><td colspan="${headers.length}" class="text-center py-3 text-slate-400">... 외 ${rows.length-30}건</td></tr>` : ''}
+    </tbody>`;
+  document.getElementById('applyImport').onclick = () => importPreviewToState(rows);
+}
+
+function importPreviewToState(rows) {
+  try {
+    let nNew=0, nLeave=0, nPar=0, nOth=0;
+    rows.forEach(r => {
+      const cat = String(r['발령구분']||r['구분']||'').trim();
+      const base = {
+        empNo: String(r['사번']||r['사원번호']||'').trim(),
+        name:  String(r['성명']||r['이름']||'').trim(),
+        dept:  String(r['부서']||'').trim(),
+        position: String(r['직위']||r['직급']||'').trim(),
+        memo:  String(r['비고']||'').trim(),
+      };
+      const date = fmtDate(r['발령일']||r['일자']||r['날짜']||'');
+      if (cat.includes('입사') || cat.includes('신규')) {
+        state.newcomers.push({ id:uid('n'), ...base, joinDate:date, account:'', license:'', healthCheck:'예정' });
+        nNew++;
+      } else if (cat.includes('퇴사') || cat.includes('퇴직')) {
+        state.leavers.push({ id:uid('l'), ...base, leaveDate:date, reason: cat });
+        nLeave++;
+      } else if (cat.includes('육아') || cat.includes('휴직')) {
+        state.parental.push({ id:uid('p'), ...base, startDate:date, endDate:'', months:12 });
+        nPar++;
+      } else {
+        state.others.push({ id:uid('o'), ...base, category:cat||'기타', startDate:date, endDate:'', detail:cat });
+        nOth++;
+      }
+    });
+    saveState();
+    toast(`자동 분류 완료: 신규 ${nNew} · 퇴사 ${nLeave} · 휴직 ${nPar} · 기타 ${nOth}`, 'success', 3800);
+    setView('classify');
+  } catch(e) { console.error(e); toast('분류 적용 실패', 'error'); }
+}
+
+function downloadTemplate() {
+  try {
+    const headers = [['사번','성명','부서','발령일','발령구분','비고']];
+    const rows = [
+      ['Y14906','홍길동','총무부','2026-06-20','신규입사','정규직'],
+      ['Y10231','한지원','건축사업부','2026-06-30','퇴사','개인사유'],
+      ['Y08921','장수빈','총무부','2026-06-01','육아휴직','첫째 출산'],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([...headers, ...rows]);
+    ws['!cols'] = headers[0].map(() => ({ wch: 14 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '인사발령양식');
+    XLSX.writeFile(wb, 'ERP_인사발령_양식.xlsx');
+    toast('양식 파일을 다운로드했습니다', 'success');
+  } catch(e) { console.error(e); toast('양식 생성 실패', 'error'); }
+}
+
+function addManualEntry() {
+  try {
+    const empNo = document.getElementById('m_empNo').value.trim();
+    const name  = document.getElementById('m_name').value.trim();
+    if (!empNo || !name) { toast('사번과 성명은 필수입니다', 'warn'); return; }
+    const dept = document.getElementById('m_dept').value.trim();
+    const date = document.getElementById('m_date').value;
+    const cat  = document.getElementById('m_category').value;
+    const memo = document.getElementById('m_memo').value;
+    const base = { empNo, name, dept, memo };
+    if (cat === '신규입사') state.newcomers.push({ id:uid('n'), ...base, joinDate:date, position:'', account:'', license:'', healthCheck:'예정' });
+    else if (cat === '퇴사') state.leavers.push({ id:uid('l'), ...base, leaveDate:date, position:'', reason:'' });
+    else if (cat === '육아휴직') state.parental.push({ id:uid('p'), ...base, startDate:date, endDate:'', months:12, position:'' });
+    else state.others.push({ id:uid('o'), ...base, category:cat, startDate:date, endDate:'', detail:'' });
+    saveState();
+    toast(`${name}님을 ${cat}로 추가했습니다`, 'success');
+    ['m_empNo','m_name','m_dept','m_memo'].forEach(id => document.getElementById(id).value='');
+  } catch(e) { console.error(e); toast('추가 실패', 'error'); }
+}
+
+// ============================================================
+// 3. 자동 분류 (탭)
+// ============================================================
+let _classifyActiveTab = 'newcomers';
+let _classifyFilter = { q: '', dept: '' };
+let _classifySort = { key: 'name', dir: 'asc' };
+
+function renderClassify(root) {
+  root.innerHTML = `
+    <section class="glass rounded-2xl mb-6 overflow-hidden">
+      <div class="p-5 border-b border-rose-200/30 dark:border-purple-500/20 flex flex-wrap items-center gap-3 justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg">
+            <i class="fa-solid fa-layer-group text-white"></i>
+          </div>
+          <div>
+            <h2 class="font-bold text-base">자동 분류 (Inline 편집)</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">셀을 클릭하여 바로 수정 가능합니다.</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <input id="classifyQ" placeholder="검색..." class="input !w-44 !py-1.5" value="${escapeHTML(_classifyFilter.q)}"/>
+          <select id="classifyDept" class="input !w-44 !py-1.5">
+            <option value="">전체 부서</option>
+            ${uniqueDepts().map(d=>`<option ${_classifyFilter.dept===d?'selected':''}>${escapeHTML(d)}</option>`).join('')}
+          </select>
+          <select id="classifySort" class="input !w-36 !py-1.5">
+            <option value="name_asc" ${_classifySort.key==='name'&&_classifySort.dir==='asc'?'selected':''}>이름 ↑</option>
+            <option value="name_desc" ${_classifySort.key==='name'&&_classifySort.dir==='desc'?'selected':''}>이름 ↓</option>
+            <option value="date_asc" ${_classifySort.key==='date'&&_classifySort.dir==='asc'?'selected':''}>날짜 ↑</option>
+            <option value="date_desc" ${_classifySort.key==='date'&&_classifySort.dir==='desc'?'selected':''}>날짜 ↓</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tab-scroll border-b border-rose-200/30 dark:border-purple-500/20">
+        <div class="flex">
+          ${[
+            {k:'newcomers', ic:'fa-user-plus', label:'신규입사자', n:state.newcomers.length, cls:'badge-emerald'},
+            {k:'leavers',   ic:'fa-user-minus', label:'퇴사자',     n:state.leavers.length,   cls:'badge-amber'},
+            {k:'parental',  ic:'fa-baby',       label:'육아휴직',   n:state.parental.length,  cls:'badge-purple'},
+            {k:'others',    ic:'fa-shuffle',    label:'그외 발령',  n:state.others.length,    cls:'badge-rose'},
+          ].map(t => `
+            <div data-tab="${t.k}" class="tab-btn ${_classifyActiveTab===t.k?'active':''}">
+              <i class="fa-solid ${t.ic}"></i> ${t.label}
+              <span class="badge ${t.cls} !text-[10.5px]">${t.n}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div id="tabBody" class="p-5"></div>
+    </section>
+  `;
+
+  root.querySelector('#classifyQ').addEventListener('input', e => { _classifyFilter.q = e.target.value; renderTabBody(); });
+  root.querySelector('#classifyDept').addEventListener('change', e => { _classifyFilter.dept = e.target.value; renderTabBody(); });
+  root.querySelector('#classifySort').addEventListener('change', e => {
+    const [k,d] = e.target.value.split('_'); _classifySort = { key:k, dir:d }; renderTabBody();
+  });
+  root.querySelectorAll('.tab-btn').forEach(t => t.addEventListener('click', () => {
+    _classifyActiveTab = t.dataset.tab; renderClassify(root);
+  }));
+  renderTabBody();
+}
+
+function uniqueDepts() {
+  const set = new Set();
+  state.newcomers.forEach(r=>set.add(r.dept));
+  state.leavers.forEach(r=>set.add(r.dept));
+  state.parental.forEach(r=>set.add(r.dept));
+  state.others.forEach(r=>set.add(r.dept));
+  return [...set].filter(Boolean).sort();
+}
+
+function filterSort(list, dateKey) {
+  const q = _classifyFilter.q.trim().toLowerCase();
+  const dept = _classifyFilter.dept;
+  let result = list.filter(r => {
+    if (dept && r.dept !== dept) return false;
+    if (!q) return true;
+    return (r.empNo||'').toLowerCase().includes(q) ||
+           (r.name||'').toLowerCase().includes(q) ||
+           (r.dept||'').toLowerCase().includes(q);
+  });
+  result.sort((a,b) => {
+    let va, vb;
+    if (_classifySort.key === 'name') { va=a.name||''; vb=b.name||''; }
+    else { va=a[dateKey]||''; vb=b[dateKey]||''; }
+    if (va < vb) return _classifySort.dir==='asc' ? -1 : 1;
+    if (va > vb) return _classifySort.dir==='asc' ? 1 : -1;
+    return 0;
+  });
+  return result;
+}
+
+function renderTabBody() {
+  const body = document.getElementById('tabBody');
+  if (!body) return;
+  const tab = _classifyActiveTab;
+  let html = '';
+  if (tab === 'newcomers') {
+    const rows = filterSort(state.newcomers, 'joinDate');
+    html = renderNewcomersTab(rows);
+  } else if (tab === 'leavers') {
+    const rows = filterSort(state.leavers, 'leaveDate');
+    html = renderLeaversTab(rows);
+  } else if (tab === 'parental') {
+    const rows = filterSort(state.parental, 'startDate');
+    html = renderParentalTab(rows);
+  } else if (tab === 'others') {
+    const rows = filterSort(state.others, 'startDate');
+    html = renderOthersTab(rows);
+  }
+  body.innerHTML = html;
+  bindRowEvents();
+}
+
+function tabAddBar(tab, label) {
+  return `
+    <div class="flex items-center justify-between mb-3">
+      <div class="text-sm font-semibold text-slate-700 dark:text-slate-200">${escapeHTML(label)}</div>
+      <button data-add="${tab}" class="btn-primary !py-1.5 !text-xs add-row-btn">
+        <i class="fa-solid fa-plus mr-1"></i> 행 추가
+      </button>
+    </div>`;
+}
+
+function renderNewcomersTab(rows) {
+  const head = `<thead><tr>
+    <th>사번</th><th>성명</th><th>부서</th><th>직위</th><th>입사일</th>
+    <th>계좌번호</th><th>자격증</th><th>채용검진</th><th>비고</th><th>액션</th>
+  </tr></thead>`;
+  const body = rows.length ? rows.map(r => `
+    <tr data-id="${r.id}" data-list="newcomers">
+      <td><input class="inline-input font-mono" data-key="empNo"   value="${escapeHTML(r.empNo)}"></td>
+      <td><input class="inline-input font-semibold" data-key="name" value="${escapeHTML(r.name)}"></td>
+      <td><input class="inline-input" data-key="dept"     value="${escapeHTML(r.dept)}"></td>
+      <td><input class="inline-input" data-key="position" value="${escapeHTML(r.position||'')}"></td>
+      <td><input class="inline-input" type="date" data-key="joinDate" value="${escapeHTML(r.joinDate)}"></td>
+      <td><input class="inline-input" data-key="account"  value="${escapeHTML(r.account||'')}" placeholder="은행 계좌"></td>
+      <td><input class="inline-input" data-key="license"  value="${escapeHTML(r.license||'')}"></td>
+      <td>
+        <select class="inline-input" data-key="healthCheck">
+          ${['예정','완료','미해당'].map(o=>`<option ${r.healthCheck===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </td>
+      <td><input class="inline-input" data-key="memo"  value="${escapeHTML(r.memo||'')}"></td>
+      <td><button class="btn-danger del-row"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>
+  `).join('') : `<tr><td colspan="10" class="text-center py-10 text-slate-400">데이터 없음 · "행 추가"로 시작하세요</td></tr>`;
+  return `${tabAddBar('newcomers','신규입사자 명단')}
+    <div class="overflow-x-auto"><table class="pretty-table">${head}<tbody>${body}</tbody></table></div>`;
+}
+
+function renderLeaversTab(rows) {
+  const head = `<thead><tr>
+    <th>사번</th><th>성명</th><th>부서</th><th>직위</th><th>퇴사일자</th><th>사유</th><th>비고</th><th>액션</th>
+  </tr></thead>`;
+  const body = rows.length ? rows.map(r => `
+    <tr data-id="${r.id}" data-list="leavers">
+      <td><input class="inline-input font-mono" data-key="empNo" value="${escapeHTML(r.empNo)}"></td>
+      <td><input class="inline-input font-semibold" data-key="name" value="${escapeHTML(r.name)}"></td>
+      <td><input class="inline-input" data-key="dept" value="${escapeHTML(r.dept)}"></td>
+      <td><input class="inline-input" data-key="position" value="${escapeHTML(r.position||'')}"></td>
+      <td><input class="inline-input" type="date" data-key="leaveDate" value="${escapeHTML(r.leaveDate)}"></td>
+      <td><input class="inline-input" data-key="reason" value="${escapeHTML(r.reason||'')}" placeholder="개인사유/이직 등"></td>
+      <td><input class="inline-input" data-key="memo" value="${escapeHTML(r.memo||'')}"></td>
+      <td><button class="btn-danger del-row"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>
+  `).join('') : `<tr><td colspan="8" class="text-center py-10 text-slate-400">데이터 없음</td></tr>`;
+  return `${tabAddBar('leavers','퇴사자 명단')}
+    <div class="overflow-x-auto"><table class="pretty-table">${head}<tbody>${body}</tbody></table></div>`;
+}
+
+function renderParentalTab(rows) {
+  const head = `<thead><tr>
+    <th>사번</th><th>성명</th><th>부서</th><th>직위</th><th>휴직시작</th><th>휴직종료</th><th>기간(개월)</th><th>비고</th><th>액션</th>
+  </tr></thead>`;
+  const body = rows.length ? rows.map(r => `
+    <tr data-id="${r.id}" data-list="parental">
+      <td><input class="inline-input font-mono" data-key="empNo" value="${escapeHTML(r.empNo)}"></td>
+      <td><input class="inline-input font-semibold" data-key="name" value="${escapeHTML(r.name)}"></td>
+      <td><input class="inline-input" data-key="dept" value="${escapeHTML(r.dept)}"></td>
+      <td><input class="inline-input" data-key="position" value="${escapeHTML(r.position||'')}"></td>
+      <td><input class="inline-input" type="date" data-key="startDate" value="${escapeHTML(r.startDate)}"></td>
+      <td><input class="inline-input" type="date" data-key="endDate" value="${escapeHTML(r.endDate)}"></td>
+      <td><input class="inline-input" type="number" data-key="months" value="${escapeHTML(r.months||'')}"></td>
+      <td><input class="inline-input" data-key="memo" value="${escapeHTML(r.memo||'')}"></td>
+      <td><button class="btn-danger del-row"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>
+  `).join('') : `<tr><td colspan="9" class="text-center py-10 text-slate-400">데이터 없음</td></tr>`;
+  return `${tabAddBar('parental','육아휴직 명단')}
+    <div class="overflow-x-auto"><table class="pretty-table">${head}<tbody>${body}</tbody></table></div>`;
+}
+
+function renderOthersTab(rows) {
+  const head = `<thead><tr>
+    <th>사번</th><th>성명</th><th>부서</th><th>구분</th><th>시작일</th><th>종료일</th><th>내용</th><th>비고</th><th>액션</th>
+  </tr></thead>`;
+  const body = rows.length ? rows.map(r => `
+    <tr data-id="${r.id}" data-list="others">
+      <td><input class="inline-input font-mono" data-key="empNo" value="${escapeHTML(r.empNo)}"></td>
+      <td><input class="inline-input font-semibold" data-key="name" value="${escapeHTML(r.name)}"></td>
+      <td><input class="inline-input" data-key="dept" value="${escapeHTML(r.dept)}"></td>
+      <td>
+        <select class="inline-input" data-key="category">
+          ${['정직','전보','파견','계약변경','복직','기타'].map(o=>`<option ${r.category===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </td>
+      <td><input class="inline-input" type="date" data-key="startDate" value="${escapeHTML(r.startDate)}"></td>
+      <td><input class="inline-input" type="date" data-key="endDate" value="${escapeHTML(r.endDate)}"></td>
+      <td><input class="inline-input" data-key="detail" value="${escapeHTML(r.detail||'')}" placeholder="발령 내용"></td>
+      <td><input class="inline-input" data-key="memo" value="${escapeHTML(r.memo||'')}"></td>
+      <td><button class="btn-danger del-row"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>
+  `).join('') : `<tr><td colspan="9" class="text-center py-10 text-slate-400">데이터 없음</td></tr>`;
+  return `${tabAddBar('others','그외 발령정보 (정직/전보/파견 등)')}
+    <div class="overflow-x-auto"><table class="pretty-table">${head}<tbody>${body}</tbody></table></div>`;
+}
+
+function bindRowEvents() {
+  const body = document.getElementById('tabBody');
+  if (!body) return;
+  // inline edit
+  body.querySelectorAll('input.inline-input, select.inline-input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const tr = inp.closest('tr');
+      const list = tr.dataset.list;
+      const id = tr.dataset.id;
+      const key = inp.dataset.key;
+      const target = state[list].find(r => r.id === id);
+      if (!target) return;
+      target[key] = inp.value;
+      saveState();
+    });
+  });
+  // delete row
+  body.querySelectorAll('.del-row').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tr = btn.closest('tr');
+      const list = tr.dataset.list;
+      const id = tr.dataset.id;
+      state[list] = state[list].filter(r => r.id !== id);
+      saveState();
+      renderTabBody();
+      toast('삭제되었습니다', 'success', 1600);
+    });
+  });
+  // add row
+  body.querySelectorAll('.add-row-btn').forEach(btn => {
+    btn.addEventListener('click', () => addEmptyRow(btn.dataset.add));
+  });
+}
+
+function addEmptyRow(list) {
+  const today = todayStr();
+  const tmpl = {
+    newcomers: () => ({ id:uid('n'), empNo:'', name:'', dept:'', position:'', joinDate:today, account:'', license:'', healthCheck:'예정', memo:'' }),
+    leavers:   () => ({ id:uid('l'), empNo:'', name:'', dept:'', position:'', leaveDate:today, reason:'', memo:'' }),
+    parental:  () => ({ id:uid('p'), empNo:'', name:'', dept:'', position:'', startDate:today, endDate:'', months:12, memo:'' }),
+    others:    () => ({ id:uid('o'), empNo:'', name:'', dept:'', category:'전보', startDate:today, endDate:'', detail:'', memo:'' }),
+  };
+  state[list].push(tmpl[list]());
+  saveState();
+  renderTabBody();
+  toast('빈 행을 추가했습니다', 'success', 1600);
+}
+
+// ============================================================
+// 4. 종합파일 생성
+// ============================================================
+function renderGenerate(root) {
+  const total = totalCount();
+  root.innerHTML = `
+    <section class="glass rounded-2xl p-6 mb-6">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-file-excel text-white text-lg"></i>
+        </div>
+        <div class="flex-1">
+          <h2 class="font-bold text-lg">종합파일 생성 (회계부 제출용)</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            모든 분류(신규/퇴사/육아휴직/기타)를 하나의 엑셀로 통합합니다. 시트가 분리되어 회계부 양식과 일치합니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+        <div class="glass-soft rounded-xl p-4 text-center">
+          <div class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">${state.newcomers.length}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">신규입사 시트</div>
+        </div>
+        <div class="glass-soft rounded-xl p-4 text-center">
+          <div class="text-2xl font-extrabold text-amber-600 dark:text-amber-400">${state.leavers.length}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">퇴사자 시트</div>
+        </div>
+        <div class="glass-soft rounded-xl p-4 text-center">
+          <div class="text-2xl font-extrabold text-purple-600 dark:text-purple-400">${state.parental.length}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">육아휴직 시트</div>
+        </div>
+        <div class="glass-soft rounded-xl p-4 text-center">
+          <div class="text-2xl font-extrabold text-sky-600 dark:text-sky-400">${state.others.length}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">기타발령 시트</div>
+        </div>
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        <label class="text-sm font-semibold">대상월</label>
+        <input id="genMonth" type="month" class="input !w-44" value="${escapeHTML(state.targetMonth)}"/>
+        <button id="previewExcel" class="btn-ghost">
+          <i class="fa-regular fa-eye mr-1.5"></i> 미리보기
+        </button>
+        <button id="downloadExcel" class="btn-primary">
+          <i class="fa-solid fa-download mr-1.5"></i> 종합파일 다운로드 (${total}건)
+        </button>
+      </div>
+    </section>
+
+    <section class="glass rounded-2xl p-6">
+      <h3 class="font-bold text-base flex items-center gap-2 mb-3">
+        <i class="fa-solid fa-circle-info text-purple-500"></i> 회계부 제출용 양식 안내
+      </h3>
+      <ul class="text-sm space-y-2 text-slate-600 dark:text-slate-300">
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i> 시트 1: <b>신규입사</b> - 사번, 성명, 부서, 직위, 입사일, 계좌번호, 자격증, 채용검진여부, 비고</li>
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i> 시트 2: <b>퇴사자</b> - 사번, 성명, 부서, 직위, 퇴사일자, 사유, 비고</li>
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i> 시트 3: <b>육아휴직</b> - 사번, 성명, 부서, 직위, 휴직시작, 휴직종료, 기간(개월), 비고</li>
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i> 시트 4: <b>기타발령</b> - 사번, 성명, 부서, 구분, 시작일, 종료일, 내용, 비고</li>
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i> 시트 5: <b>요약</b> - 작성일, 작성자(이태정), 총 변동 인원, 분류별 집계</li>
+      </ul>
+    </section>
+  `;
+  root.querySelector('#genMonth').addEventListener('change', e => { state.targetMonth = e.target.value; document.getElementById('targetMonthLabel').textContent = e.target.value; saveState(); });
+  root.querySelector('#previewExcel').onclick = previewExcelModal;
+  root.querySelector('#downloadExcel').onclick = downloadComprehensiveExcel;
+}
+
+function buildSheetData() {
+  const newH = [['사번','성명','부서','직위','입사일','계좌번호','자격증','채용검진','비고']];
+  const newR = state.newcomers.map(r => [r.empNo, r.name, r.dept, r.position||'', r.joinDate, r.account||'', r.license||'', r.healthCheck||'', r.memo||'']);
+  const leH = [['사번','성명','부서','직위','퇴사일자','사유','비고']];
+  const leR = state.leavers.map(r => [r.empNo, r.name, r.dept, r.position||'', r.leaveDate, r.reason||'', r.memo||'']);
+  const paH = [['사번','성명','부서','직위','휴직시작','휴직종료','기간(개월)','비고']];
+  const paR = state.parental.map(r => [r.empNo, r.name, r.dept, r.position||'', r.startDate, r.endDate||'', r.months||'', r.memo||'']);
+  const otH = [['사번','성명','부서','구분','시작일','종료일','내용','비고']];
+  const otR = state.others.map(r => [r.empNo, r.name, r.dept, r.category||'', r.startDate, r.endDate||'', r.detail||'', r.memo||'']);
+  const total = totalCount();
+  const sumH = [['항목','값']];
+  const sumR = [
+    ['작성일', todayStr()],
+    ['작성자', '이태정 (총무부 인사팀)'],
+    ['대상월', state.targetMonth],
+    ['총 변동 인원', total + '명'],
+    ['신규입사', state.newcomers.length + '명'],
+    ['퇴사자', state.leavers.length + '명'],
+    ['육아휴직', state.parental.length + '명'],
+    ['기타발령', state.others.length + '명'],
+  ];
+  return {
+    '요약':       { head: sumH, rows: sumR },
+    '신규입사':   { head: newH, rows: newR },
+    '퇴사자':     { head: leH, rows: leR },
+    '육아휴직':   { head: paH, rows: paR },
+    '기타발령':   { head: otH, rows: otR },
+  };
+}
+
+function previewExcelModal() {
+  const sheets = buildSheetData();
+  let bodyHtml = '<div class="space-y-5">';
+  Object.entries(sheets).forEach(([sheetName, data]) => {
+    bodyHtml += `
+      <div>
+        <div class="font-bold text-sm mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-table text-rose4 dark:text-rose3"></i> ${escapeHTML(sheetName)} 시트 (${data.rows.length}건)
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-rose-200/30 dark:border-purple-500/20">
+          <table class="pretty-table">
+            <thead><tr>${data.head[0].map(h=>`<th>${escapeHTML(h)}</th>`).join('')}</tr></thead>
+            <tbody>${data.rows.length ? data.rows.map(r => `<tr>${r.map(c=>`<td>${escapeHTML(c)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${data.head[0].length}" class="text-center py-4 text-slate-400">데이터 없음</td></tr>`}</tbody>
+          </table>
+        </div>
+      </div>`;
+  });
+  bodyHtml += '</div>';
+  openModal({
+    title: `종합파일 미리보기 · ${state.targetMonth}`,
+    bodyHtml,
+    footerHtml: `
+      <button class="btn-ghost" onclick="closeModal()">닫기</button>
+      <button class="btn-primary" onclick="closeModal(); downloadComprehensiveExcel()">
+        <i class="fa-solid fa-download mr-1.5"></i> 다운로드
+      </button>
+    `
+  });
+}
+// 외부에서 호출하기 위해 window 노출
+window.closeModal = closeModal;
+
+function downloadComprehensiveExcel() {
+  try {
+    const sheets = buildSheetData();
+    const wb = XLSX.utils.book_new();
+    Object.entries(sheets).forEach(([name, data]) => {
+      const aoa = [...data.head, ...data.rows];
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = data.head[0].map(() => ({ wch: 14 }));
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    });
+    const fname = `급여변동자료_${state.targetMonth}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    // 이력 자동 기록
+    state.history.unshift({
+      date: nowStamp(),
+      month: state.targetMonth,
+      count: totalCount(),
+      status: '엑셀 다운로드',
+      method: '다운로드'
+    });
+    saveState();
+    toast(`${fname} 다운로드 완료`, 'success', 3500);
+  } catch(e) { console.error(e); toast('엑셀 생성 실패: ' + e.message, 'error'); }
+}
+window.downloadComprehensiveExcel = downloadComprehensiveExcel;
+
+// ============================================================
+// 5. 회계부 전달
+// ============================================================
+function renderDeliver(root) {
+  const total = totalCount();
+  const subject = `[급여변동자료] ${state.targetMonth} · 총 ${total}건 (총무부 인사팀 이태정)`;
+  const body = buildEmailBody();
+
+  root.innerHTML = `
+    <section class="glass rounded-2xl p-6 mb-6">
+      <div class="flex items-start gap-4 mb-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-paper-plane text-white text-lg"></i>
+        </div>
+        <div class="flex-1">
+          <h2 class="font-bold text-lg">회계부 전달</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">엑셀을 다운로드한 뒤 메일을 발송하세요. 본문은 자동 생성됩니다.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div>
+          <label class="text-xs font-semibold mb-1 block">수신자 (회계부)</label>
+          <input id="mailTo" class="input" placeholder="accounting@company.com" value="accounting@company.com"/>
+        </div>
+        <div>
+          <label class="text-xs font-semibold mb-1 block">참조</label>
+          <input id="mailCc" class="input" placeholder="hr@company.com" value="hr@company.com"/>
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs font-semibold mb-1 block">제목</label>
+          <input id="mailSubject" class="input" value="${escapeHTML(subject)}"/>
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs font-semibold mb-1 block">본문</label>
+          <textarea id="mailBody" class="input" rows="12">${escapeHTML(body)}</textarea>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 justify-between">
+        <div class="flex gap-2">
+          <button id="downloadExcelInDeliver" class="btn-ghost">
+            <i class="fa-solid fa-download mr-1.5"></i> 엑셀 다운로드
+          </button>
+          <button id="copyMail" class="btn-ghost">
+            <i class="fa-solid fa-copy mr-1.5"></i> 본문 복사
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button id="sendMail" class="btn-primary">
+            <i class="fa-solid fa-envelope mr-1.5"></i> 메일 보내기
+          </button>
+          <button id="markDelivered" class="btn-primary" style="background: linear-gradient(90deg, #10b981, #059669);">
+            <i class="fa-solid fa-check mr-1.5"></i> 전달완료 기록
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass rounded-2xl p-6">
+      <h3 class="font-bold text-base mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-list-check text-emerald-500"></i> 전달 전 체크리스트
+      </h3>
+      <div class="space-y-2">
+        ${[
+          {check: state.newcomers.length>0 || state.leavers.length>0 || state.parental.length>0 || state.others.length>0, label:'1건 이상의 변동 인원이 등록되어 있다'},
+          {check: state.newcomers.every(r => r.empNo && r.name), label:'신규입사자의 사번/성명이 모두 입력되어 있다'},
+          {check: state.leavers.every(r => r.leaveDate), label:'퇴사자의 퇴사일자가 모두 입력되어 있다'},
+          {check: state.parental.every(r => r.startDate), label:'육아휴직자의 휴직시작일이 모두 입력되어 있다'},
+          {check: !!state.targetMonth, label:'대상월이 지정되어 있다'},
+        ].map(c => `
+          <div class="flex items-center gap-3 p-3 rounded-xl ${c.check ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-amber-50 dark:bg-amber-900/20'}">
+            <i class="fa-solid ${c.check ? 'fa-circle-check text-emerald-500' : 'fa-circle-exclamation text-amber-500'} text-lg"></i>
+            <span class="text-sm">${escapeHTML(c.label)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+  `;
+
+  root.querySelector('#downloadExcelInDeliver').onclick = downloadComprehensiveExcel;
+  root.querySelector('#copyMail').onclick = () => {
+    try {
+      navigator.clipboard.writeText(document.getElementById('mailBody').value);
+      toast('본문이 복사되었습니다', 'success', 1800);
+    } catch(e) { toast('복사 실패', 'error'); }
+  };
+  root.querySelector('#sendMail').onclick = () => {
+    const to = document.getElementById('mailTo').value;
+    const cc = document.getElementById('mailCc').value;
+    const subj = document.getElementById('mailSubject').value;
+    const bod = document.getElementById('mailBody').value;
+    const url = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(bod)}`;
+    window.location.href = url;
+    toast('메일 클라이언트를 열었습니다', 'info');
+  };
+  root.querySelector('#markDelivered').onclick = () => {
+    state.history.unshift({
+      date: nowStamp(),
+      month: state.targetMonth,
+      count: totalCount(),
+      status: '전달완료',
+      method: '이메일'
+    });
+    saveState();
+    toast('전달완료가 이력에 기록되었습니다', 'success');
+    setView('history');
+  };
+}
+
+function buildEmailBody() {
+  return `회계부 담당자님,
+
+안녕하세요. 총무부 인사팀 이태정 과장입니다.
+
+${state.targetMonth} 급여변동자료를 첨부와 같이 송부드립니다.
+
+[변동 인원 요약]
+- 총 변동: ${totalCount()}명
+- 신규입사: ${state.newcomers.length}명
+- 퇴사자: ${state.leavers.length}명
+- 육아휴직: ${state.parental.length}명
+- 기타발령(전보/정직 등): ${state.others.length}명
+
+세부 사항은 첨부 엑셀(시트 분리)을 참고 부탁드립니다.
+문의사항이 있으시면 언제든 연락 주시기 바랍니다.
+
+감사합니다.
+이태정 드림
+(총무부 인사팀 · 내선 5678)`;
+}
+
+// ============================================================
+// 6. 전달 이력
+// ============================================================
+function renderHistory(root) {
+  root.innerHTML = `
+    <section class="glass rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
+            <i class="fa-solid fa-clock-rotate-left text-white"></i>
+          </div>
+          <div>
+            <h2 class="font-bold text-base">전달 이력</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">회계부로 전달했던 급여변동자료 이력입니다.</p>
+          </div>
+        </div>
+        <button id="clearHistory" class="btn-ghost !py-1.5 !text-xs">
+          <i class="fa-solid fa-broom mr-1"></i> 이력 초기화
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="pretty-table">
+          <thead><tr>
+            <th>일시</th><th>대상월</th><th>변동 인원</th><th>방법</th><th>상태</th>
+          </tr></thead>
+          <tbody>${historyRows()}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
+  root.querySelector('#clearHistory').onclick = () => {
+    if (!confirm('이력을 초기화하시겠습니까?')) return;
+    state.history = []; saveState(); renderView();
+    toast('이력이 초기화되었습니다', 'success');
+  };
+}
+function historyRows() {
+  if (!state.history.length) return `<tr><td colspan="5" class="text-center py-10 text-slate-400">아직 전달 이력이 없습니다</td></tr>`;
+  return state.history.map(h => `
+    <tr>
+      <td class="font-mono text-[12.5px]">${escapeHTML(h.date)}</td>
+      <td><span class="badge badge-rose">${escapeHTML(h.month)}</span></td>
+      <td class="font-semibold">${escapeHTML(String(h.count))}명</td>
+      <td>${escapeHTML(h.method)}</td>
+      <td>
+        <span class="badge ${h.status==='전달완료' ? 'badge-emerald' : 'badge-purple'}">
+          <i class="fa-solid ${h.status==='전달완료' ? 'fa-check' : 'fa-download'}"></i> ${escapeHTML(h.status)}
+        </span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// 글로벌 검색 / 빠른 추가
+// ============================================================
+document.getElementById('globalSearch').addEventListener('input', e => {
+  if (currentView !== 'classify') setView('classify');
+  _classifyFilter.q = e.target.value;
+  const q = document.getElementById('classifyQ');
+  if (q) { q.value = e.target.value; renderTabBody(); }
+});
+
+document.getElementById('quickAddBtn').addEventListener('click', () => {
+  setView('upload');
+  setTimeout(() => {
+    const m = document.getElementById('manualSection');
+    if (m) m.classList.remove('hidden');
+    document.getElementById('m_name').focus();
+  }, 100);
+});
+
+// 모바일 사이드바
+document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('hidden');
+  sb.classList.toggle('flex');
+});
+
+// 초기 렌더
+renderView();
+</script>
+
+</body>
+</html>

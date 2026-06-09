@@ -1,0 +1,1550 @@
+<!-- 이 파일의 역할: 김혜강(총무부 인사팀) 귀임휴가 발생 검토 자동화 시스템 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>귀임휴가 발생 검토 자동화 시스템 | 김혜강 (총무부 인사팀)</title>
+
+<!-- TailwindCSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- SheetJS XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- Google Fonts: Pretendard / Noto Sans KR -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+<script>
+  // Tailwind 설정 (다크모드: class 기반)
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Pretendard', 'Noto Sans KR', 'sans-serif'],
+        },
+        colors: {
+          mint: {
+            50:  '#ecfdf7',
+            100: '#d1fae9',
+            200: '#a7f3d2',
+            300: '#6ee7b9',
+            400: '#34d39e',
+            500: '#10b981',
+            600: '#0d9c6e',
+            700: '#0d7d5b',
+            800: '#0f5f48',
+            900: '#0d4f3c',
+          },
+          teal2: {
+            500: '#14b8a6',
+            600: '#0d9488',
+            700: '#0f766e',
+          }
+        },
+        boxShadow: {
+          'glass': '0 8px 32px 0 rgba(31,38,135,0.18)',
+        }
+      }
+    }
+  };
+</script>
+
+<style>
+  html { font-family: 'Pretendard', 'Noto Sans KR', sans-serif; scroll-behavior: smooth; }
+  body { font-family: 'Pretendard', 'Noto Sans KR', sans-serif; }
+
+  /* 그라데이션 배경 - 청록/민트 톤 (인사 분위기) */
+  .bg-gradient-hr {
+    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 35%, #34d399 70%, #6ee7b9 100%);
+    background-attachment: fixed;
+  }
+  .dark .bg-gradient-hr {
+    background: linear-gradient(135deg, #042f2e 0%, #064e3b 40%, #0f766e 75%, #0d9488 100%);
+    background-attachment: fixed;
+  }
+
+  /* 글래스모피즘 */
+  .glass {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.45);
+    box-shadow: 0 8px 32px 0 rgba(13, 124, 102, 0.18);
+  }
+  .dark .glass {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(20, 184, 166, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+  }
+
+  .glass-strong {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 12px 40px rgba(13, 124, 102, 0.2);
+  }
+  .dark .glass-strong {
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(20, 184, 166, 0.22);
+  }
+
+  /* 사이드바 활성 상태 */
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(20, 184, 166, 0.18), rgba(20, 184, 166, 0.0));
+    color: #0f766e;
+    border-left: 3px solid #14b8a6;
+  }
+  .dark .nav-item.active {
+    color: #6ee7b9;
+    background: linear-gradient(90deg, rgba(20, 184, 166, 0.28), rgba(20, 184, 166, 0.0));
+    border-left: 3px solid #34d399;
+  }
+
+  /* 스크롤바 */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(15, 118, 110, 0.35); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(15, 118, 110, 0.6); }
+
+  /* 카드 호버 */
+  .card-hover { transition: all .3s ease; }
+  .card-hover:hover { transform: translateY(-4px); box-shadow: 0 16px 44px rgba(13,124,102,0.28); }
+
+  /* 토스트 */
+  .toast-enter {
+    animation: toastIn .3s ease-out forwards;
+  }
+  .toast-exit {
+    animation: toastOut .3s ease-in forwards;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(-12px) scale(.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(-12px) scale(.95); }
+  }
+
+  /* 결과 배지 */
+  .badge { display: inline-flex; align-items:center; gap:4px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge-success { background: #d1fae5; color: #065f46; }
+  .badge-danger  { background: #fee2e2; color: #991b1b; }
+  .badge-warn    { background: #fed7aa; color: #9a3412; }
+  .badge-info    { background: #fef3c7; color: #92400e; }
+  .dark .badge-success { background: rgba(16,185,129,0.22); color:#6ee7b9; }
+  .dark .badge-danger  { background: rgba(239,68,68,0.22);  color:#fca5a5; }
+  .dark .badge-warn    { background: rgba(249,115,22,0.22); color:#fdba74; }
+  .dark .badge-info    { background: rgba(234,179,8,0.22);  color:#fde68a; }
+
+  /* 행 색상 코딩 */
+  .row-success { background: rgba(209, 250, 229, 0.55); }
+  .row-danger  { background: rgba(254, 226, 226, 0.55); }
+  .row-warn    { background: rgba(254, 215, 170, 0.55); }
+  .row-info    { background: rgba(254, 243, 199, 0.55); }
+  .dark .row-success { background: rgba(16,185,129,0.10); }
+  .dark .row-danger  { background: rgba(239,68,68,0.10); }
+  .dark .row-warn    { background: rgba(249,115,22,0.10); }
+  .dark .row-info    { background: rgba(234,179,8,0.10); }
+
+  /* 인쇄 */
+  @media print {
+    body { background: white !important; }
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    .glass, .glass-strong { background: white !important; box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+  }
+  .print-only { display: none; }
+
+  /* 입력 폼 */
+  .input-base {
+    width: 100%; padding: 8px 12px; border-radius: 10px;
+    border: 1px solid rgba(15, 118, 110, 0.22);
+    background: rgba(255,255,255,0.6);
+    transition: all .2s;
+    font-size: 13px;
+  }
+  .input-base:focus {
+    outline: none; border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20,184,166,0.18);
+    background: white;
+  }
+  .dark .input-base {
+    background: rgba(15,23,42,0.55); color:#e2e8f0;
+    border-color: rgba(20,184,166,0.3);
+  }
+  .dark .input-base:focus { background: rgba(15,23,42,0.85); }
+
+  /* 버튼 */
+  .btn-primary {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    color: white;
+    transition: all .2s;
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(20,184,166,0.45); }
+
+  /* 모달 백드롭 */
+  .modal-backdrop {
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+  }
+
+  /* 우선 처리 박스 (강조) */
+  .priority-box {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    box-shadow: 0 6px 24px rgba(245,158,11,0.28);
+  }
+  .dark .priority-box {
+    background: linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(217,119,6,0.18) 100%);
+    border: 2px solid #f59e0b;
+  }
+</style>
+</head>
+
+<body class="bg-gradient-hr min-h-screen text-slate-800 dark:text-slate-200">
+
+<!-- ============ 토스트 컨테이너 ============ -->
+<div id="toastContainer" class="fixed top-4 right-4 z-[9999] space-y-2 no-print"></div>
+
+<!-- ============ 메인 레이아웃 ============ -->
+<div class="flex min-h-screen">
+
+  <!-- =================== 사이드바 =================== -->
+  <aside id="sidebar" class="w-64 glass-strong fixed top-0 left-0 h-screen z-40 no-print transform transition-transform duration-300 lg:translate-x-0 -translate-x-full">
+    <div class="p-5 border-b border-mint-200/50 dark:border-mint-700/30">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-mint-500 flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-plane-arrival text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold text-teal-800 dark:text-mint-300 leading-tight">귀임휴가 검토</h1>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">총무부 인사팀 · 김혜강</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="p-3 space-y-1 overflow-y-auto" style="height: calc(100vh - 180px);">
+      <a href="#dashboard" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-mint-50 dark:hover:bg-slate-700/40 transition" data-section="dashboard">
+        <i class="fa-solid fa-gauge-high w-5 text-center"></i><span>대시보드</span>
+      </a>
+      <a href="#dispatch" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-mint-50 dark:hover:bg-slate-700/40 transition" data-section="dispatch">
+        <i class="fa-solid fa-globe w-5 text-center"></i><span>자료1 · 파견 인원</span>
+      </a>
+      <a href="#erp" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-mint-50 dark:hover:bg-slate-700/40 transition" data-section="erp">
+        <i class="fa-solid fa-database w-5 text-center"></i><span>자료2 · ERP 발생내역</span>
+      </a>
+      <a href="#review" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-mint-50 dark:hover:bg-slate-700/40 transition" data-section="review">
+        <i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i><span>자동 대조 검토</span>
+      </a>
+      <a href="#summary" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-mint-50 dark:hover:bg-slate-700/40 transition" data-section="summary">
+        <i class="fa-solid fa-clipboard-check w-5 text-center"></i><span>검토 요약</span>
+      </a>
+      <a href="#output" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-mint-50 dark:hover:bg-slate-700/40 transition" data-section="output">
+        <i class="fa-solid fa-share-from-square w-5 text-center"></i><span>결과 출력</span>
+      </a>
+      <a href="#history" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-mint-50 dark:hover:bg-slate-700/40 transition" data-section="history">
+        <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span>검토 이력</span>
+      </a>
+    </nav>
+
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-mint-200/50 dark:border-mint-700/30">
+      <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+        <i class="fa-solid fa-shield-halved"></i><span>v1.0 · 데이터 로컬 저장</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =================== 메인 컨테이너 =================== -->
+  <main class="flex-1 lg:ml-64">
+
+    <!-- ===== 헤더 ===== -->
+    <header class="sticky top-0 z-30 glass-strong border-b border-mint-200/50 dark:border-mint-700/30 no-print">
+      <div class="flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-3">
+          <button id="sidebarToggle" class="lg:hidden p-2 rounded-lg hover:bg-mint-100 dark:hover:bg-slate-700"><i class="fa-solid fa-bars"></i></button>
+          <div>
+            <h2 id="pageTitle" class="text-xl font-extrabold text-teal-800 dark:text-mint-300">대시보드</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400" id="pageSubtitle">월간 귀임휴가 발생 검토 현황을 한눈에 확인하세요.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-mint-50 dark:bg-slate-700/60 text-xs">
+            <i class="fa-regular fa-calendar text-teal-600 dark:text-mint-400"></i>
+            <span id="todayDate" class="font-semibold"></span>
+          </div>
+          <button id="themeToggle" class="p-2.5 rounded-lg bg-mint-50 dark:bg-slate-700 hover:bg-mint-100 dark:hover:bg-slate-600 transition" title="다크/라이트 모드 토글">
+            <i id="themeIcon" class="fa-solid fa-moon text-teal-700 dark:text-mint-300"></i>
+          </button>
+          <button class="btn-primary px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2" onclick="runReview()">
+            <i class="fa-solid fa-bolt"></i><span class="hidden sm:inline">검토 실행</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-6 space-y-6">
+
+      <!-- =============================================================== -->
+      <!-- ===== 1. 대시보드 ============================================== -->
+      <!-- =============================================================== -->
+      <section id="dashboard" class="section-content">
+        <!-- 카드 5종 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div class="glass card-hover rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">전체 검토 인원</span>
+              <div class="w-9 h-9 rounded-lg bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center"><i class="fa-solid fa-users text-teal-600 dark:text-teal-300"></i></div>
+            </div>
+            <div class="text-3xl font-extrabold text-teal-800 dark:text-mint-300" id="cardTotal">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">명</div>
+          </div>
+          <div class="glass card-hover rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">발생 완료</span>
+              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center"><i class="fa-solid fa-check-circle text-emerald-600 dark:text-emerald-300"></i></div>
+            </div>
+            <div class="text-3xl font-extrabold text-emerald-700 dark:text-emerald-300" id="cardCompleted">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">정상 처리됨</div>
+          </div>
+          <div class="glass card-hover rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">추가 발생 필요</span>
+              <div class="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center"><i class="fa-solid fa-circle-exclamation text-rose-600 dark:text-rose-300"></i></div>
+            </div>
+            <div class="text-3xl font-extrabold text-rose-700 dark:text-rose-300" id="cardNeedAdd">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">즉시 처리</div>
+          </div>
+          <div class="glass card-hover rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">중복 발생 의심</span>
+              <div class="w-9 h-9 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center"><i class="fa-solid fa-copy text-orange-600 dark:text-orange-300"></i></div>
+            </div>
+            <div class="text-3xl font-extrabold text-orange-700 dark:text-orange-300" id="cardDuplicate">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">확인 후 정정</div>
+          </div>
+          <div class="glass card-hover rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">확인 필요</span>
+              <div class="w-9 h-9 rounded-lg bg-yellow-100 dark:bg-yellow-900/50 flex items-center justify-center"><i class="fa-solid fa-circle-question text-yellow-600 dark:text-yellow-300"></i></div>
+            </div>
+            <div class="text-3xl font-extrabold text-yellow-700 dark:text-yellow-300" id="cardCheck">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">사번/부서 확인</div>
+          </div>
+        </div>
+
+        <!-- 차트 2개 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-teal-800 dark:text-mint-300"><i class="fa-solid fa-chart-pie mr-2"></i>검토 결과 분포</h3>
+              <span class="text-xs text-slate-400">도넛 차트</span>
+            </div>
+            <div style="height: 280px;"><canvas id="donutChart"></canvas></div>
+          </div>
+          <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-teal-800 dark:text-mint-300"><i class="fa-solid fa-chart-column mr-2"></i>부서별 귀임휴가 발생 현황</h3>
+              <span class="text-xs text-slate-400">막대 차트</span>
+            </div>
+            <div style="height: 280px;"><canvas id="barChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- 빠른 안내 -->
+        <div class="glass rounded-2xl p-6 mt-6">
+          <h3 class="font-bold text-teal-800 dark:text-mint-300 mb-3"><i class="fa-solid fa-lightbulb mr-2"></i>처리 순서</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+            <div class="p-4 rounded-xl bg-mint-50/70 dark:bg-slate-700/40">
+              <div class="text-teal-700 dark:text-mint-300 font-bold mb-1"><i class="fa-solid fa-1 mr-1"></i> 자료 입력</div>
+              <div class="text-xs text-slate-600 dark:text-slate-300">파견 인원 + ERP 발생내역 업로드</div>
+            </div>
+            <div class="p-4 rounded-xl bg-mint-50/70 dark:bg-slate-700/40">
+              <div class="text-teal-700 dark:text-mint-300 font-bold mb-1"><i class="fa-solid fa-2 mr-1"></i> 검토 실행</div>
+              <div class="text-xs text-slate-600 dark:text-slate-300">사번/성명·부서로 자동 대조</div>
+            </div>
+            <div class="p-4 rounded-xl bg-mint-50/70 dark:bg-slate-700/40">
+              <div class="text-teal-700 dark:text-mint-300 font-bold mb-1"><i class="fa-solid fa-3 mr-1"></i> 결과 확인</div>
+              <div class="text-xs text-slate-600 dark:text-slate-300">4가지 검토 결과 분류 확인</div>
+            </div>
+            <div class="p-4 rounded-xl bg-mint-50/70 dark:bg-slate-700/40">
+              <div class="text-teal-700 dark:text-mint-300 font-bold mb-1"><i class="fa-solid fa-4 mr-1"></i> 출력/공유</div>
+              <div class="text-xs text-slate-600 dark:text-slate-300">엑셀/PDF/메일 발송</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================================== -->
+      <!-- ===== 2. 자료1 - 파견 인원 ===================================== -->
+      <!-- =============================================================== -->
+      <section id="dispatch" class="section-content hidden">
+        <div class="glass rounded-2xl p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div>
+              <h3 class="text-lg font-bold text-teal-800 dark:text-mint-300"><i class="fa-solid fa-globe mr-2"></i>자료 1 · 전월 해외합동사무소 파견 인원</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">파견시작일 ~ 귀임일까지 파견 후 귀임한 직원 명단</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <label class="px-3 py-2 rounded-lg bg-mint-100 hover:bg-mint-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs font-semibold cursor-pointer transition">
+                <i class="fa-solid fa-upload mr-1"></i> 엑셀 업로드
+                <input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="uploadExcel(event,'dispatch')" />
+              </label>
+              <button class="px-3 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition" onclick="addRow('dispatch')"><i class="fa-solid fa-plus mr-1"></i> 행 추가</button>
+              <button class="px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-semibold transition" onclick="clearAll('dispatch')"><i class="fa-solid fa-trash mr-1"></i> 전체 삭제</button>
+              <button class="px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-semibold transition" onclick="loadSample()"><i class="fa-solid fa-flask mr-1"></i> 샘플 데이터</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl">
+            <table class="w-full text-sm">
+              <thead class="bg-gradient-to-r from-teal-600 to-mint-600 text-white">
+                <tr>
+                  <th class="px-3 py-3 text-left">사번</th>
+                  <th class="px-3 py-3 text-left">성명</th>
+                  <th class="px-3 py-3 text-left">부서</th>
+                  <th class="px-3 py-3 text-left">직위</th>
+                  <th class="px-3 py-3 text-left">파견지</th>
+                  <th class="px-3 py-3 text-left">파견시작일</th>
+                  <th class="px-3 py-3 text-left">귀임일</th>
+                  <th class="px-3 py-3 text-center w-20">동작</th>
+                </tr>
+              </thead>
+              <tbody id="dispatchTable" class="bg-white/70 dark:bg-slate-800/40 divide-y divide-mint-100 dark:divide-slate-700/40"></tbody>
+            </table>
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-3"><i class="fa-solid fa-info-circle mr-1"></i> 총 <span id="dispatchCount" class="font-bold text-teal-700 dark:text-mint-300">0</span>명</div>
+        </div>
+      </section>
+
+      <!-- =============================================================== -->
+      <!-- ===== 3. 자료2 - ERP 발생내역 ================================== -->
+      <!-- =============================================================== -->
+      <section id="erp" class="section-content hidden">
+        <div class="glass rounded-2xl p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div>
+              <h3 class="text-lg font-bold text-teal-800 dark:text-mint-300"><i class="fa-solid fa-database mr-2"></i>자료 2 · ERP 당월 귀임휴가 발생내역</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">전월 귀임 대상자에 대해 당월 발생 버튼으로 생성된 휴가 내역</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <label class="px-3 py-2 rounded-lg bg-mint-100 hover:bg-mint-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs font-semibold cursor-pointer transition">
+                <i class="fa-solid fa-upload mr-1"></i> 엑셀 업로드
+                <input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="uploadExcel(event,'erp')" />
+              </label>
+              <button class="px-3 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition" onclick="addRow('erp')"><i class="fa-solid fa-plus mr-1"></i> 행 추가</button>
+              <button class="px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-semibold transition" onclick="clearAll('erp')"><i class="fa-solid fa-trash mr-1"></i> 전체 삭제</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl">
+            <table class="w-full text-sm">
+              <thead class="bg-gradient-to-r from-teal-600 to-mint-600 text-white">
+                <tr>
+                  <th class="px-3 py-3 text-left">사번</th>
+                  <th class="px-3 py-3 text-left">성명</th>
+                  <th class="px-3 py-3 text-left">휴가종류</th>
+                  <th class="px-3 py-3 text-left">발생월</th>
+                  <th class="px-3 py-3 text-left">발생일</th>
+                  <th class="px-3 py-3 text-left">발생일수</th>
+                  <th class="px-3 py-3 text-left">비고</th>
+                  <th class="px-3 py-3 text-center w-20">동작</th>
+                </tr>
+              </thead>
+              <tbody id="erpTable" class="bg-white/70 dark:bg-slate-800/40 divide-y divide-mint-100 dark:divide-slate-700/40"></tbody>
+            </table>
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-3"><i class="fa-solid fa-info-circle mr-1"></i> 총 <span id="erpCount" class="font-bold text-teal-700 dark:text-mint-300">0</span>건</div>
+        </div>
+      </section>
+
+      <!-- =============================================================== -->
+      <!-- ===== 4. 자동 대조 검토 ======================================== -->
+      <!-- =============================================================== -->
+      <section id="review" class="section-content hidden">
+        <div class="glass rounded-2xl p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-teal-800 dark:text-mint-300"><i class="fa-solid fa-magnifying-glass-chart mr-2"></i>자동 대조 검토 결과</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">사번 1순위 → 성명+부서 2순위로 매칭, 중복 발생 자동 식별</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="btn-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2" onclick="runReview()"><i class="fa-solid fa-bolt"></i> 검토 실행</button>
+              <select id="reviewFilter" class="input-base !w-auto !py-2 text-xs" onchange="renderReviewTable()">
+                <option value="all">전체 결과</option>
+                <option value="발생 완료">발생 완료</option>
+                <option value="추가 발생 필요">추가 발생 필요</option>
+                <option value="중복 발생 의심">중복 발생 의심</option>
+                <option value="확인 필요">확인 필요</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 색상 범례 -->
+          <div class="flex flex-wrap gap-3 mb-4 text-xs">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-300"></span> 발생 완료</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-rose-300"></span> 추가 발생 필요</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-orange-300"></span> 중복 발생 의심</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-300"></span> 확인 필요</span>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl">
+            <table class="w-full text-sm">
+              <thead class="bg-gradient-to-r from-teal-700 to-mint-700 text-white">
+                <tr>
+                  <th class="px-3 py-3 text-left">사번</th>
+                  <th class="px-3 py-3 text-left">성명</th>
+                  <th class="px-3 py-3 text-left">부서</th>
+                  <th class="px-3 py-3 text-left">직위</th>
+                  <th class="px-3 py-3 text-left">파견지</th>
+                  <th class="px-3 py-3 text-left">귀임일</th>
+                  <th class="px-3 py-3 text-center">ERP 발생 여부</th>
+                  <th class="px-3 py-3 text-center">검토 결과</th>
+                  <th class="px-3 py-3 text-left">조치 사항</th>
+                </tr>
+              </thead>
+              <tbody id="reviewTable" class="divide-y divide-mint-100 dark:divide-slate-700/40">
+                <tr><td colspan="9" class="text-center py-10 text-slate-400 dark:text-slate-500"><i class="fa-solid fa-arrow-up-from-bracket mr-2"></i>"검토 실행" 버튼을 눌러 결과를 생성하세요.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================================== -->
+      <!-- ===== 5. 검토 요약 ============================================ -->
+      <!-- =============================================================== -->
+      <section id="summary" class="section-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 glass rounded-2xl p-6">
+            <h3 class="text-lg font-bold text-teal-800 dark:text-mint-300 mb-4"><i class="fa-solid fa-clipboard-check mr-2"></i>검토 요약 보고</h3>
+            <div class="space-y-3" id="summaryList">
+              <div class="flex items-center justify-between p-4 rounded-xl bg-teal-50 dark:bg-slate-700/40">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-users text-teal-600"></i><span class="font-semibold">전체 검토 인원</span></div>
+                <span class="text-2xl font-extrabold text-teal-700 dark:text-mint-300" id="sumTotal">0</span><span class="text-sm">명</span>
+              </div>
+              <div class="flex items-center justify-between p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-emerald-600"></i><span class="font-semibold">발생 완료</span></div>
+                <span class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300" id="sumCompleted">0</span><span class="text-sm">명</span>
+              </div>
+              <div class="flex items-center justify-between p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-circle-exclamation text-rose-600"></i><span class="font-semibold">추가 발생 필요</span></div>
+                <span class="text-2xl font-extrabold text-rose-700 dark:text-rose-300" id="sumNeedAdd">0</span><span class="text-sm">명</span>
+              </div>
+              <div class="flex items-center justify-between p-4 rounded-xl bg-orange-50 dark:bg-orange-900/20">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-copy text-orange-600"></i><span class="font-semibold">중복 발생 의심</span></div>
+                <span class="text-2xl font-extrabold text-orange-700 dark:text-orange-300" id="sumDuplicate">0</span><span class="text-sm">명</span>
+              </div>
+              <div class="flex items-center justify-between p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-circle-question text-yellow-600"></i><span class="font-semibold">확인 필요</span></div>
+                <span class="text-2xl font-extrabold text-yellow-700 dark:text-yellow-300" id="sumCheck">0</span><span class="text-sm">명</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div class="priority-box rounded-2xl p-6">
+              <h3 class="font-extrabold text-amber-900 dark:text-amber-200 mb-3"><i class="fa-solid fa-triangle-exclamation mr-2"></i>우선 처리 대상</h3>
+              <div class="space-y-2 text-sm" id="priorityBox">
+                <div class="text-amber-900 dark:text-amber-200">데이터 없음</div>
+              </div>
+            </div>
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-teal-800 dark:text-mint-300 mb-3"><i class="fa-solid fa-percent mr-2"></i>처리율</h3>
+              <div class="text-4xl font-extrabold text-emerald-600 dark:text-emerald-400" id="rateValue">0%</div>
+              <div class="w-full bg-mint-100 dark:bg-slate-700 rounded-full h-3 mt-3 overflow-hidden">
+                <div id="rateBar" class="bg-gradient-to-r from-teal-500 to-mint-500 h-full transition-all" style="width:0%"></div>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">발생 완료 / 전체 검토 인원</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================================== -->
+      <!-- ===== 6. 결과 출력 ============================================ -->
+      <!-- =============================================================== -->
+      <section id="output" class="section-content hidden">
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-lg font-bold text-teal-800 dark:text-mint-300 mb-5"><i class="fa-solid fa-share-from-square mr-2"></i>결과 출력 및 공유</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button onclick="exportExcel()" class="card-hover p-6 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-left">
+              <i class="fa-solid fa-file-excel text-3xl mb-3"></i>
+              <div class="font-bold">엑셀 다운로드</div>
+              <div class="text-xs opacity-90 mt-1">검토결과표 + 요약 시트</div>
+            </button>
+            <button onclick="printPDF()" class="card-hover p-6 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white text-left">
+              <i class="fa-solid fa-file-pdf text-3xl mb-3"></i>
+              <div class="font-bold">PDF 인쇄</div>
+              <div class="text-xs opacity-90 mt-1">브라우저 인쇄로 PDF 저장</div>
+            </button>
+            <button onclick="copyMarkdown()" class="card-hover p-6 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-left">
+              <i class="fa-solid fa-clipboard text-3xl mb-3"></i>
+              <div class="font-bold">클립보드 복사</div>
+              <div class="text-xs opacity-90 mt-1">마크다운 표 + 요약</div>
+            </button>
+            <button onclick="sendEmail()" class="card-hover p-6 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 text-white text-left">
+              <i class="fa-solid fa-envelope text-3xl mb-3"></i>
+              <div class="font-bold">이메일 발송</div>
+              <div class="text-xs opacity-90 mt-1">mailto 자동 본문 생성</div>
+            </button>
+          </div>
+
+          <div class="mt-6 p-5 rounded-xl bg-mint-50/70 dark:bg-slate-700/40">
+            <h4 class="font-bold text-teal-700 dark:text-mint-300 mb-3"><i class="fa-solid fa-file-lines mr-2"></i>마크다운 미리보기</h4>
+            <pre id="mdPreview" class="text-xs bg-white/70 dark:bg-slate-800/50 p-4 rounded-lg overflow-x-auto max-h-72 whitespace-pre-wrap">검토를 먼저 실행하세요.</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================================== -->
+      <!-- ===== 7. 검토 이력 ============================================ -->
+      <!-- =============================================================== -->
+      <section id="history" class="section-content hidden">
+        <div class="glass rounded-2xl p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <h3 class="text-lg font-bold text-teal-800 dark:text-mint-300"><i class="fa-solid fa-clock-rotate-left mr-2"></i>월별 검토 이력</h3>
+            <div class="flex flex-wrap gap-2">
+              <input id="historySearch" type="text" placeholder="제목/일자 검색" class="input-base !w-48 !py-2 text-xs" oninput="renderHistory()" />
+              <select id="historySort" class="input-base !w-auto !py-2 text-xs" onchange="renderHistory()">
+                <option value="desc">최신순</option>
+                <option value="asc">오래된순</option>
+              </select>
+              <button onclick="saveHistory()" class="btn-primary px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-floppy-disk mr-1"></i> 현재 검토 저장</button>
+              <button onclick="clearHistory()" class="px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash mr-1"></i> 이력 전체 삭제</button>
+            </div>
+          </div>
+          <div id="historyList" class="space-y-3"></div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="px-6 py-6 text-center text-xs text-white/70 dark:text-slate-400 no-print">
+      <i class="fa-solid fa-shield-halved mr-1"></i> 모든 데이터는 브라우저 LocalStorage에만 저장됩니다 · (주)멋진엔지니어링 총무부 인사팀 · 김혜강
+    </footer>
+  </main>
+</div>
+
+<!-- ============ 모달 ============ -->
+<div id="modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center no-print">
+  <div class="glass-strong rounded-2xl p-6 w-full max-w-md mx-4">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="modalTitle" class="font-bold text-teal-800 dark:text-mint-300">확인</h3>
+      <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-mint-100 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p id="modalMessage" class="text-sm text-slate-600 dark:text-slate-300 mb-5"></p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeModal()" class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-sm font-semibold">취소</button>
+      <button id="modalConfirm" onclick="confirmModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-bold">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ JavaScript ============ -->
+<script>
+/* ===========================================================
+ * 상수 / 전역 상태
+ * =========================================================== */
+const STORAGE_KEY = 'khk_return_leave_v1';
+
+const STATE = {
+  dispatch: [],   // 파견 인원
+  erp: [],        // ERP 발생내역
+  review: [],     // 대조 결과
+  history: [],    // 검토 이력
+};
+
+let donutChart = null;
+let barChart = null;
+let modalCallback = null;
+
+/* ===========================================================
+ * 유틸 (XSS 방어 / 토스트 / 모달)
+ * =========================================================== */
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+function showToast(message, type = 'info') {
+  try {
+    const container = document.getElementById('toastContainer');
+    const colors = {
+      success: 'bg-emerald-500 text-white',
+      error:   'bg-rose-500 text-white',
+      info:    'bg-teal-600 text-white',
+      warn:    'bg-amber-500 text-white',
+    };
+    const icons = {
+      success: 'fa-check-circle',
+      error:   'fa-circle-exclamation',
+      info:    'fa-circle-info',
+      warn:    'fa-triangle-exclamation',
+    };
+    const toast = document.createElement('div');
+    toast.className = `toast-enter ${colors[type] || colors.info} px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[260px] max-w-md`;
+    toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span class="text-sm font-semibold">${escapeHTML(message)}</span>`;
+    container.appendChild(toast);
+    setTimeout(()=>{
+      toast.classList.remove('toast-enter');
+      toast.classList.add('toast-exit');
+      setTimeout(()=>toast.remove(), 300);
+    }, 2800);
+  } catch(e) { console.error('toast error', e); }
+}
+
+function openModal(title, message, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMessage').textContent = message;
+  modalCallback = onConfirm;
+  const modal = document.getElementById('modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  modalCallback = null;
+}
+function confirmModal() {
+  if (typeof modalCallback === 'function') {
+    try { modalCallback(); } catch(e){ console.error(e); showToast('처리 중 오류 발생','error'); }
+  }
+  closeModal();
+}
+
+/* ===========================================================
+ * LocalStorage 로드 / 저장
+ * =========================================================== */
+function loadStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.dispatch) STATE.dispatch = data.dispatch;
+    if (data.erp)      STATE.erp = data.erp;
+    if (data.review)   STATE.review = data.review;
+    if (data.history)  STATE.history = data.history;
+  } catch(e) {
+    console.error('Load storage error', e);
+    showToast('저장 데이터를 불러오지 못했습니다.', 'error');
+  }
+}
+function saveStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      dispatch: STATE.dispatch,
+      erp: STATE.erp,
+      review: STATE.review,
+      history: STATE.history,
+    }));
+  } catch(e) {
+    console.error('Save storage error', e);
+    showToast('저장 중 오류가 발생했습니다.', 'error');
+  }
+}
+
+/* ===========================================================
+ * 샘플 데이터 (의도적 누락/중복 포함)
+ * =========================================================== */
+function loadSample() {
+  STATE.dispatch = [
+    { empNo:'Y00001', name:'홍길동',     dept:'해외사업1부', position:'차장',     site:'베트남',     start:'2026-03-01', end:'2026-03-25' },
+    { empNo:'Y00002', name:'김영수',     dept:'해외사업1부', position:'과장',     site:'UAE',        start:'2026-02-15', end:'2026-03-18' },
+    { empNo:'Y00003', name:'박지원',     dept:'해외사업2부', position:'대리',     site:'사우디',     start:'2026-01-20', end:'2026-03-22' },
+    { empNo:'Y00004', name:'이수민',     dept:'플랜트사업부', position:'부장',     site:'인도네시아', start:'2026-02-10', end:'2026-03-30' },
+    { empNo:'Y00005', name:'정유진',     dept:'해외사업2부', position:'사원',     site:'카타르',     start:'2026-03-05', end:'2026-03-28' },
+    { empNo:'Y00006', name:'최민호',     dept:'해외사업1부', position:'과장',     site:'베트남',     start:'2026-02-25', end:'2026-03-26' },
+    { empNo:'Y00007', name:'한지영',     dept:'플랜트사업부', position:'대리',     site:'UAE',        start:'2026-03-08', end:'2026-03-31' },
+  ];
+
+  STATE.erp = [
+    { empNo:'Y00001', name:'홍길동', kind:'귀임휴가', month:'2026-03', date:'2026-04-01', days:3, note:'해외현장 귀임' },
+    { empNo:'Y00002', name:'김영수', kind:'귀임휴가', month:'2026-03', date:'2026-04-01', days:5, note:'UAE 현장 귀임' },
+    { empNo:'Y00002', name:'김영수', kind:'귀임휴가', month:'2026-03', date:'2026-04-02', days:3, note:'중복 발생 의심' },
+    { empNo:'Y00004', name:'이수민', kind:'귀임휴가', month:'2026-03', date:'2026-04-01', days:4, note:'인도네시아 현장' },
+    { empNo:'',       name:'정유진', kind:'귀임휴가', month:'2026-03', date:'2026-04-02', days:3, note:'사번 누락 - 확인 필요' },
+  ];
+
+  saveStorage();
+  renderDispatchTable();
+  renderErpTable();
+  showToast('샘플 데이터를 불러왔습니다.', 'success');
+}
+
+/* ===========================================================
+ * 테이블 렌더 - 자료1 파견 인원
+ * =========================================================== */
+function renderDispatchTable() {
+  const tbody = document.getElementById('dispatchTable');
+  if (!STATE.dispatch.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 dark:text-slate-500"><i class="fa-solid fa-inbox mr-2"></i>데이터가 없습니다. "행 추가" 또는 "샘플 데이터"를 눌러주세요.</td></tr>`;
+  } else {
+    tbody.innerHTML = STATE.dispatch.map((row, i) => `
+      <tr class="hover:bg-mint-50/40 dark:hover:bg-slate-700/20">
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.empNo)}"     onchange="updateRow('dispatch',${i},'empNo',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.name)}"      onchange="updateRow('dispatch',${i},'name',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.dept)}"      onchange="updateRow('dispatch',${i},'dept',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.position)}"  onchange="updateRow('dispatch',${i},'position',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.site)}"      onchange="updateRow('dispatch',${i},'site',this.value)" /></td>
+        <td class="px-2 py-2"><input type="date" class="input-base" value="${escapeHTML(row.start)}" onchange="updateRow('dispatch',${i},'start',this.value)" /></td>
+        <td class="px-2 py-2"><input type="date" class="input-base" value="${escapeHTML(row.end)}"   onchange="updateRow('dispatch',${i},'end',this.value)" /></td>
+        <td class="px-2 py-2 text-center">
+          <button class="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300" onclick="deleteRow('dispatch',${i})" title="삭제"><i class="fa-solid fa-trash text-xs"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  }
+  document.getElementById('dispatchCount').textContent = STATE.dispatch.length;
+}
+
+/* ===========================================================
+ * 테이블 렌더 - 자료2 ERP
+ * =========================================================== */
+function renderErpTable() {
+  const tbody = document.getElementById('erpTable');
+  if (!STATE.erp.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 dark:text-slate-500"><i class="fa-solid fa-inbox mr-2"></i>데이터가 없습니다. "행 추가" 또는 "샘플 데이터"를 눌러주세요.</td></tr>`;
+  } else {
+    tbody.innerHTML = STATE.erp.map((row, i) => `
+      <tr class="hover:bg-mint-50/40 dark:hover:bg-slate-700/20">
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.empNo)}"   onchange="updateRow('erp',${i},'empNo',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.name)}"    onchange="updateRow('erp',${i},'name',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.kind || '귀임휴가')}" onchange="updateRow('erp',${i},'kind',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.month)}"   placeholder="2026-03" onchange="updateRow('erp',${i},'month',this.value)" /></td>
+        <td class="px-2 py-2"><input type="date" class="input-base" value="${escapeHTML(row.date)}" onchange="updateRow('erp',${i},'date',this.value)" /></td>
+        <td class="px-2 py-2"><input type="number" min="0" step="0.5" class="input-base" value="${escapeHTML(row.days)}" onchange="updateRow('erp',${i},'days',this.value)" /></td>
+        <td class="px-2 py-2"><input class="input-base" value="${escapeHTML(row.note)}"    onchange="updateRow('erp',${i},'note',this.value)" /></td>
+        <td class="px-2 py-2 text-center">
+          <button class="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300" onclick="deleteRow('erp',${i})" title="삭제"><i class="fa-solid fa-trash text-xs"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  }
+  document.getElementById('erpCount').textContent = STATE.erp.length;
+}
+
+/* ===========================================================
+ * 행 추가 / 수정 / 삭제 / 전체삭제
+ * =========================================================== */
+function addRow(kind) {
+  if (kind === 'dispatch') {
+    STATE.dispatch.push({ empNo:'', name:'', dept:'', position:'', site:'', start:'', end:'' });
+    renderDispatchTable();
+  } else if (kind === 'erp') {
+    STATE.erp.push({ empNo:'', name:'', kind:'귀임휴가', month:'', date:'', days:0, note:'' });
+    renderErpTable();
+  }
+  saveStorage();
+}
+
+function updateRow(kind, idx, field, value) {
+  try {
+    const v = (field === 'days') ? (Number(value) || 0) : String(value || '').trim();
+    if (kind === 'dispatch') STATE.dispatch[idx][field] = v;
+    else if (kind === 'erp') STATE.erp[idx][field] = v;
+    saveStorage();
+  } catch(e) {
+    console.error('updateRow error', e);
+    showToast('값 수정 중 오류가 발생했습니다.', 'error');
+  }
+}
+
+function deleteRow(kind, idx) {
+  if (kind === 'dispatch') { STATE.dispatch.splice(idx,1); renderDispatchTable(); }
+  else if (kind === 'erp') { STATE.erp.splice(idx,1); renderErpTable(); }
+  saveStorage();
+  showToast('1건 삭제되었습니다.', 'info');
+}
+
+function clearAll(kind) {
+  openModal('전체 삭제', `${kind === 'dispatch' ? '파견 인원' : 'ERP 발생내역'} 데이터를 모두 삭제하시겠어요?`, () => {
+    if (kind === 'dispatch') { STATE.dispatch = []; renderDispatchTable(); }
+    else if (kind === 'erp') { STATE.erp = []; renderErpTable(); }
+    saveStorage();
+    showToast('데이터가 전체 삭제되었습니다.', 'success');
+  });
+}
+
+/* ===========================================================
+ * 엑셀 업로드 (SheetJS)
+ * =========================================================== */
+function uploadExcel(event, kind) {
+  try {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        if (!rows.length) { showToast('엑셀에 데이터가 없습니다.', 'warn'); return; }
+
+        if (kind === 'dispatch') {
+          STATE.dispatch = rows.map(r => ({
+            empNo: r['사번'] || r['empNo'] || '',
+            name:  r['성명'] || r['name'] || '',
+            dept:  r['부서'] || r['dept'] || '',
+            position: r['직위'] || r['position'] || '',
+            site:  r['파견지'] || r['site'] || '',
+            start: normalizeDate(r['파견시작일'] || r['start']),
+            end:   normalizeDate(r['귀임일'] || r['end']),
+          }));
+          renderDispatchTable();
+        } else if (kind === 'erp') {
+          STATE.erp = rows.map(r => ({
+            empNo: r['사번'] || r['empNo'] || '',
+            name:  r['성명'] || r['name'] || '',
+            kind:  r['휴가종류'] || r['kind'] || '귀임휴가',
+            month: r['발생월'] || r['month'] || '',
+            date:  normalizeDate(r['발생일'] || r['date']),
+            days:  Number(r['발생일수'] || r['days'] || 0),
+            note:  r['비고'] || r['note'] || '',
+          }));
+          renderErpTable();
+        }
+        saveStorage();
+        showToast(`엑셀 업로드 완료 · ${rows.length}건`, 'success');
+      } catch(err) {
+        console.error('xlsx parse error', err);
+        showToast('엑셀 파일을 읽지 못했습니다.', 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    event.target.value = '';
+  } catch(e) {
+    console.error('upload error', e);
+    showToast('파일 업로드 중 오류 발생', 'error');
+  }
+}
+
+function normalizeDate(v) {
+  if (!v) return '';
+  if (typeof v === 'number') {
+    try {
+      const d = XLSX.SSF.parse_date_code(v);
+      if (d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+    } catch(e) {}
+  }
+  const s = String(v).trim().replace(/\./g,'-').replace(/\//g,'-');
+  return s;
+}
+
+/* ===========================================================
+ * 핵심: 자동 대조 검토 로직
+ * =========================================================== */
+function runReview() {
+  try {
+    if (!STATE.dispatch.length) {
+      showToast('자료1(파견 인원)이 비어 있습니다.', 'warn');
+      switchSection('dispatch'); return;
+    }
+
+    const results = [];
+    // ERP를 사번 / (성명+부서) 모두 인덱스
+    const erpByEmp  = {};
+    const erpByName = {};
+    STATE.erp.forEach(e => {
+      if (e.empNo && String(e.empNo).trim()) {
+        const k = String(e.empNo).trim();
+        if (!erpByEmp[k]) erpByEmp[k] = [];
+        erpByEmp[k].push(e);
+      }
+      const nk = `${String(e.name||'').trim()}`;
+      if (nk) {
+        if (!erpByName[nk]) erpByName[nk] = [];
+        erpByName[nk].push(e);
+      }
+    });
+
+    // 파견 인원 순회
+    STATE.dispatch.forEach(p => {
+      if (!p.end) {
+        // 귀임일 미정 → 검토 제외
+        return;
+      }
+      let matched = [];
+      let matchedBy = '';
+
+      // 1순위: 사번 매칭
+      if (p.empNo && erpByEmp[String(p.empNo).trim()]) {
+        matched = erpByEmp[String(p.empNo).trim()];
+        matchedBy = '사번';
+      } else {
+        // 2순위: 성명만 일치 (그 후 부서까지 확인)
+        const cand = erpByName[String(p.name||'').trim()] || [];
+        if (cand.length) {
+          // 부서 정보가 ERP에 없을 수도 있으므로 성명 단독으로 매칭 시도, 후속 분기에서 부서 확인 표시
+          matched = cand;
+          matchedBy = '성명';
+        }
+      }
+
+      let erpStatus = '없음';        // 있음 / 없음 / 중복 의심 / 확인 필요
+      let resultStatus = '추가 발생 필요'; // 발생 완료 / 추가 발생 필요 / 중복 발생 의심 / 확인 필요
+      let action = '귀임휴가 추가 발생 처리';
+
+      if (!matched.length) {
+        // 사번/성명으로도 ERP에 없음 → 사번이 비어 있으면 확인 필요로 분류
+        if (!p.empNo || String(p.empNo).trim() === '') {
+          erpStatus = '확인 필요';
+          resultStatus = '확인 필요';
+          action = '사번 확인 필요';
+        } else {
+          erpStatus = '없음';
+          resultStatus = '추가 발생 필요';
+          action = '귀임휴가 추가 발생 처리';
+        }
+      } else if (matched.length === 1) {
+        // 1건 매칭
+        if (matchedBy === '성명') {
+          // 부서 비교 없이는 100% 확신 불가
+          erpStatus = '확인 필요';
+          resultStatus = '확인 필요';
+          action = '사번/부서 일치 여부 확인 필요';
+        } else {
+          erpStatus = '있음';
+          resultStatus = '발생 완료';
+          action = '별도 조치 없음';
+        }
+      } else {
+        // 2건 이상 매칭 → 중복 의심
+        erpStatus = '중복 의심';
+        resultStatus = '중복 발생 의심';
+        action = 'ERP 중복 발생내역 확인';
+      }
+
+      // 귀임월과 발생월 기준 보조 검증 (간단 휴리스틱)
+      if (resultStatus === '발생 완료' && matched.length === 1) {
+        const m = matched[0];
+        const endMonth = (p.end || '').slice(0,7); // YYYY-MM
+        if (m.month && m.month !== endMonth) {
+          action = '귀임월과 발생월 기준 확인 필요';
+        }
+      }
+
+      results.push({
+        empNo: p.empNo || '',
+        name:  p.name || '',
+        dept:  p.dept || '',
+        position: p.position || '',
+        site:  p.site || '',
+        end:   p.end || '',
+        erpStatus,
+        resultStatus,
+        action,
+        matchedCount: matched.length,
+      });
+    });
+
+    STATE.review = results;
+    saveStorage();
+    renderReviewTable();
+    renderSummary();
+    renderDashboard();
+    renderMarkdownPreview();
+    showToast(`검토 완료 · 총 ${results.length}건`, 'success');
+    switchSection('review');
+  } catch(e) {
+    console.error('runReview error', e);
+    showToast('검토 실행 중 오류가 발생했습니다.', 'error');
+  }
+}
+
+/* ===========================================================
+ * 검토 테이블 렌더
+ * =========================================================== */
+function getResultBadge(status) {
+  switch(status) {
+    case '발생 완료':       return `<span class="badge badge-success"><i class="fa-solid fa-check"></i>발생 완료</span>`;
+    case '추가 발생 필요':  return `<span class="badge badge-danger"><i class="fa-solid fa-exclamation"></i>추가 발생 필요</span>`;
+    case '중복 발생 의심':  return `<span class="badge badge-warn"><i class="fa-solid fa-copy"></i>중복 발생 의심</span>`;
+    case '확인 필요':       return `<span class="badge badge-info"><i class="fa-solid fa-question"></i>확인 필요</span>`;
+    default: return escapeHTML(status);
+  }
+}
+function getErpStatusBadge(status) {
+  switch(status) {
+    case '있음':       return `<span class="badge badge-success">있음</span>`;
+    case '없음':       return `<span class="badge badge-danger">없음</span>`;
+    case '중복 의심':  return `<span class="badge badge-warn">중복 의심</span>`;
+    case '확인 필요':  return `<span class="badge badge-info">확인 필요</span>`;
+    default: return escapeHTML(status);
+  }
+}
+function getRowClass(status) {
+  switch(status) {
+    case '발생 완료':       return 'row-success';
+    case '추가 발생 필요':  return 'row-danger';
+    case '중복 발생 의심':  return 'row-warn';
+    case '확인 필요':       return 'row-info';
+    default: return '';
+  }
+}
+
+function renderReviewTable() {
+  const tbody = document.getElementById('reviewTable');
+  if (!tbody) return;
+  if (!STATE.review.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400 dark:text-slate-500"><i class="fa-solid fa-arrow-up-from-bracket mr-2"></i>"검토 실행" 버튼을 눌러 결과를 생성하세요.</td></tr>`;
+    return;
+  }
+  const filter = document.getElementById('reviewFilter').value;
+  const list = (filter === 'all') ? STATE.review : STATE.review.filter(r => r.resultStatus === filter);
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400"><i class="fa-solid fa-filter mr-2"></i>해당 분류의 결과가 없습니다.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(r => `
+    <tr class="${getRowClass(r.resultStatus)} hover:opacity-90">
+      <td class="px-3 py-2 font-mono text-xs">${escapeHTML(r.empNo)}</td>
+      <td class="px-3 py-2 font-semibold">${escapeHTML(r.name)}</td>
+      <td class="px-3 py-2 text-xs">${escapeHTML(r.dept)}</td>
+      <td class="px-3 py-2 text-xs">${escapeHTML(r.position)}</td>
+      <td class="px-3 py-2 text-xs">${escapeHTML(r.site)}</td>
+      <td class="px-3 py-2 text-xs">${escapeHTML(r.end)}</td>
+      <td class="px-3 py-2 text-center">${getErpStatusBadge(r.erpStatus)}</td>
+      <td class="px-3 py-2 text-center">${getResultBadge(r.resultStatus)}</td>
+      <td class="px-3 py-2 text-xs">${escapeHTML(r.action)}</td>
+    </tr>
+  `).join('');
+}
+
+/* ===========================================================
+ * 요약 / 우선처리 / 처리율
+ * =========================================================== */
+function countByResult() {
+  const c = { total: STATE.review.length, completed: 0, needAdd: 0, duplicate: 0, check: 0 };
+  STATE.review.forEach(r => {
+    if (r.resultStatus === '발생 완료')       c.completed++;
+    else if (r.resultStatus === '추가 발생 필요') c.needAdd++;
+    else if (r.resultStatus === '중복 발생 의심') c.duplicate++;
+    else if (r.resultStatus === '확인 필요')   c.check++;
+  });
+  return c;
+}
+
+function renderSummary() {
+  const c = countByResult();
+  document.getElementById('sumTotal').textContent     = c.total;
+  document.getElementById('sumCompleted').textContent = c.completed;
+  document.getElementById('sumNeedAdd').textContent   = c.needAdd;
+  document.getElementById('sumDuplicate').textContent = c.duplicate;
+  document.getElementById('sumCheck').textContent     = c.check;
+
+  // 우선 처리 박스
+  const box = document.getElementById('priorityBox');
+  if (c.total === 0) {
+    box.innerHTML = `<div class="text-amber-900 dark:text-amber-200">데이터 없음</div>`;
+  } else {
+    box.innerHTML = `
+      <div class="text-base font-extrabold text-amber-900 dark:text-amber-100">
+        추가 발생 필요자 <span class="text-rose-700">${c.needAdd}명</span>,
+        중복 발생 의심자 <span class="text-orange-700">${c.duplicate}명</span>,
+        확인 필요자 <span class="text-yellow-700">${c.check}명</span>
+      </div>
+      <div class="text-xs text-amber-800/80 dark:text-amber-200/80 mt-2">즉시 조치 권고 · 총 ${c.needAdd + c.duplicate + c.check}명</div>
+    `;
+  }
+
+  // 처리율
+  const rate = c.total ? Math.round((c.completed / c.total) * 100) : 0;
+  document.getElementById('rateValue').textContent = rate + '%';
+  document.getElementById('rateBar').style.width = rate + '%';
+}
+
+/* ===========================================================
+ * 대시보드 카드 + 차트
+ * =========================================================== */
+function renderDashboard() {
+  const c = countByResult();
+  document.getElementById('cardTotal').textContent     = c.total;
+  document.getElementById('cardCompleted').textContent = c.completed;
+  document.getElementById('cardNeedAdd').textContent   = c.needAdd;
+  document.getElementById('cardDuplicate').textContent = c.duplicate;
+  document.getElementById('cardCheck').textContent     = c.check;
+
+  renderDonut(c);
+  renderBar();
+}
+
+function renderDonut(c) {
+  const ctx = document.getElementById('donutChart');
+  if (!ctx) return;
+  const data = {
+    labels: ['발생 완료', '추가 발생 필요', '중복 발생 의심', '확인 필요'],
+    datasets: [{
+      data: [c.completed, c.needAdd, c.duplicate, c.check],
+      backgroundColor: ['#10b981', '#ef4444', '#f97316', '#eab308'],
+      borderWidth: 0,
+    }]
+  };
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data,
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12, family: 'Pretendard' } } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}명` } }
+      }
+    }
+  });
+}
+
+function renderBar() {
+  const ctx = document.getElementById('barChart');
+  if (!ctx) return;
+
+  // 부서별 카운트 (검토 결과 기준)
+  const deptMap = {};
+  STATE.review.forEach(r => {
+    const d = r.dept || '미지정';
+    if (!deptMap[d]) deptMap[d] = { completed:0, needAdd:0, duplicate:0, check:0 };
+    if (r.resultStatus === '발생 완료')       deptMap[d].completed++;
+    else if (r.resultStatus === '추가 발생 필요') deptMap[d].needAdd++;
+    else if (r.resultStatus === '중복 발생 의심') deptMap[d].duplicate++;
+    else if (r.resultStatus === '확인 필요')   deptMap[d].check++;
+  });
+  const labels = Object.keys(deptMap);
+  if (!labels.length) labels.push('데이터 없음');
+  const dataCompleted = labels.map(l => deptMap[l]?.completed || 0);
+  const dataNeedAdd   = labels.map(l => deptMap[l]?.needAdd   || 0);
+  const dataDuplicate = labels.map(l => deptMap[l]?.duplicate || 0);
+  const dataCheck     = labels.map(l => deptMap[l]?.check     || 0);
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '발생 완료',       data: dataCompleted, backgroundColor: '#10b981' },
+        { label: '추가 발생 필요',  data: dataNeedAdd,   backgroundColor: '#ef4444' },
+        { label: '중복 발생 의심',  data: dataDuplicate, backgroundColor: '#f97316' },
+        { label: '확인 필요',       data: dataCheck,     backgroundColor: '#eab308' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11, family: 'Pretendard' } } } },
+      scales: {
+        x: { stacked: true, ticks: { font: { family: 'Pretendard' } } },
+        y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Pretendard' } } }
+      }
+    }
+  });
+}
+
+/* ===========================================================
+ * 마크다운 / 엑셀 / PDF / 메일
+ * =========================================================== */
+function buildMarkdown() {
+  const c = countByResult();
+  let md = `# 귀임휴가 발생 검토 결과\n\n`;
+  md += `- 검토 일자: ${new Date().toLocaleString('ko-KR')}\n`;
+  md += `- 담당자: 김혜강 (총무부 인사팀)\n\n`;
+  md += `## 검토 결과표\n\n`;
+  md += `| 사번 | 성명 | 부서 | 직위 | 파견지 | 귀임일 | ERP 발생 여부 | 검토 결과 | 조치 사항 |\n`;
+  md += `|---|---|---|---|---|---|---|---|---|\n`;
+  STATE.review.forEach(r => {
+    md += `| ${r.empNo || '-'} | ${r.name || '-'} | ${r.dept || '-'} | ${r.position || '-'} | ${r.site || '-'} | ${r.end || '-'} | ${r.erpStatus} | ${r.resultStatus} | ${r.action} |\n`;
+  });
+  md += `\n## 요약\n\n`;
+  md += `- 전체 검토 인원: ${c.total}명\n`;
+  md += `- 발생 완료: ${c.completed}명\n`;
+  md += `- 추가 발생 필요: ${c.needAdd}명\n`;
+  md += `- 중복 발생 의심: ${c.duplicate}명\n`;
+  md += `- 확인 필요: ${c.check}명\n\n`;
+  md += `우선 처리 대상: 추가 발생 필요자 ${c.needAdd}명, 중복 발생 의심자 ${c.duplicate}명, 확인 필요자 ${c.check}명\n`;
+  return md;
+}
+
+function renderMarkdownPreview() {
+  const pre = document.getElementById('mdPreview');
+  if (!pre) return;
+  if (!STATE.review.length) { pre.textContent = '검토를 먼저 실행하세요.'; return; }
+  pre.textContent = buildMarkdown();
+}
+
+function copyMarkdown() {
+  if (!STATE.review.length) { showToast('검토 결과가 없습니다.', 'warn'); return; }
+  try {
+    const md = buildMarkdown();
+    navigator.clipboard.writeText(md).then(()=>{
+      showToast('마크다운 표가 클립보드에 복사되었습니다.', 'success');
+    }).catch(()=>{
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = md; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showToast('클립보드에 복사되었습니다.', 'success'); }
+      catch(e) { showToast('클립보드 복사 실패', 'error'); }
+      ta.remove();
+    });
+  } catch(e) {
+    console.error('copy error', e);
+    showToast('복사 중 오류 발생', 'error');
+  }
+}
+
+function exportExcel() {
+  if (!STATE.review.length) { showToast('검토 결과가 없습니다.', 'warn'); return; }
+  try {
+    const wb = XLSX.utils.book_new();
+    // Sheet1: 검토결과표
+    const headers = ['사번','성명','부서','직위','파견지','귀임일','ERP 발생 여부','검토 결과','조치 사항'];
+    const rows = STATE.review.map(r => [r.empNo, r.name, r.dept, r.position, r.site, r.end, r.erpStatus, r.resultStatus, r.action]);
+    const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws1['!cols'] = headers.map(()=>({ wch: 16 }));
+    XLSX.utils.book_append_sheet(wb, ws1, '검토결과표');
+
+    // Sheet2: 요약
+    const c = countByResult();
+    const summary = [
+      ['항목','명'],
+      ['전체 검토 인원', c.total],
+      ['발생 완료', c.completed],
+      ['추가 발생 필요', c.needAdd],
+      ['중복 발생 의심', c.duplicate],
+      ['확인 필요', c.check],
+      [''],
+      ['우선 처리 대상', `추가 ${c.needAdd}명 / 중복 ${c.duplicate}명 / 확인 ${c.check}명`],
+    ];
+    const ws2 = XLSX.utils.aoa_to_sheet(summary);
+    ws2['!cols'] = [{ wch: 24 }, { wch: 32 }];
+    XLSX.utils.book_append_sheet(wb, ws2, '요약');
+
+    const fname = `귀임휴가검토_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    showToast('엑셀 파일이 다운로드되었습니다.', 'success');
+  } catch(e) {
+    console.error('export error', e);
+    showToast('엑셀 저장 중 오류 발생', 'error');
+  }
+}
+
+function printPDF() {
+  if (!STATE.review.length) { showToast('검토 결과가 없습니다.', 'warn'); return; }
+  switchSection('review');
+  setTimeout(()=>window.print(), 200);
+}
+
+function sendEmail() {
+  if (!STATE.review.length) { showToast('검토 결과가 없습니다.', 'warn'); return; }
+  try {
+    const c = countByResult();
+    const subject = `[귀임휴가 검토 결과] ${new Date().toISOString().slice(0,10)}`;
+    const body = `안녕하세요. 총무부 인사팀 김혜강입니다.\n\n금월 귀임휴가 발생 검토 결과를 보내드립니다.\n\n- 전체 검토 인원: ${c.total}명\n- 발생 완료: ${c.completed}명\n- 추가 발생 필요: ${c.needAdd}명\n- 중복 발생 의심: ${c.duplicate}명\n- 확인 필요: ${c.check}명\n\n우선 처리 대상: 추가 발생 필요자 ${c.needAdd}명, 중복 발생 의심자 ${c.duplicate}명, 확인 필요자 ${c.check}명\n\n상세 내역은 첨부 엑셀 파일을 확인 부탁드립니다.\n감사합니다.`;
+    const mail = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mail;
+  } catch(e) {
+    console.error('mail error', e);
+    showToast('메일 발송 중 오류 발생', 'error');
+  }
+}
+
+/* ===========================================================
+ * 검토 이력 (LocalStorage)
+ * =========================================================== */
+function saveHistory() {
+  if (!STATE.review.length) { showToast('저장할 검토 결과가 없습니다.', 'warn'); return; }
+  const c = countByResult();
+  const item = {
+    id: 'h_' + Date.now(),
+    title: `${new Date().toISOString().slice(0,7)} 귀임휴가 검토`,
+    date: new Date().toISOString(),
+    counts: c,
+    snapshot: JSON.parse(JSON.stringify(STATE.review)),
+  };
+  STATE.history.unshift(item);
+  saveStorage();
+  renderHistory();
+  showToast('검토 결과가 이력에 저장되었습니다.', 'success');
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!list) return;
+  const keyword = (document.getElementById('historySearch')?.value || '').toLowerCase();
+  const sortDir = document.getElementById('historySort')?.value || 'desc';
+  let items = [...STATE.history];
+  if (keyword) {
+    items = items.filter(i => (i.title || '').toLowerCase().includes(keyword) || (i.date || '').includes(keyword));
+  }
+  items.sort((a,b) => sortDir === 'desc' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+
+  if (!items.length) {
+    list.innerHTML = `<div class="text-center text-slate-400 py-10"><i class="fa-solid fa-folder-open mr-2"></i>저장된 이력이 없습니다.</div>`;
+    return;
+  }
+  list.innerHTML = items.map(it => `
+    <div class="glass p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <div class="font-bold text-teal-800 dark:text-mint-300">${escapeHTML(it.title)}</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">${new Date(it.date).toLocaleString('ko-KR')}</div>
+        <div class="text-xs mt-1">총 ${it.counts.total}명 · 완료 ${it.counts.completed} · 추가 ${it.counts.needAdd} · 중복 ${it.counts.duplicate} · 확인 ${it.counts.check}</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold" onclick="restoreHistory('${it.id}')"><i class="fa-solid fa-rotate-left mr-1"></i>복원</button>
+        <button class="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 text-xs font-bold" onclick="deleteHistory('${it.id}')"><i class="fa-solid fa-trash mr-1"></i>삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function restoreHistory(id) {
+  const it = STATE.history.find(x => x.id === id);
+  if (!it) { showToast('이력을 찾을 수 없습니다.', 'error'); return; }
+  STATE.review = JSON.parse(JSON.stringify(it.snapshot));
+  saveStorage();
+  renderReviewTable();
+  renderSummary();
+  renderDashboard();
+  renderMarkdownPreview();
+  showToast(`"${it.title}" 이력 복원 완료`, 'success');
+  switchSection('review');
+}
+
+function deleteHistory(id) {
+  openModal('이력 삭제', '이 검토 이력을 삭제하시겠어요?', () => {
+    STATE.history = STATE.history.filter(x => x.id !== id);
+    saveStorage();
+    renderHistory();
+    showToast('이력 1건 삭제됨', 'info');
+  });
+}
+function clearHistory() {
+  openModal('이력 전체 삭제', '저장된 모든 검토 이력을 삭제하시겠어요?', () => {
+    STATE.history = [];
+    saveStorage();
+    renderHistory();
+    showToast('이력이 전체 삭제되었습니다.', 'success');
+  });
+}
+
+/* ===========================================================
+ * 네비게이션 / 사이드바
+ * =========================================================== */
+const TITLES = {
+  dashboard: ['대시보드', '월간 귀임휴가 발생 검토 현황을 한눈에 확인하세요.'],
+  dispatch:  ['자료1 · 파견 인원', '전월 해외합동사무소 파견 인원을 입력/관리합니다.'],
+  erp:       ['자료2 · ERP 발생내역', 'ERP에서 발생된 당월 귀임휴가 내역을 입력/관리합니다.'],
+  review:    ['자동 대조 검토', '사번/성명·부서 기준으로 두 자료를 자동 대조합니다.'],
+  summary:   ['검토 요약', '검토 결과 요약과 우선 처리 대상을 확인합니다.'],
+  output:    ['결과 출력', '엑셀·PDF·클립보드·이메일로 결과를 공유합니다.'],
+  history:   ['검토 이력', '월별로 저장된 검토 결과를 조회/복원합니다.'],
+};
+
+function switchSection(section) {
+  document.querySelectorAll('.section-content').forEach(el => el.classList.add('hidden'));
+  const target = document.getElementById(section);
+  if (target) target.classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-section="${section}"]`)?.classList.add('active');
+
+  const [title, sub] = TITLES[section] || [section, ''];
+  document.getElementById('pageTitle').textContent = title;
+  document.getElementById('pageSubtitle').textContent = sub;
+
+  if (section === 'dashboard') renderDashboard();
+  if (section === 'summary')   renderSummary();
+  if (section === 'history')   renderHistory();
+  if (section === 'output')    renderMarkdownPreview();
+
+  // 모바일에서 사이드바 닫기
+  if (window.innerWidth < 1024) {
+    document.getElementById('sidebar').classList.add('-translate-x-full');
+  }
+}
+
+/* ===========================================================
+ * 다크모드 토글
+ * =========================================================== */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.toggle('dark');
+  document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun text-yellow-300' : 'fa-solid fa-moon text-teal-700';
+  localStorage.setItem(STORAGE_KEY + '_theme', isDark ? 'dark' : 'light');
+  // 차트 재렌더 (다크모드 색 반영)
+  setTimeout(()=>{
+    if (donutChart || barChart) renderDashboard();
+  }, 50);
+}
+function initTheme() {
+  const t = localStorage.getItem(STORAGE_KEY + '_theme');
+  if (t === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.getElementById('themeIcon').className = 'fa-solid fa-sun text-yellow-300';
+  }
+}
+
+/* ===========================================================
+ * 초기화
+ * =========================================================== */
+function init() {
+  initTheme();
+  loadStorage();
+
+  // 데이터가 비어 있으면 샘플 자동 로드
+  if (!STATE.dispatch.length && !STATE.erp.length) {
+    loadSample();
+  } else {
+    renderDispatchTable();
+    renderErpTable();
+  }
+  renderReviewTable();
+  renderSummary();
+  renderDashboard();
+  renderHistory();
+  renderMarkdownPreview();
+
+  // 오늘 날짜
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+
+  // 사이드바 네비
+  document.querySelectorAll('.nav-item').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const sec = a.dataset.section;
+      switchSection(sec);
+    });
+  });
+
+  // 사이드바 토글 (모바일)
+  document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('-translate-x-full');
+  });
+
+  // 테마 토글
+  document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+
+  // 초기 섹션
+  switchSection('dashboard');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

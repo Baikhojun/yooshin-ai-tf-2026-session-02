@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<!-- 이 파일의 역할: 이학준(총무부) 사무용품 비용 정산 자동 비교 시스템 V4 -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>사무용품 정산 자동 비교 시스템 V4 · 이학준 (총무부)</title>
+
+<!-- Tailwind / Font Awesome / Google Fonts -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
+
+<!-- SheetJS / Chart.js / jsPDF + autotable -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+:root{
+  --bg:#0b0f1d;
+  --bg2:#0e1330;
+  --panel:rgba(255,255,255,0.06);
+  --panel-strong:rgba(255,255,255,0.10);
+  --line:rgba(255,255,255,0.12);
+  --text:#f1f3ff;
+  --muted:#a9b0d0;
+  --indigo:#6366f1;
+  --violet:#a855f7;
+  --pink:#f472b6;
+  --cyan:#22d3ee;
+  --emerald:#10b981;
+  --amber:#f59e0b;
+  --rose:#fb7185;
+  --neon: 0 0 0 1px rgba(168,85,247,0.45), 0 0 22px rgba(99,102,241,0.35), 0 8px 28px rgba(168,85,247,0.18);
+}
+html,body{font-family:"Pretendard","Noto Sans KR","Malgun Gothic",Arial,sans-serif;}
+body{
+  margin:0;color:var(--text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,0.30), transparent 60%),
+    radial-gradient(1000px 700px at 110% 10%, rgba(244,114,182,0.22), transparent 55%),
+    radial-gradient(900px 500px at 50% 110%, rgba(34,211,238,0.18), transparent 60%),
+    linear-gradient(180deg,#080b1a 0%, #0b0f1d 60%, #0a0e22 100%);
+  min-height:100vh;
+}
+body.light{
+  color:#1a2240;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,0.18), transparent 60%),
+    radial-gradient(1000px 700px at 110% 10%, rgba(244,114,182,0.18), transparent 55%),
+    radial-gradient(900px 500px at 50% 110%, rgba(34,211,238,0.15), transparent 60%),
+    linear-gradient(180deg,#f4f5ff 0%, #eef0ff 60%, #f6f4ff 100%);
+}
+.glass{
+  background:var(--panel);
+  backdrop-filter:blur(18px) saturate(160%);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid var(--line);
+  border-radius:20px;
+}
+body.light .glass{background:rgba(255,255,255,0.7);border-color:rgba(99,102,241,0.18);}
+.glass-strong{background:var(--panel-strong);}
+.neon{box-shadow:var(--neon);}
+.brand-grad{
+  background:linear-gradient(135deg,#818cf8 0%, #c084fc 35%, #f472b6 65%, #22d3ee 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;font-weight:700;
+  padding:10px 14px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(255,255,255,0.06);color:var(--text);cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,0.25);}
+.btn-primary{
+  background:linear-gradient(135deg,#6366f1,#a855f7 50%,#f472b6);
+  color:#fff;border:none;
+}
+.btn-primary:hover{box-shadow:0 10px 30px rgba(168,85,247,0.45);}
+.btn-ghost{background:transparent;}
+.btn-cyan{background:linear-gradient(135deg,#06b6d4,#22d3ee);color:#062a36;border:none;}
+.btn-emerald{background:linear-gradient(135deg,#059669,#10b981);color:#04231a;border:none;}
+.btn-amber{background:linear-gradient(135deg,#d97706,#f59e0b);color:#241501;border:none;}
+.btn-rose{background:linear-gradient(135deg,#e11d48,#fb7185);color:#2b0210;border:none;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;}
+.chip-ok{background:rgba(16,185,129,0.16);color:#34d399;}
+.chip-warn{background:rgba(245,158,11,0.16);color:#fbbf24;}
+.chip-bad{background:rgba(244,63,94,0.16);color:#fb7185;}
+.chip-info{background:rgba(99,102,241,0.18);color:#a5b4fc;}
+.chip-pink{background:rgba(244,114,182,0.16);color:#f9a8d4;}
+
+/* Sidebar nav */
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--muted);cursor:pointer;font-weight:600;}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+.nav-item.active{
+  color:#fff;
+  background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(168,85,247,0.30) 60%,rgba(244,114,182,0.25));
+  box-shadow:inset 0 0 0 1px rgba(168,85,247,0.45);
+}
+body.light .nav-item{color:#475085;}
+body.light .nav-item.active{color:#1a2240;}
+
+/* Stepper */
+.step{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--line);color:var(--muted);background:rgba(255,255,255,0.04);}
+.step.done{border-color:rgba(16,185,129,0.45);color:#34d399;background:rgba(16,185,129,0.08);}
+.step.current{border:none;color:#fff;background:linear-gradient(135deg,#6366f1,#a855f7,#f472b6);box-shadow:0 8px 24px rgba(168,85,247,0.35);}
+.step .dot{width:18px;height:18px;border-radius:999px;background:rgba(255,255,255,0.15);display:inline-flex;align-items:center;justify-content:center;font-size:10px;}
+
+/* Drag zone */
+.dropzone{
+  border:2px dashed rgba(168,85,247,0.45);
+  border-radius:18px;padding:24px;text-align:center;
+  background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(244,114,182,0.08));
+  transition:.18s ease;cursor:pointer;
+}
+.dropzone:hover, .dropzone.drag{border-color:#f472b6;background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(244,114,182,0.18));}
+
+/* Tables */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+.tbl thead th{
+  position:sticky;top:0;z-index:1;
+  background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(168,85,247,0.30));
+  color:#fff;font-weight:800;padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);
+}
+.tbl tbody td{padding:9px 12px;border-bottom:1px dashed var(--line);color:var(--text);}
+.tbl tbody tr:hover td{background:rgba(168,85,247,0.06);}
+body.light .tbl tbody td{color:#1a2240;}
+.tbl .right{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl .center{text-align:center;}
+.tbl-wrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:14px;}
+
+/* Toast */
+#toastBox{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:99;}
+.toast{
+  min-width:260px;padding:12px 14px;border-radius:12px;background:rgba(11,15,29,0.92);
+  border:1px solid rgba(168,85,247,0.4);color:#f1f3ff;box-shadow:var(--neon);
+  display:flex;gap:10px;align-items:center;font-weight:600;
+}
+.toast.ok{border-color:rgba(16,185,129,0.5);}
+.toast.warn{border-color:rgba(245,158,11,0.5);}
+.toast.bad{border-color:rgba(244,63,94,0.5);}
+
+/* Modal */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:none;z-index:90;align-items:center;justify-content:center;}
+.modal-mask.show{display:flex;}
+.modal-card{max-width:1000px;width:92%;max-height:88vh;overflow:auto;background:#0f1330;border:1px solid rgba(168,85,247,0.4);border-radius:18px;}
+body.light .modal-card{background:#fff;color:#1a2240;}
+
+/* Sections */
+.section{display:none;}
+.section.active{display:block;animation:fadeUp .35s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* Metric cards */
+.metric{
+  position:relative;overflow:hidden;border-radius:18px;padding:18px;border:1px solid var(--line);
+  background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(244,114,182,0.10));
+}
+.metric .ico{position:absolute;right:-10px;top:-10px;font-size:64px;opacity:.12;}
+.metric .lbl{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em;}
+.metric .val{font-size:26px;font-weight:900;letter-spacing:-0.02em;margin-top:4px;}
+.metric .sub{font-size:12px;color:var(--muted);margin-top:6px;}
+.metric.v-violet{background:linear-gradient(135deg,rgba(168,85,247,0.22),rgba(99,102,241,0.18));}
+.metric.v-pink{background:linear-gradient(135deg,rgba(244,114,182,0.22),rgba(168,85,247,0.18));}
+.metric.v-cyan{background:linear-gradient(135deg,rgba(34,211,238,0.22),rgba(99,102,241,0.16));}
+.metric.v-emerald{background:linear-gradient(135deg,rgba(16,185,129,0.22),rgba(34,211,238,0.16));}
+.metric.v-amber{background:linear-gradient(135deg,rgba(245,158,11,0.22),rgba(244,114,182,0.14));}
+.metric.v-rose{background:linear-gradient(135deg,rgba(244,63,94,0.22),rgba(168,85,247,0.16));}
+
+/* Hide scrollbar but allow scroll */
+.no-scrollbar::-webkit-scrollbar{display:none;}
+.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+
+/* Progress bar in stepper */
+.progress-track{height:6px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#6366f1,#a855f7,#f472b6,#22d3ee);transition:.4s ease;}
+
+/* Cause color codes */
+.cause-pill{padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;display:inline-block;}
+.c-qty{background:rgba(99,102,241,0.18);color:#a5b4fc;}
+.c-qty-amt{background:rgba(168,85,247,0.18);color:#d8b4fe;}
+.c-price{background:rgba(244,114,182,0.18);color:#f9a8d4;}
+.c-tax{background:rgba(34,211,238,0.18);color:#67e8f9;}
+.c-upd{background:rgba(16,185,129,0.18);color:#6ee7b7;}
+.c-erp-miss{background:rgba(245,158,11,0.18);color:#fcd34d;}
+.c-vendor-miss{background:rgba(244,63,94,0.18);color:#fda4af;}
+.c-over{background:rgba(225,29,72,0.22);color:#fecaca;}
+.c-under{background:rgba(217,119,6,0.22);color:#fde68a;}
+.c-dept{background:rgba(124,58,237,0.22);color:#ddd6fe;}
+.c-check{background:rgba(148,163,184,0.22);color:#cbd5e1;}
+
+/* Light mode tweaks */
+body.light .glass{color:#1a2240;}
+body.light .nav-item{color:#3b3f6e;}
+body.light .step{color:#5b6193;background:rgba(99,102,241,0.06);border-color:rgba(99,102,241,0.18);}
+body.light .step.done{color:#047857;background:rgba(16,185,129,0.10);border-color:rgba(16,185,129,0.35);}
+body.light .metric{border-color:rgba(99,102,241,0.18);}
+body.light .tbl tbody td{color:#1a2240;}
+body.light .tbl thead th{background:linear-gradient(135deg,#6366f1,#a855f7);}
+body.light .chip-ok{background:rgba(16,185,129,0.18);color:#047857;}
+body.light .chip-warn{background:rgba(245,158,11,0.18);color:#92400e;}
+body.light .chip-bad{background:rgba(244,63,94,0.18);color:#9f1239;}
+body.light .chip-info{background:rgba(99,102,241,0.20);color:#3730a3;}
+
+/* Print */
+@media print{
+  body{background:#fff;color:#000;}
+  .no-print{display:none !important;}
+  .glass{background:#fff;border:1px solid #ddd;color:#000;}
+  .tbl thead th{background:#1f2a44;color:#fff;}
+}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Toast -->
+<div id="toastBox" class="no-print"></div>
+
+<!-- Modal: 보고서 미리보기 -->
+<div id="reportModal" class="modal-mask no-print">
+  <div class="modal-card glass">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <div class="font-extrabold text-lg"><i class="fa-solid fa-file-invoice mr-2 text-pink-300"></i>보고서 형태 미리보기</div>
+      <button class="btn btn-ghost" onclick="closeModal('reportModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="reportPreview" class="p-6 text-sm leading-relaxed"></div>
+    <div class="flex items-center justify-end gap-2 px-6 py-3 border-t border-white/10">
+      <button class="btn btn-ghost" onclick="copyReportText()"><i class="fa-regular fa-clipboard"></i> 텍스트 복사</button>
+      <button class="btn btn-cyan" onclick="window.print()"><i class="fa-solid fa-print"></i> 인쇄</button>
+      <button class="btn btn-primary" onclick="closeModal('reportModal')"><i class="fa-solid fa-check"></i> 닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 이력 -->
+<div id="historyModal" class="modal-mask no-print">
+  <div class="modal-card glass">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <div class="font-extrabold text-lg"><i class="fa-solid fa-clock-rotate-left mr-2 text-cyan-300"></i>월별 정산 이력</div>
+      <button class="btn btn-ghost" onclick="closeModal('historyModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="historyBody" class="p-6"></div>
+  </div>
+</div>
+
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="w-64 shrink-0 p-4 no-print">
+    <div class="glass p-4 neon">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-xl font-black" style="background:linear-gradient(135deg,#6366f1,#a855f7,#f472b6);"><i class="fa-solid fa-paperclip"></i></div>
+        <div>
+          <div class="text-xs text-white/60 font-semibold">총무부 · V4</div>
+          <div class="font-extrabold text-base brand-grad">사무용품 정산</div>
+        </div>
+      </div>
+      <nav class="space-y-1">
+        <div class="nav-item active" data-section="dashboard"><i class="fa-solid fa-gauge-high w-5 text-center"></i> 대시보드</div>
+        <div class="nav-item" data-section="upload"><i class="fa-solid fa-cloud-arrow-up w-5 text-center"></i> 1. 파일 업로드</div>
+        <div class="nav-item" data-section="sheet"><i class="fa-regular fa-rectangle-list w-5 text-center"></i> 2. 시트 선택</div>
+        <div class="nav-item" data-section="map"><i class="fa-solid fa-diagram-project w-5 text-center"></i> 3. 컬럼 매핑</div>
+        <div class="nav-item" data-section="clean"><i class="fa-solid fa-wand-magic-sparkles w-5 text-center"></i> 4. 데이터 정리</div>
+        <div class="nav-item" data-section="money"><i class="fa-solid fa-coins w-5 text-center"></i> 5. 금액 처리</div>
+        <div class="nav-item" data-section="compare"><i class="fa-solid fa-scale-balanced w-5 text-center"></i> 6. 비교 실행</div>
+        <div class="nav-item" data-section="results"><i class="fa-solid fa-table-list w-5 text-center"></i> 7. 결과 표 8종</div>
+        <div class="nav-item" data-section="audit"><i class="fa-solid fa-shield-check w-5 text-center"></i> 8. 최종 검산</div>
+        <div class="nav-item" data-section="report"><i class="fa-solid fa-file-export w-5 text-center"></i> 9. 결과 출력</div>
+      </nav>
+      <div class="border-t border-white/10 mt-4 pt-3 space-y-1">
+        <button class="nav-item w-full text-left" onclick="loadSample()"><i class="fa-solid fa-flask-vial w-5 text-center text-pink-300"></i> 샘플 데이터 로드</button>
+        <button class="nav-item w-full text-left" onclick="openHistory()"><i class="fa-solid fa-clock-rotate-left w-5 text-center text-cyan-300"></i> 이력 관리</button>
+        <button class="nav-item w-full text-left" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke w-5 text-center text-amber-300"></i> 라이트/다크</button>
+      </div>
+    </div>
+    <div class="glass p-3 mt-3 text-xs text-white/60">
+      <div class="font-bold text-white/90 mb-1"><i class="fa-solid fa-user-tie text-violet-300"></i> 담당자</div>
+      <div>이학준 · 총무부</div>
+      <div class="mt-1">기준: <span class="chip chip-info">유신코드</span></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 min-w-0 p-4 pr-6">
+    <!-- Header -->
+    <header class="glass p-5 mb-4 neon flex items-center justify-between flex-wrap gap-3 no-print">
+      <div>
+        <div class="flex items-center gap-2 text-xs uppercase tracking-widest text-white/60 font-bold">
+          <i class="fa-solid fa-sparkles text-pink-300"></i> Yooshin Office Supply Settlement · V4
+        </div>
+        <h1 class="text-2xl md:text-3xl font-black mt-1">
+          <span class="brand-grad">사무용품 정산 자동 비교</span>
+          <span class="text-white/70 text-base font-bold ml-2">— ERP × 업체 엑셀 1:1 대조</span>
+        </h1>
+        <p class="text-white/60 text-sm mt-1">유신코드 기준 자동 비교 · 차이 원인 11종 분류 · 부서별 조치 우선순위 자동 산출</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="btn btn-ghost" onclick="loadSample()"><i class="fa-solid fa-flask-vial text-pink-300"></i> 샘플 로드</button>
+        <button class="btn btn-primary" onclick="runFullCompare()"><i class="fa-solid fa-bolt"></i> 비교 실행</button>
+      </div>
+    </header>
+
+    <!-- Stepper -->
+    <section class="glass p-4 mb-4 no-print">
+      <div class="flex items-center gap-2 flex-wrap" id="stepper">
+        <div class="step done" data-step="1"><span class="dot">1</span> 업로드</div>
+        <div class="step done" data-step="2"><span class="dot">2</span> 시트</div>
+        <div class="step done" data-step="3"><span class="dot">3</span> 매핑</div>
+        <div class="step done" data-step="4"><span class="dot">4</span> 정리</div>
+        <div class="step done" data-step="5"><span class="dot">5</span> 금액</div>
+        <div class="step current" data-step="6"><span class="dot">6</span> 비교</div>
+        <div class="step" data-step="7"><span class="dot">7</span> 결과</div>
+        <div class="step" data-step="8"><span class="dot">8</span> 검산</div>
+        <div class="step" data-step="9"><span class="dot">9</span> 출력</div>
+      </div>
+      <div class="progress-track mt-3"><div id="progressFill" class="progress-fill" style="width:55%"></div></div>
+    </section>
+
+    <!-- ============== SECTION: Dashboard ============== -->
+    <section id="sec-dashboard" class="section active">
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+        <div class="metric v-violet"><div class="lbl">비교 총 건수</div><div class="val" id="m_total">0</div><div class="sub">유신코드 × 부서 × 월</div><i class="fa-solid fa-layer-group ico"></i></div>
+        <div class="metric v-emerald"><div class="lbl">일치 건수</div><div class="val" id="m_match">0</div><div class="sub">상태: 정상</div><i class="fa-solid fa-check ico"></i></div>
+        <div class="metric v-rose"><div class="lbl">차이 발생 건수</div><div class="val" id="m_diff">0</div><div class="sub">상태: 확인 필요</div><i class="fa-solid fa-triangle-exclamation ico"></i></div>
+        <div class="metric v-cyan"><div class="lbl">부서 수</div><div class="val" id="m_dept">0</div><div class="sub">참여 부서</div><i class="fa-solid fa-building ico"></i></div>
+        <div class="metric v-pink"><div class="lbl">유신코드 수</div><div class="val" id="m_code">0</div><div class="sub">대상 품목</div><i class="fa-solid fa-barcode ico"></i></div>
+        <div class="metric v-amber"><div class="lbl">총 차이금액</div><div class="val" id="m_amt">0원</div><div class="sub">부가세 포함</div><i class="fa-solid fa-won-sign ico"></i></div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 mb-4">
+        <div class="glass p-4 xl:col-span-2">
+          <div class="flex items-center justify-between mb-2">
+            <div class="font-extrabold"><i class="fa-solid fa-chart-column text-violet-300 mr-2"></i>부서별 차이금액 TOP 10</div>
+            <span class="chip chip-info">막대형</span>
+          </div>
+          <canvas id="chartDept" height="120"></canvas>
+        </div>
+        <div class="glass p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="font-extrabold"><i class="fa-solid fa-chart-pie text-pink-300 mr-2"></i>차이 원인 분포</div>
+            <span class="chip chip-info">도넛형</span>
+          </div>
+          <canvas id="chartCause" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 mb-4">
+        <div class="glass p-4 xl:col-span-2">
+          <div class="flex items-center justify-between mb-2">
+            <div class="font-extrabold"><i class="fa-solid fa-chart-line text-cyan-300 mr-2"></i>월별 정산 추이 (ERP vs 업체)</div>
+            <span class="chip chip-info">라인형</span>
+          </div>
+          <canvas id="chartMonth" height="120"></canvas>
+        </div>
+        <div class="glass p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="font-extrabold"><i class="fa-solid fa-fire text-amber-300 mr-2"></i>차이 발생 TOP 5 유신코드</div>
+            <span class="chip chip-info">막대형</span>
+          </div>
+          <canvas id="chartCode" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="glass p-4">
+        <div class="font-extrabold mb-2"><i class="fa-solid fa-circle-info text-emerald-300 mr-2"></i>업무 흐름 안내</div>
+        <ol class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-white/80">
+          <li class="glass-strong p-3 rounded-xl"><b class="text-pink-300">1) 업로드</b><br/>ERP 엑셀과 업체 엑셀을 드래그앤드롭으로 업로드합니다.</li>
+          <li class="glass-strong p-3 rounded-xl"><b class="text-violet-300">2) 매핑·정리</b><br/>유신코드/부서/수량/금액 컬럼을 자동 매핑하고 데이터를 정리합니다.</li>
+          <li class="glass-strong p-3 rounded-xl"><b class="text-cyan-300">3) 비교·검산</b><br/>유신코드 기준으로 1:1 비교하고 검산까지 자동으로 끝냅니다.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Upload ============== -->
+    <section id="sec-upload" class="section">
+      <div class="glass p-5 mb-4">
+        <div class="font-extrabold text-lg mb-1"><i class="fa-solid fa-cloud-arrow-up text-pink-300 mr-2"></i>Step 1. 파일 업로드</div>
+        <div class="text-white/60 text-sm mb-4">ERP 엑셀과 업체 엑셀 2개 파일을 업로드하세요. 드래그앤드롭 또는 파일 선택을 지원합니다.</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <div class="text-xs font-bold text-violet-300 mb-1"><i class="fa-solid fa-database"></i> ERP 엑셀 파일</div>
+            <div id="dzERP" class="dropzone">
+              <i class="fa-solid fa-file-excel text-3xl text-emerald-300"></i>
+              <div class="mt-2 font-extrabold">여기로 ERP 엑셀 파일을 드롭</div>
+              <div class="text-white/60 text-xs mt-1">또는 클릭하여 선택 (.xlsx, .xls, .csv)</div>
+              <input type="file" id="fileERP" accept=".xlsx,.xls,.csv" class="hidden" />
+            </div>
+            <div id="erpInfo" class="text-xs mt-2 text-white/70"></div>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-pink-300 mb-1"><i class="fa-solid fa-store"></i> 사무용품 업체 엑셀</div>
+            <div id="dzVEN" class="dropzone">
+              <i class="fa-solid fa-file-excel text-3xl text-pink-300"></i>
+              <div class="mt-2 font-extrabold">여기로 업체 엑셀 파일을 드롭</div>
+              <div class="text-white/60 text-xs mt-1">또는 클릭하여 선택 (.xlsx, .xls, .csv)</div>
+              <input type="file" id="fileVEN" accept=".xlsx,.xls,.csv" class="hidden" />
+            </div>
+            <div id="venInfo" class="text-xs mt-2 text-white/70"></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-4 flex-wrap">
+          <button class="btn btn-primary" onclick="goSection('sheet')"><i class="fa-solid fa-arrow-right"></i> 다음: 시트 선택</button>
+          <button class="btn btn-ghost" onclick="loadSample()"><i class="fa-solid fa-flask-vial text-pink-300"></i> 샘플 데이터로 빠르게 시작</button>
+        </div>
+      </div>
+
+      <div class="glass p-5">
+        <div class="font-extrabold mb-2"><i class="fa-solid fa-magnifying-glass-chart text-cyan-300 mr-2"></i>파일 구조 분석 결과</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>구분</th><th>파일명</th><th>시트명</th><th class="right">행 수</th><th>주요 컬럼</th><th>비교 가능 여부</th><th>비고</th></tr></thead>
+            <tbody id="tbStructure"><tr><td colspan="7" class="text-center text-white/50 py-5">파일을 업로드하면 자동으로 분석됩니다.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Sheet ============== -->
+    <section id="sec-sheet" class="section">
+      <div class="glass p-5 mb-4">
+        <div class="font-extrabold text-lg mb-1"><i class="fa-regular fa-rectangle-list text-violet-300 mr-2"></i>Step 2. 시트 선택</div>
+        <div class="text-white/60 text-sm mb-4">ERP 시트와 업체 시트를 1:1로 매칭하세요.</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="glass-strong p-4 rounded-xl">
+            <div class="text-xs font-bold text-violet-300 mb-1">ERP 시트</div>
+            <select id="selERPSheet" class="w-full p-2 rounded-lg bg-white/10 border border-white/10"></select>
+            <div id="erpPreview" class="text-xs mt-3 text-white/70"></div>
+          </div>
+          <div class="glass-strong p-4 rounded-xl">
+            <div class="text-xs font-bold text-pink-300 mb-1">업체 시트</div>
+            <select id="selVENSheet" class="w-full p-2 rounded-lg bg-white/10 border border-white/10"></select>
+            <div id="venPreview" class="text-xs mt-3 text-white/70"></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <button class="btn btn-ghost" onclick="goSection('upload')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+          <button class="btn btn-primary" onclick="afterSheetSelect()"><i class="fa-solid fa-arrow-right"></i> 다음: 컬럼 매핑</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Mapping ============== -->
+    <section id="sec-map" class="section">
+      <div class="glass p-5 mb-4">
+        <div class="font-extrabold text-lg mb-1"><i class="fa-solid fa-diagram-project text-cyan-300 mr-2"></i>Step 3. 컬럼 자동 매핑</div>
+        <div class="text-white/60 text-sm mb-4">유신코드는 필수입니다. 한쪽이라도 누락 시 자동 비교를 진행하지 않습니다.</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>표준 항목</th><th>ERP 매핑 컬럼</th><th>업체 매핑 컬럼</th><th>매핑 상태</th><th>비고</th></tr></thead>
+            <tbody id="tbMap"></tbody>
+          </table>
+        </div>
+        <div class="flex items-center gap-2 mt-4 flex-wrap">
+          <button class="btn btn-ghost" onclick="goSection('sheet')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+          <button class="btn btn-primary" onclick="afterMap()"><i class="fa-solid fa-arrow-right"></i> 다음: 데이터 정리</button>
+          <span id="mapWarn" class="chip chip-warn hidden"><i class="fa-solid fa-triangle-exclamation"></i> 유신코드 컬럼 누락</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Cleaning ============== -->
+    <section id="sec-clean" class="section">
+      <div class="glass p-5 mb-4">
+        <div class="font-extrabold text-lg mb-1"><i class="fa-solid fa-wand-magic-sparkles text-pink-300 mr-2"></i>Step 4. 데이터 정리</div>
+        <div class="text-white/60 text-sm mb-4">유신코드 문자형 통일·공백 제거, 금액·수량 숫자화, 부서명 정리.</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <div class="glass-strong p-3 rounded-xl">
+            <div class="font-bold text-violet-300 mb-2"><i class="fa-solid fa-database"></i> ERP 정리 미리보기 (최대 6행)</div>
+            <div class="tbl-wrap" style="max-height:260px"><table class="tbl"><thead id="cleanERPHead"></thead><tbody id="cleanERPBody"></tbody></table></div>
+          </div>
+          <div class="glass-strong p-3 rounded-xl">
+            <div class="font-bold text-pink-300 mb-2"><i class="fa-solid fa-store"></i> 업체 정리 미리보기 (최대 6행)</div>
+            <div class="tbl-wrap" style="max-height:260px"><table class="tbl"><thead id="cleanVENHead"></thead><tbody id="cleanVENBody"></tbody></table></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-ghost" onclick="goSection('map')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+          <button class="btn btn-primary" onclick="goSection('money')"><i class="fa-solid fa-arrow-right"></i> 다음: 금액 처리</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Money ============== -->
+    <section id="sec-money" class="section">
+      <div class="glass p-5 mb-4">
+        <div class="font-extrabold text-lg mb-1"><i class="fa-solid fa-coins text-amber-300 mr-2"></i>Step 5. 금액 처리</div>
+        <div class="text-white/60 text-sm mb-4">파일에 표시된 금액은 <b>부가세 포함금액</b>으로 처리합니다.</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <div class="glass-strong p-4 rounded-xl">
+            <div class="text-xs text-white/60">자동계산 공급가액</div>
+            <div class="text-xl font-extrabold text-cyan-300 mt-1">포함금액 ÷ 1.1</div>
+            <div class="text-xs text-white/60 mt-1">ROUND, 원 단위 반올림</div>
+          </div>
+          <div class="glass-strong p-4 rounded-xl">
+            <div class="text-xs text-white/60">자동계산 부가세</div>
+            <div class="text-xl font-extrabold text-pink-300 mt-1">포함금액 − 공급가액</div>
+            <div class="text-xs text-white/60 mt-1">차감으로 계산</div>
+          </div>
+          <div class="glass-strong p-4 rounded-xl">
+            <div class="text-xs text-white/60">부가세율</div>
+            <div class="text-xl font-extrabold text-violet-300 mt-1">10%</div>
+            <div class="text-xs text-white/60 mt-1">기본값</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-ghost" onclick="goSection('clean')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+          <button class="btn btn-primary" onclick="goSection('compare')"><i class="fa-solid fa-arrow-right"></i> 다음: 비교 실행</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Compare ============== -->
+    <section id="sec-compare" class="section">
+      <div class="glass p-5 mb-4 neon">
+        <div class="font-extrabold text-lg mb-1"><i class="fa-solid fa-scale-balanced text-violet-300 mr-2"></i>Step 6. 비교 실행</div>
+        <div class="text-white/60 text-sm mb-4">유신코드 + 부서명 + 월 기준으로 ERP × 업체 자료를 자동 비교합니다.</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <button class="btn btn-primary text-lg py-4" onclick="runFullCompare()"><i class="fa-solid fa-bolt"></i> 비교 실행하기</button>
+          <button class="btn btn-cyan text-lg py-4" onclick="loadSample();setTimeout(runFullCompare,200);"><i class="fa-solid fa-flask-vial"></i> 샘플 로드 후 즉시 비교</button>
+        </div>
+        <div id="compareLog" class="text-xs text-white/70 mt-4 space-y-1"></div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Results ============== -->
+    <section id="sec-results" class="section">
+
+      <!-- 표1: 전체 요약 -->
+      <div class="glass p-5 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-extrabold"><i class="fa-solid fa-table-list text-violet-300 mr-2"></i>표 1. 전체 요약 대시보드</div>
+          <span class="chip chip-info">ERP vs 업체</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>구분</th><th class="right">ERP 기준</th><th class="right">업체 기준</th><th class="right">차이</th><th class="center">상태</th></tr></thead>
+            <tbody id="tb1"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 표2: 부서별 금액 -->
+      <div class="glass p-5 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-extrabold"><i class="fa-solid fa-building text-pink-300 mr-2"></i>표 2. 부서별 금액 비교</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyTable('tb2')"><i class="fa-regular fa-clipboard"></i> 복사</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>부서명</th>
+              <th class="right">ERP 포함금액</th><th class="right">업체 포함금액</th><th class="right">포함 차이</th>
+              <th class="right">ERP 공급가액</th><th class="right">업체 공급가액</th><th class="right">공급가액 차이</th>
+              <th class="right">ERP 수량</th><th class="right">업체 수량</th><th class="right">수량 차이</th>
+              <th class="center">상태</th>
+            </tr></thead>
+            <tbody id="tb2"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 표3: 품목별·부서별 수량 -->
+      <div class="glass p-5 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-extrabold"><i class="fa-solid fa-boxes-stacked text-cyan-300 mr-2"></i>표 3. 품목별·부서별 수량 비교</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyTable('tb3')"><i class="fa-regular fa-clipboard"></i> 복사</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>부서명</th><th>월</th><th>유신코드</th><th>ERP 품목명</th><th>업체 상품명</th>
+              <th class="right">ERP 수량</th><th class="right">업체 청구 수량</th><th class="right">수량 차이</th>
+              <th>부서별 수량 차이 여부</th><th class="center">상태</th>
+            </tr></thead>
+            <tbody id="tb3"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 표4: 품목별·부서별 금액 -->
+      <div class="glass p-5 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-extrabold"><i class="fa-solid fa-coins text-amber-300 mr-2"></i>표 4. 품목별·부서별 금액 비교</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyTable('tb4')"><i class="fa-regular fa-clipboard"></i> 복사</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>부서명</th><th>월</th><th>유신코드</th><th>ERP 품목명</th><th>업체 상품명</th><th>품목명 일치 여부</th>
+              <th class="right">ERP 단가</th><th class="right">업체 단가</th>
+              <th class="right">ERP 포함금액</th><th class="right">업체 포함금액</th><th class="right">포함 차이</th>
+              <th class="right">ERP 공급가액</th><th class="right">업체 공급가액</th><th class="right">공급가액 차이</th>
+              <th>추정 원인</th>
+            </tr></thead>
+            <tbody id="tb4"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 표5: 차이 원인별·부서별 요약 -->
+      <div class="glass p-5 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-extrabold"><i class="fa-solid fa-chart-pie text-pink-300 mr-2"></i>표 5. 차이 원인별·부서별 요약</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyTable('tb5')"><i class="fa-regular fa-clipboard"></i> 복사</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th>부서명</th><th>차이 원인</th><th class="right">건수</th>
+              <th class="right">수량 차이 합계</th><th class="right">포함 차이금액 합계</th><th class="right">공급가액 차이 합계</th>
+              <th>조치 방향</th>
+            </tr></thead>
+            <tbody id="tb5"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 표6: 조치 필요 -->
+      <div class="glass p-5 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-extrabold"><i class="fa-solid fa-triangle-exclamation text-rose-300 mr-2"></i>표 6. 부서별 조치 필요 목록 (우선순위 자동 정렬)</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyTable('tb6')"><i class="fa-regular fa-clipboard"></i> 복사</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th class="center">우선순위</th><th>부서명</th><th>월</th><th>구분</th><th>유신코드</th><th>품목명</th>
+              <th>문제 내용</th><th class="right">부서별 차이금액</th><th>조치 사항</th><th>담당 확인 대상</th>
+            </tr></thead>
+            <tbody id="tb6"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Audit ============== -->
+    <section id="sec-audit" class="section">
+      <div class="glass p-5 mb-4">
+        <div class="font-extrabold text-lg mb-2"><i class="fa-solid fa-shield-check text-emerald-300 mr-2"></i>표 7. 최종 검산표</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>검산 항목</th><th>계산식</th><th class="center">결과</th><th class="right">차이금액</th><th>비고</th></tr></thead>
+            <tbody id="tb7"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="glass p-5">
+        <div class="font-extrabold text-lg mb-2"><i class="fa-solid fa-quote-right text-violet-300 mr-2"></i>표 8. 최종 결론 (서술형 요약)</div>
+        <div id="tb8" class="text-sm leading-relaxed text-white/85"></div>
+      </div>
+    </section>
+
+    <!-- ============== SECTION: Report ============== -->
+    <section id="sec-report" class="section">
+      <div class="glass p-5 mb-4">
+        <div class="font-extrabold text-lg mb-3"><i class="fa-solid fa-file-export text-pink-300 mr-2"></i>9. 결과 출력</div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <button class="btn btn-emerald" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> 엑셀 다운로드 (8시트)</button>
+          <button class="btn btn-rose" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF 보고서</button>
+          <button class="btn btn-cyan" onclick="window.print()"><i class="fa-solid fa-print"></i> 인쇄</button>
+          <button class="btn btn-amber" onclick="copyAllReport()"><i class="fa-regular fa-clipboard"></i> 클립보드 복사</button>
+          <button class="btn btn-primary" onclick="openReport()"><i class="fa-solid fa-eye"></i> 보고서 미리보기</button>
+        </div>
+        <div class="text-xs text-white/60 mt-3">엑셀은 8개 시트(전체요약/부서별/품목수량/품목금액/원인요약/조치필요/검산/결론)로 자동 분리되어 저장됩니다.</div>
+      </div>
+
+      <div class="glass p-5">
+        <div class="font-extrabold mb-2"><i class="fa-solid fa-database text-violet-300 mr-2"></i>이력 저장</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input id="histTag" placeholder="예: 2026-05 정산" class="p-3 rounded-xl bg-white/10 border border-white/10 text-sm md:col-span-2" />
+          <button class="btn btn-primary" onclick="saveHistory()"><i class="fa-solid fa-save"></i> 현재 결과 이력 저장</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== JS ===== -->
+<script>
+/* ============ 상태 저장소 ============ */
+const STATE = {
+  erp: { name:"", wb:null, sheetNames:[], sheet:"", rows:[], headers:[] },
+  ven: { name:"", wb:null, sheetNames:[], sheet:"", rows:[], headers:[] },
+  map: { erp:{}, ven:{} },           // 표준항목 -> 실제 컬럼명
+  merged: [],                         // 유신코드+부서+월 기준 통합
+  results: null,
+  reportText: ""
+};
+
+/* ============ XSS escape ============ */
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmt(n){
+  if(n===null||n===undefined||n===""||isNaN(n)) return "0";
+  return Math.round(Number(n)).toLocaleString("ko-KR");
+}
+function won(n){ return fmt(n)+"원"; }
+
+/* ============ 토스트 ============ */
+function toast(msg, type="info"){
+  try{
+    const box=document.getElementById("toastBox");
+    const el=document.createElement("div");
+    const icon={ok:"fa-circle-check",warn:"fa-triangle-exclamation",bad:"fa-circle-xmark",info:"fa-circle-info"}[type]||"fa-circle-info";
+    el.className=`toast ${type}`;
+    el.innerHTML=`<i class="fa-solid ${icon}"></i><div>${esc(msg)}</div>`;
+    box.appendChild(el);
+    setTimeout(()=>{ el.style.opacity="0"; el.style.transform="translateY(8px)"; }, 2400);
+    setTimeout(()=> el.remove(), 2900);
+  }catch(e){ console.error("toast error",e); }
+}
+
+/* ============ 섹션 전환 ============ */
+function goSection(id){
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById("sec-"+id).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.section===id));
+  updateStepper(id);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav-item[data-section]").forEach(n => n.addEventListener("click", ()=> goSection(n.dataset.section)));
+
+function updateStepper(id){
+  const order=["upload","sheet","map","clean","money","compare","results","audit","report"];
+  const idx=order.indexOf(id);
+  if(idx<0) return;
+  document.querySelectorAll("#stepper .step").forEach(el=>{
+    const n=parseInt(el.dataset.step,10);
+    el.classList.remove("done","current");
+    if(n<idx+1) el.classList.add("done");
+    else if(n===idx+1) el.classList.add("current");
+  });
+  document.getElementById("progressFill").style.width = `${(idx+1)/order.length*100}%`;
+}
+
+/* ============ 테마 ============ */
+function toggleTheme(){
+  document.body.classList.toggle("light");
+  toast(document.body.classList.contains("light")?"라이트 모드":"다크 모드","info");
+  redrawCharts();
+}
+
+/* ============ 모달 ============ */
+function openModal(id){ document.getElementById(id).classList.add("show"); }
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+
+/* ============ 파일 업로드 (드래그앤드롭) ============ */
+function bindDropzone(zoneId, inputId, isERP){
+  const dz=document.getElementById(zoneId), input=document.getElementById(inputId);
+  dz.addEventListener("click", ()=> input.click());
+  ["dragover","dragenter"].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add("drag"); }));
+  ["dragleave","drop"].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove("drag"); }));
+  dz.addEventListener("drop", ev => {
+    const f=ev.dataTransfer.files?.[0]; if(f) readExcel(f, isERP);
+  });
+  input.addEventListener("change", e => { const f=e.target.files?.[0]; if(f) readExcel(f, isERP); });
+}
+bindDropzone("dzERP","fileERP", true);
+bindDropzone("dzVEN","fileVEN", false);
+
+function readExcel(file, isERP){
+  try{
+    const reader=new FileReader();
+    reader.onload = e => {
+      try{
+        const wb = XLSX.read(e.target.result, { type:"array" });
+        const slot = isERP ? STATE.erp : STATE.ven;
+        slot.name = file.name; slot.wb = wb; slot.sheetNames = wb.SheetNames;
+        slot.sheet = wb.SheetNames[0];
+        loadSheet(slot);
+        renderUploadInfo();
+        renderStructure();
+        toast(`${isERP?"ERP":"업체"} 파일 로드됨: ${file.name}`,"ok");
+      }catch(err){ console.error(err); toast("엑셀 파싱 오류: "+err.message,"bad"); }
+    };
+    reader.onerror = ()=> toast("파일 읽기 실패","bad");
+    reader.readAsArrayBuffer(file);
+  }catch(err){ console.error(err); toast("업로드 실패: "+err.message,"bad"); }
+}
+
+function loadSheet(slot){
+  try{
+    const ws = slot.wb.Sheets[slot.sheet];
+    const json = XLSX.utils.sheet_to_json(ws, { defval:"" });
+    slot.rows = json;
+    slot.headers = json.length ? Object.keys(json[0]) : [];
+  }catch(e){ console.error(e); slot.rows=[]; slot.headers=[]; }
+}
+
+function renderUploadInfo(){
+  const e=STATE.erp, v=STATE.ven;
+  document.getElementById("erpInfo").innerHTML = e.name
+    ? `<i class="fa-solid fa-check text-emerald-300"></i> <b>${esc(e.name)}</b> · 시트 ${e.sheetNames.length}개 · ${e.rows.length}행`
+    : "";
+  document.getElementById("venInfo").innerHTML = v.name
+    ? `<i class="fa-solid fa-check text-emerald-300"></i> <b>${esc(v.name)}</b> · 시트 ${v.sheetNames.length}개 · ${v.rows.length}행`
+    : "";
+}
+
+function renderStructure(){
+  const tb=document.getElementById("tbStructure");
+  const rows=[];
+  [["ERP",STATE.erp],["업체",STATE.ven]].forEach(([k,slot])=>{
+    if(!slot.name) return;
+    const hasYC = slot.headers.includes("유신코드");
+    rows.push(`<tr>
+      <td><span class="chip ${k==='ERP'?'chip-info':'chip-pink'}">${k}</span></td>
+      <td>${esc(slot.name)}</td>
+      <td>${esc(slot.sheet)}</td>
+      <td class="right">${slot.rows.length}</td>
+      <td>${slot.headers.slice(0,8).map(h=>esc(h)).join(", ")}${slot.headers.length>8?" …":""}</td>
+      <td>${hasYC?'<span class="chip chip-ok">가능</span>':'<span class="chip chip-bad">유신코드 누락</span>'}</td>
+      <td>${slot.sheetNames.length>1?'다중 시트':'단일 시트'}</td>
+    </tr>`);
+  });
+  tb.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="7" class="text-center text-white/50 py-5">파일을 업로드하면 자동으로 분석됩니다.</td></tr>`;
+}
+
+/* ============ 시트 선택 ============ */
+function refreshSheetSelectors(){
+  const a=document.getElementById("selERPSheet"), b=document.getElementById("selVENSheet");
+  a.innerHTML = STATE.erp.sheetNames.map(s=>`<option ${s===STATE.erp.sheet?'selected':''}>${esc(s)}</option>`).join("");
+  b.innerHTML = STATE.ven.sheetNames.map(s=>`<option ${s===STATE.ven.sheet?'selected':''}>${esc(s)}</option>`).join("");
+  a.onchange = ()=> { STATE.erp.sheet=a.value; loadSheet(STATE.erp); renderSheetPreview(); };
+  b.onchange = ()=> { STATE.ven.sheet=b.value; loadSheet(STATE.ven); renderSheetPreview(); };
+  renderSheetPreview();
+}
+function renderSheetPreview(){
+  function html(slot){
+    if(!slot.rows.length) return "<i class='text-white/50'>데이터가 없습니다.</i>";
+    return `<div>행 수: <b>${slot.rows.length}</b></div>
+      <div class="mt-1">컬럼: ${slot.headers.map(h=>`<span class="chip chip-info mr-1">${esc(h)}</span>`).join("")}</div>`;
+  }
+  document.getElementById("erpPreview").innerHTML = html(STATE.erp);
+  document.getElementById("venPreview").innerHTML = html(STATE.ven);
+}
+function afterSheetSelect(){ buildMappingTable(); goSection("map"); }
+
+/* ============ 컬럼 매핑 ============ */
+const STANDARD = [
+  { key:"유신코드", required:true, note:"품목 비교 핵심 기준 (반드시 동일 컬럼명)" },
+  { key:"품목명",  required:false, note:"참고용 (ERP 품목명 / 업체 상품명)" },
+  { key:"부서명",  required:true, note:"부서별 비교 기준" },
+  { key:"월",      required:false, note:"월별 비교 기준 (월·정산월 자동 추정)" },
+  { key:"수량",    required:true, note:"유신코드 기준 수량 비교" },
+  { key:"단가",    required:false, note:"단가 차이 확인용" },
+  { key:"부가세포함금액", required:true, note:"금액 또는 총금액 / 총청구금액" }
+];
+function autoGuess(headers, standardKey){
+  const cands = {
+    "유신코드":["유신코드"],
+    "품목명":["품목명","상품명","품명"],
+    "부서명":["부서명","부서","사용부서"],
+    "월":["월","정산월","구매월","청구월"],
+    "수량":["수량","수량(개)","수량개"],
+    "단가":["단가","단가(원)"],
+    "부가세포함금액":["부가세포함금액","총금액","금액","총청구금액","청구금액"]
+  }[standardKey] || [];
+  for(const c of cands) if(headers.includes(c)) return c;
+  return "";
+}
+function buildMappingTable(){
+  const tb=document.getElementById("tbMap");
+  const eh=STATE.erp.headers, vh=STATE.ven.headers;
+  STATE.map.erp = {}; STATE.map.ven = {};
+  STANDARD.forEach(s => {
+    STATE.map.erp[s.key] = autoGuess(eh, s.key);
+    STATE.map.ven[s.key] = autoGuess(vh, s.key);
+  });
+  tb.innerHTML = STANDARD.map(s => {
+    const ge=STATE.map.erp[s.key], gv=STATE.map.ven[s.key];
+    const ok = ge && gv;
+    const optsE = ['<option value="">(없음)</option>', ...eh.map(h=>`<option ${h===ge?'selected':''}>${esc(h)}</option>`)].join("");
+    const optsV = ['<option value="">(없음)</option>', ...vh.map(h=>`<option ${h===gv?'selected':''}>${esc(h)}</option>`)].join("");
+    const status = ok ? '<span class="chip chip-ok">매핑 완료</span>'
+                      : (s.required?'<span class="chip chip-bad">누락</span>':'<span class="chip chip-warn">선택</span>');
+    return `<tr>
+      <td><b>${esc(s.key)}</b>${s.required?' <span class="chip chip-info">필수</span>':''}</td>
+      <td><select class="bg-white/10 border border-white/10 rounded-lg p-1 text-sm" onchange="STATE.map.erp['${esc(s.key)}']=this.value;checkMapWarn();">${optsE}</select></td>
+      <td><select class="bg-white/10 border border-white/10 rounded-lg p-1 text-sm" onchange="STATE.map.ven['${esc(s.key)}']=this.value;checkMapWarn();">${optsV}</select></td>
+      <td>${status}</td>
+      <td class="text-white/60 text-xs">${esc(s.note)}</td>
+    </tr>`;
+  }).join("");
+  checkMapWarn();
+}
+function checkMapWarn(){
+  const w = document.getElementById("mapWarn");
+  const need = STATE.map.erp["유신코드"] && STATE.map.ven["유신코드"];
+  w.classList.toggle("hidden", !!need);
+}
+
+/* ============ 정리 미리보기 ============ */
+function afterMap(){ renderCleanPreview(); goSection("clean"); }
+function renderCleanPreview(){
+  function buildTable(slot, mapBy){
+    const headers=["부서명","월","유신코드","품목명","수량","단가","부가세포함금액"];
+    const head = "<tr>"+headers.map(h=>`<th>${esc(h)}</th>`).join("")+"</tr>";
+    const rows = slot.rows.slice(0,6).map(r=>{
+      const c = headers.map(h => {
+        const real = mapBy[h] || h;
+        let v = r[real] ?? "";
+        if(["수량","단가","부가세포함금액"].includes(h)) v = fmt(toNum(v));
+        if(h==="유신코드") v = String(v).trim();
+        return `<td>${esc(v)}</td>`;
+      }).join("");
+      return `<tr>${c}</tr>`;
+    }).join("");
+    return [head,rows];
+  }
+  const [eh,er]=buildTable(STATE.erp, STATE.map.erp);
+  const [vh,vr]=buildTable(STATE.ven, STATE.map.ven);
+  document.getElementById("cleanERPHead").innerHTML = eh;
+  document.getElementById("cleanERPBody").innerHTML = er || `<tr><td colspan="7" class="text-white/50">데이터 없음</td></tr>`;
+  document.getElementById("cleanVENHead").innerHTML = vh;
+  document.getElementById("cleanVENBody").innerHTML = vr || `<tr><td colspan="7" class="text-white/50">데이터 없음</td></tr>`;
+}
+function toNum(x){
+  if(x===null||x===undefined||x==="") return 0;
+  const s = String(x).replace(/[,₩원\s]/g,"");
+  const n = Number(s); return isNaN(n)?0:n;
+}
+
+/* ============ 비교 실행 (Step 6) ============ */
+function runFullCompare(){
+  const log = document.getElementById("compareLog"); log.innerHTML="";
+  function step(msg, ok=true){ log.innerHTML += `<div><i class="fa-solid ${ok?'fa-check text-emerald-300':'fa-xmark text-rose-300'}"></i> ${esc(msg)}</div>`; }
+  try{
+    if(!STATE.erp.rows.length || !STATE.ven.rows.length){
+      toast("ERP/업체 파일을 먼저 업로드(또는 샘플 로드)하세요","warn"); goSection("upload"); return;
+    }
+    if(!STATE.map.erp["유신코드"] || !STATE.map.ven["유신코드"]){
+      toast("유신코드 컬럼 매핑이 필요합니다","bad"); goSection("map"); return;
+    }
+    step("데이터 정규화");
+    const erp = normalizeRows(STATE.erp.rows, STATE.map.erp);
+    const ven = normalizeRows(STATE.ven.rows, STATE.map.ven);
+
+    step("그룹핑 키 생성 (월+부서+유신코드)");
+    const erpMap = groupByKey(erp);
+    const venMap = groupByKey(ven);
+
+    step("ERP × 업체 1:1 머지");
+    const merged = mergeERPVendor(erpMap, venMap);
+    STATE.merged = merged;
+
+    step("차이 원인 분류");
+    classifyCauses(merged);
+
+    step("결과 표 8종 자동 생성");
+    const results = buildAllTables(merged, erp, ven);
+    STATE.results = results;
+
+    renderAllTables();
+    updateDashboard();
+    redrawCharts();
+    goSection("results");
+    toast("비교 완료 — 결과 화면으로 이동합니다","ok");
+  }catch(err){ console.error(err); toast("비교 중 오류: "+err.message,"bad"); step("오류: "+err.message,false); }
+}
+
+/* ============ 정규화 ============ */
+function normalizeRows(rows, mp){
+  return rows.map(r => ({
+    유신코드: String(r[mp["유신코드"]] ?? "").trim(),
+    품목명:   String(r[mp["품목명"]] ?? "").trim(),
+    부서명:   String(r[mp["부서명"]] ?? "").trim(),
+    월:       String(r[mp["월"]] ?? "").trim() || "—",
+    수량:     toNum(r[mp["수량"]]),
+    단가:     toNum(r[mp["단가"]]),
+    포함:     toNum(r[mp["부가세포함금액"]])
+  })).filter(r => r.유신코드 !== "");
+}
+function groupByKey(arr){
+  const m = new Map();
+  arr.forEach(r => {
+    const key = `${r.월}||${r.부서명}||${r.유신코드}`;
+    const cur = m.get(key) || { 월:r.월, 부서명:r.부서명, 유신코드:r.유신코드, 품목명:r.품목명, 수량:0, 포함:0, 단가:r.단가 };
+    cur.수량 += r.수량; cur.포함 += r.포함;
+    if(!cur.품목명) cur.품목명 = r.품목명;
+    m.set(key, cur);
+  });
+  return m;
+}
+function mergeERPVendor(erpMap, venMap){
+  const keys = new Set([...erpMap.keys(), ...venMap.keys()]);
+  const out = [];
+  keys.forEach(k => {
+    const e = erpMap.get(k);
+    const v = venMap.get(k);
+    const base = e || v;
+    const erpInc = e?.포함 ?? 0, venInc = v?.포함 ?? 0;
+    const erpQty = e?.수량 ?? 0, venQty = v?.수량 ?? 0;
+    const erpSup = Math.round(erpInc/1.1), venSup = Math.round(venInc/1.1);
+    const erpTax = erpInc - erpSup,         venTax = venInc - venSup;
+    out.push({
+      월: base.월, 부서명: base.부서명, 유신코드: base.유신코드,
+      ERP품목명: e?.품목명 ?? "", 업체상품명: v?.품목명 ?? "",
+      ERP수량: erpQty, 업체수량: venQty, 수량차이: venQty - erpQty,
+      ERP단가: e?.단가 ?? 0, 업체단가: v?.단가 ?? 0,
+      ERP포함: erpInc, 업체포함: venInc, 포함차이: venInc - erpInc,
+      ERP공급: erpSup, 업체공급: venSup, 공급차이: venSup - erpSup,
+      ERP부가세: erpTax, 업체부가세: venTax, 부가세차이: venTax - erpTax,
+      onlyERP: !v, onlyVEN: !e
+    });
+  });
+  return out;
+}
+
+/* ============ 차이 원인 분류 ============ */
+function classifyCauses(rows){
+  rows.forEach(r => {
+    const dq = r.수량차이, dp = r.포함차이;
+    let cause = "정상";
+    if(r.onlyERP) cause = "업체 청구 누락";
+    else if(r.onlyVEN) cause = "ERP 입력 누락";
+    else if(dq!==0 && dp!==0) cause = "수량 및 금액 차이";
+    else if(dq!==0) cause = "수량 차이";
+    else if(dp!==0){
+      if(r.ERP단가!==r.업체단가 && r.업체단가>0 && r.ERP단가>0){
+        cause = (r.업체단가 > r.ERP단가) ? "단가 차이" : "금액 업데이트 누락";
+      } else if(Math.abs(dp) <= 5){
+        cause = "부가세 계산 차이";
+      } else if(dp>0){
+        cause = "업체 과청구 가능성";
+      } else {
+        cause = "업체 과소청구 가능성";
+      }
+    }
+    r.원인 = cause;
+    r.상태 = (dq===0 && dp===0) ? "정상" : "확인 필요";
+  });
+}
+
+/* ============ 결과 표 8종 ============ */
+function buildAllTables(merged, erp, ven){
+  const t1 = buildTable1(merged);
+  const t2 = buildTable2(merged);
+  const t3 = buildTable3(merged);
+  const t4 = buildTable4(merged);
+  const t5 = buildTable5(merged);
+  const t6 = buildTable6(merged);
+  const t7 = buildTable7(merged, t2, t4);
+  const t8 = buildTable8(merged, t1, t5);
+  return { t1, t2, t3, t4, t5, t6, t7, t8 };
+}
+function buildTable1(rows){
+  const sum = key => rows.reduce((a,r)=>a+r[key],0);
+  const codes = new Set(rows.map(r=>r.유신코드));
+  const diffCodes = new Set(rows.filter(r=>r.상태!=="정상").map(r=>r.유신코드));
+  return [
+    { 구분:"부가세 포함금액", erp:sum("ERP포함"), ven:sum("업체포함") },
+    { 구분:"자동계산 공급가액", erp:sum("ERP공급"), ven:sum("업체공급") },
+    { 구분:"자동계산 부가세",   erp:sum("ERP부가세"), ven:sum("업체부가세") },
+    { 구분:"총 수량",          erp:sum("ERP수량"), ven:sum("업체수량") },
+    { 구분:"전체 유신코드 수", erp:codes.size, ven:codes.size },
+    { 구분:"차이 발생 유신코드 수", erp:diffCodes.size, ven:diffCodes.size }
+  ].map(x => ({...x, diff: x.ven - x.erp, status: (x.ven-x.erp===0)?"일치":"차이 발생"}));
+}
+function buildTable2(rows){
+  const m = new Map();
+  rows.forEach(r => {
+    const cur = m.get(r.부서명) || { 부서명:r.부서명, ERP포함:0, 업체포함:0, ERP공급:0, 업체공급:0, ERP수량:0, 업체수량:0, 차이건수:0 };
+    cur.ERP포함 += r.ERP포함; cur.업체포함 += r.업체포함;
+    cur.ERP공급 += r.ERP공급; cur.업체공급 += r.업체공급;
+    cur.ERP수량 += r.ERP수량; cur.업체수량 += r.업체수량;
+    if(r.상태!=="정상") cur.차이건수++;
+    m.set(r.부서명, cur);
+  });
+  return [...m.values()].map(x => ({
+    ...x,
+    포함차이: x.업체포함 - x.ERP포함,
+    공급차이: x.업체공급 - x.ERP공급,
+    수량차이: x.업체수량 - x.ERP수량,
+    상태: (x.차이건수===0?"정상":"확인 필요")
+  })).sort((a,b)=>Math.abs(b.포함차이)-Math.abs(a.포함차이));
+}
+function buildTable3(rows){
+  return rows.map(r => ({
+    부서명:r.부서명, 월:r.월, 유신코드:r.유신코드,
+    ERP품목명:r.ERP품목명, 업체상품명:r.업체상품명,
+    ERP수량:r.ERP수량, 업체수량:r.업체수량, 수량차이:r.수량차이,
+    부서수량차이여부: r.수량차이===0?"동일":"차이",
+    상태: r.상태
+  })).sort((a,b)=> Math.abs(b.수량차이)-Math.abs(a.수량차이) || a.부서명.localeCompare(b.부서명));
+}
+function buildTable4(rows){
+  return rows.map(r => ({
+    부서명:r.부서명, 월:r.월, 유신코드:r.유신코드,
+    ERP품목명:r.ERP품목명, 업체상품명:r.업체상품명,
+    품목명일치: (r.ERP품목명 && r.업체상품명 && r.ERP품목명===r.업체상품명)?"일치":"참고",
+    ERP단가:r.ERP단가, 업체단가:r.업체단가,
+    ERP포함:r.ERP포함, 업체포함:r.업체포함, 포함차이:r.포함차이,
+    ERP공급:r.ERP공급, 업체공급:r.업체공급, 공급차이:r.공급차이,
+    원인:r.원인
+  })).sort((a,b)=>Math.abs(b.포함차이)-Math.abs(a.포함차이));
+}
+function buildTable5(rows){
+  const m = new Map();
+  rows.filter(r=>r.상태!=="정상").forEach(r => {
+    const key = `${r.부서명}||${r.원인}`;
+    const cur = m.get(key) || { 부서명:r.부서명, 원인:r.원인, 건수:0, 수량합:0, 포함합:0, 공급합:0 };
+    cur.건수++; cur.수량합 += r.수량차이; cur.포함합 += r.포함차이; cur.공급합 += r.공급차이;
+    m.set(key, cur);
+  });
+  const action = c => ({
+    "수량 차이":"실제 수령 여부 확인 필요",
+    "수량 및 금액 차이":"실제 수령 여부 확인 필요",
+    "단가 차이":"단가 협의 필요",
+    "부가세 계산 차이":"단순 업데이트 필요",
+    "금액 업데이트 누락":"단순 업데이트 필요",
+    "ERP 입력 누락":"ERP 수정 필요",
+    "업체 청구 누락":"업체 청구자료 수정 요청",
+    "업체 과청구 가능성":"업체 청구자료 수정 요청",
+    "업체 과소청구 가능성":"추가 확인 필요"
+  })[c] || "추가 확인 필요";
+  return [...m.values()].map(x=>({...x, 조치방향: action(x.원인)})).sort((a,b)=>Math.abs(b.포함합)-Math.abs(a.포함합));
+}
+function buildTable6(rows){
+  const diff = rows.filter(r=>r.상태!=="정상");
+  const action = c => ({
+    "수량 차이":"실제 수령 여부 확인 후 ERP/업체 수정",
+    "수량 및 금액 차이":"실물 수령 확인 후 양측 조정",
+    "단가 차이":"업체와 단가 협의 후 정정",
+    "부가세 계산 차이":"부가세 재계산 후 갱신",
+    "금액 업데이트 누락":"ERP/업체 금액 동기화",
+    "ERP 입력 누락":"ERP 입력 보완",
+    "업체 청구 누락":"업체 청구자료 보완 요청",
+    "업체 과청구 가능성":"업체 청구 정정 요청",
+    "업체 과소청구 가능성":"업체 확인 후 추가 청구 또는 면제"
+  })[c] || "추가 확인";
+  const target = c => ({
+    "수량 차이":"해당 부서 확인",
+    "수량 및 금액 차이":"해당 부서 확인",
+    "단가 차이":"사무용품 업체 확인",
+    "부가세 계산 차이":"회계팀 확인",
+    "금액 업데이트 누락":"ERP 담당자 확인",
+    "ERP 입력 누락":"ERP 담당자 확인",
+    "업체 청구 누락":"사무용품 업체 확인",
+    "업체 과청구 가능성":"사무용품 업체 확인",
+    "업체 과소청구 가능성":"사무용품 업체 확인"
+  })[c] || "총무부 확인";
+  return diff.map(r => ({
+    부서명:r.부서명, 월:r.월, 구분:r.원인, 유신코드:r.유신코드,
+    품목명: r.ERP품목명 || r.업체상품명,
+    문제: `${r.원인} (수량차이 ${r.수량차이}, 포함차이 ${won(r.포함차이)})`,
+    차이금액: r.포함차이,
+    조치: action(r.원인),
+    담당: target(r.원인)
+  })).sort((a,b)=> Math.abs(b.차이금액)-Math.abs(a.차이금액))
+    .map((x,i)=>({ 우선순위:i+1, ...x }));
+}
+function buildTable7(rows, t2, t4){
+  const sum = (arr, key) => arr.reduce((a,b)=>a+b[key],0);
+  const erpAll = sum(rows, "ERP포함"), venAll = sum(rows, "업체포함");
+  const erpDept = sum(t2, "ERP포함"), venDept = sum(t2, "업체포함");
+  const erpItem = sum(t4, "ERP포함"), venItem = sum(t4, "업체포함");
+  const erpSup = Math.round(erpAll/1.1), venSup = Math.round(venAll/1.1);
+  const ok = "정상", ng = "불일치";
+  return [
+    { 항목:"ERP 전체 vs 부서별 합계", 식:"Σ(ERP)=Σ(부서별 ERP)", 결과:(erpAll===erpDept)?ok:ng, 차이:erpAll-erpDept, 비고:"부서별 검산" },
+    { 항목:"업체 전체 vs 부서별 합계", 식:"Σ(업체)=Σ(부서별 업체)", 결과:(venAll===venDept)?ok:ng, 차이:venAll-venDept, 비고:"부서별 검산" },
+    { 항목:"ERP 전체 vs 품목별 합계", 식:"Σ(ERP)=Σ(품목별 ERP)", 결과:(erpAll===erpItem)?ok:ng, 차이:erpAll-erpItem, 비고:"품목별 검산" },
+    { 항목:"업체 전체 vs 품목별 합계", 식:"Σ(업체)=Σ(품목별 업체)", 결과:(venAll===venItem)?ok:ng, 차이:venAll-venItem, 비고:"품목별 검산" },
+    { 항목:"ERP 공급가액 계산", 식:"ROUND(포함÷1.1)", 결과:ok, 차이:0, 비고:`자동계산 공급가액 ${won(erpSup)}` },
+    { 항목:"업체 공급가액 계산", 식:"ROUND(포함÷1.1)", 결과:ok, 차이:0, 비고:`자동계산 공급가액 ${won(venSup)}` },
+    { 항목:"부가세 일관성", 식:"부가세=포함-공급", 결과:ok, 차이:0, 비고:"자동 적용" },
+    { 항목:"차이금액 계산식", 식:"업체−ERP", 결과:ok, 차이:0, 비고:"일관 적용" }
+  ];
+}
+function buildTable8(rows, t1, t5){
+  const total = t1[0]; const diffCnt = rows.filter(r=>r.상태!=="정상").length;
+  const causes = [...new Set(t5.map(x=>x.원인))];
+  const depts = [...new Set(rows.filter(r=>r.상태!=="정상").map(r=>r.부서명))];
+  const reqVendor = t5.filter(x=>["업체 청구 누락","업체 과청구 가능성","단가 차이"].includes(x.원인)).map(x=>x.부서명);
+  const reqERP    = t5.filter(x=>["ERP 입력 누락","금액 업데이트 누락"].includes(x.원인)).map(x=>x.부서명);
+  const reqRecv   = t5.filter(x=>["수량 차이","수량 및 금액 차이"].includes(x.원인)).map(x=>x.부서명);
+  const reqPrice  = t5.filter(x=>x.원인==="단가 차이").map(x=>x.부서명);
+  return {
+    전체: `ERP 총 ${won(total.erp)} · 업체 총 ${won(total.ven)} · 차이 ${won(total.diff)}`,
+    차이여부: diffCnt===0?"없음 (전체 일치)":`차이 발생 ${diffCnt}건`,
+    차이부서: depts.length?depts.join(", "):"없음",
+    주요원인: causes.length?causes.join(", "):"없음",
+    업체요청: reqVendor.length?[...new Set(reqVendor)].join(", "):"없음",
+    ERP수정: reqERP.length?[...new Set(reqERP)].join(", "):"없음",
+    수령확인: reqRecv.length?[...new Set(reqRecv)].join(", "):"없음",
+    단가협의: reqPrice.length?[...new Set(reqPrice)].join(", "):"없음",
+    보고가능: diffCnt===0?"가능 (즉시 보고)":"부분 가능 (조치 후 최종 보고)"
+  };
+}
+
+/* ============ 결과 렌더링 ============ */
+function chipStatus(s){
+  if(s==="정상" || s==="일치") return '<span class="chip chip-ok">정상</span>';
+  if(s==="확인 필요") return '<span class="chip chip-warn">확인 필요</span>';
+  if(s==="불일치" || s==="차이 발생") return '<span class="chip chip-bad">차이 발생</span>';
+  return `<span class="chip chip-info">${esc(s)}</span>`;
+}
+function causePill(c){
+  const map = {
+    "수량 차이":"c-qty","수량 및 금액 차이":"c-qty-amt","단가 차이":"c-price",
+    "부가세 계산 차이":"c-tax","금액 업데이트 누락":"c-upd",
+    "ERP 입력 누락":"c-erp-miss","업체 청구 누락":"c-vendor-miss",
+    "업체 과청구 가능성":"c-over","업체 과소청구 가능성":"c-under",
+    "부서명 매칭 오류 가능성":"c-dept","확인 필요":"c-check"
+  };
+  const cls = map[c] || "c-check";
+  return `<span class="cause-pill ${cls}">${esc(c)}</span>`;
+}
+function renderAllTables(){
+  const r = STATE.results;
+  // 표1
+  document.getElementById("tb1").innerHTML = r.t1.map(x=>`<tr>
+    <td>${esc(x.구분)}</td>
+    <td class="right">${fmt(x.erp)}</td>
+    <td class="right">${fmt(x.ven)}</td>
+    <td class="right">${fmt(x.diff)}</td>
+    <td class="center">${chipStatus(x.status)}</td>
+  </tr>`).join("");
+  // 표2
+  document.getElementById("tb2").innerHTML = r.t2.map(x=>`<tr>
+    <td><b>${esc(x.부서명)}</b></td>
+    <td class="right">${fmt(x.ERP포함)}</td><td class="right">${fmt(x.업체포함)}</td><td class="right">${fmt(x.포함차이)}</td>
+    <td class="right">${fmt(x.ERP공급)}</td><td class="right">${fmt(x.업체공급)}</td><td class="right">${fmt(x.공급차이)}</td>
+    <td class="right">${fmt(x.ERP수량)}</td><td class="right">${fmt(x.업체수량)}</td><td class="right">${fmt(x.수량차이)}</td>
+    <td class="center">${chipStatus(x.상태)}</td>
+  </tr>`).join("");
+  // 표3
+  document.getElementById("tb3").innerHTML = r.t3.map(x=>`<tr>
+    <td>${esc(x.부서명)}</td><td>${esc(x.월)}</td><td><b>${esc(x.유신코드)}</b></td>
+    <td>${esc(x.ERP품목명)}</td><td>${esc(x.업체상품명)}</td>
+    <td class="right">${fmt(x.ERP수량)}</td><td class="right">${fmt(x.업체수량)}</td><td class="right">${fmt(x.수량차이)}</td>
+    <td>${esc(x.부서수량차이여부)}</td><td class="center">${chipStatus(x.상태)}</td>
+  </tr>`).join("");
+  // 표4
+  document.getElementById("tb4").innerHTML = r.t4.map(x=>`<tr>
+    <td>${esc(x.부서명)}</td><td>${esc(x.월)}</td><td><b>${esc(x.유신코드)}</b></td>
+    <td>${esc(x.ERP품목명)}</td><td>${esc(x.업체상품명)}</td><td>${esc(x.품목명일치)}</td>
+    <td class="right">${fmt(x.ERP단가)}</td><td class="right">${fmt(x.업체단가)}</td>
+    <td class="right">${fmt(x.ERP포함)}</td><td class="right">${fmt(x.업체포함)}</td><td class="right">${fmt(x.포함차이)}</td>
+    <td class="right">${fmt(x.ERP공급)}</td><td class="right">${fmt(x.업체공급)}</td><td class="right">${fmt(x.공급차이)}</td>
+    <td>${causePill(x.원인)}</td>
+  </tr>`).join("");
+  // 표5
+  document.getElementById("tb5").innerHTML = r.t5.map(x=>`<tr>
+    <td>${esc(x.부서명)}</td><td>${causePill(x.원인)}</td>
+    <td class="right">${fmt(x.건수)}</td>
+    <td class="right">${fmt(x.수량합)}</td><td class="right">${fmt(x.포함합)}</td><td class="right">${fmt(x.공급합)}</td>
+    <td>${esc(x.조치방향)}</td>
+  </tr>`).join("");
+  // 표6
+  document.getElementById("tb6").innerHTML = r.t6.map(x=>`<tr>
+    <td class="center"><b>${x.우선순위}</b></td>
+    <td>${esc(x.부서명)}</td><td>${esc(x.월)}</td><td>${causePill(x.구분)}</td>
+    <td><b>${esc(x.유신코드)}</b></td><td>${esc(x.품목명)}</td>
+    <td>${esc(x.문제)}</td><td class="right">${fmt(x.차이금액)}</td>
+    <td>${esc(x.조치)}</td><td>${esc(x.담당)}</td>
+  </tr>`).join("");
+  // 표7
+  document.getElementById("tb7").innerHTML = r.t7.map(x=>`<tr>
+    <td>${esc(x.항목)}</td><td>${esc(x.식)}</td>
+    <td class="center">${chipStatus(x.결과)}</td>
+    <td class="right">${fmt(x.차이)}</td><td>${esc(x.비고)}</td>
+  </tr>`).join("");
+  // 표8
+  const c = r.t8;
+  document.getElementById("tb8").innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="glass-strong p-3 rounded-xl"><b class="text-violet-300">전체 정산 결과</b><br/>${esc(c.전체)}</div>
+      <div class="glass-strong p-3 rounded-xl"><b class="text-pink-300">차이 발생 여부</b><br/>${esc(c.차이여부)}</div>
+      <div class="glass-strong p-3 rounded-xl"><b class="text-cyan-300">차이 발생 부서</b><br/>${esc(c.차이부서)}</div>
+      <div class="glass-strong p-3 rounded-xl"><b class="text-amber-300">주요 차이 원인</b><br/>${esc(c.주요원인)}</div>
+      <div class="glass-strong p-3 rounded-xl"><b class="text-rose-300">업체 요청 사항</b><br/>${esc(c.업체요청)}</div>
+      <div class="glass-strong p-3 rounded-xl"><b class="text-emerald-300">ERP 수정 사항</b><br/>${esc(c.ERP수정)}</div>
+      <div class="glass-strong p-3 rounded-xl"><b class="text-fuchsia-300">실제 수령 확인</b><br/>${esc(c.수령확인)}</div>
+      <div class="glass-strong p-3 rounded-xl"><b class="text-indigo-300">단가 협의 필요</b><br/>${esc(c.단가협의)}</div>
+      <div class="glass-strong p-3 rounded-xl md:col-span-2"><b class="text-lime-300">최종 보고 가능 여부</b><br/>${esc(c.보고가능)}</div>
+    </div>`;
+}
+
+/* ============ 대시보드 ============ */
+function updateDashboard(){
+  const rows = STATE.merged;
+  const diff = rows.filter(r=>r.상태!=="정상");
+  document.getElementById("m_total").textContent = fmt(rows.length);
+  document.getElementById("m_match").textContent = fmt(rows.length - diff.length);
+  document.getElementById("m_diff").textContent  = fmt(diff.length);
+  document.getElementById("m_dept").textContent  = fmt(new Set(rows.map(r=>r.부서명)).size);
+  document.getElementById("m_code").textContent  = fmt(new Set(rows.map(r=>r.유신코드)).size);
+  document.getElementById("m_amt").textContent   = won(diff.reduce((a,r)=>a+Math.abs(r.포함차이),0));
+}
+
+/* ============ 차트 ============ */
+let chDept=null, chCause=null, chMonth=null, chCode=null;
+function destroy(c){ try{ c && c.destroy(); }catch(e){} }
+function chartColors(){
+  return {
+    grid: document.body.classList.contains("light") ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.08)",
+    tick: document.body.classList.contains("light") ? "#1a2240" : "#cbd5e1"
+  };
+}
+function redrawCharts(){
+  destroy(chDept); destroy(chCause); destroy(chMonth); destroy(chCode);
+  if(!STATE.results) { drawEmpty(); return; }
+  const c = chartColors();
+  // 부서별 TOP 10
+  const t2 = STATE.results.t2.slice(0,10);
+  chDept = new Chart(document.getElementById("chartDept"), {
+    type:"bar",
+    data:{
+      labels:t2.map(x=>x.부서명),
+      datasets:[
+        { label:"ERP", data:t2.map(x=>x.ERP포함), backgroundColor:"rgba(99,102,241,0.7)" },
+        { label:"업체", data:t2.map(x=>x.업체포함), backgroundColor:"rgba(244,114,182,0.7)" },
+        { label:"차이(절대)", data:t2.map(x=>Math.abs(x.포함차이)), backgroundColor:"rgba(34,211,238,0.7)" }
+      ]
+    },
+    options:{ responsive:true, scales:{
+      x:{ ticks:{color:c.tick}, grid:{color:c.grid} },
+      y:{ ticks:{color:c.tick}, grid:{color:c.grid} }
+    }, plugins:{ legend:{labels:{color:c.tick}} } }
+  });
+  // 차이 원인 분포 (도넛)
+  const t5 = STATE.results.t5;
+  const cm = new Map();
+  t5.forEach(x => cm.set(x.원인, (cm.get(x.원인)||0)+x.건수));
+  chCause = new Chart(document.getElementById("chartCause"), {
+    type:"doughnut",
+    data:{
+      labels:[...cm.keys()],
+      datasets:[{ data:[...cm.values()], backgroundColor:[
+        "#6366f1","#a855f7","#f472b6","#22d3ee","#10b981","#f59e0b","#fb7185","#fbbf24","#818cf8","#c084fc","#94a3b8"
+      ]}]
+    },
+    options:{ responsive:true, plugins:{ legend:{position:"bottom", labels:{color:c.tick}} } }
+  });
+  // 월별 정산 추이
+  const mMap = new Map();
+  STATE.merged.forEach(r => {
+    const cur = mMap.get(r.월) || { 월:r.월, ERP:0, VEN:0 };
+    cur.ERP += r.ERP포함; cur.VEN += r.업체포함;
+    mMap.set(r.월, cur);
+  });
+  const months = [...mMap.values()].sort((a,b)=> String(a.월).localeCompare(String(b.월)));
+  chMonth = new Chart(document.getElementById("chartMonth"), {
+    type:"line",
+    data:{
+      labels:months.map(m=>m.월),
+      datasets:[
+        { label:"ERP", data:months.map(m=>m.ERP), borderColor:"#a78bfa", backgroundColor:"rgba(168,85,247,0.18)", tension:0.35, fill:true },
+        { label:"업체", data:months.map(m=>m.VEN), borderColor:"#f472b6", backgroundColor:"rgba(244,114,182,0.18)", tension:0.35, fill:true }
+      ]
+    },
+    options:{ responsive:true, scales:{
+      x:{ ticks:{color:c.tick}, grid:{color:c.grid} },
+      y:{ ticks:{color:c.tick}, grid:{color:c.grid} }
+    }, plugins:{ legend:{labels:{color:c.tick}} } }
+  });
+  // 차이 TOP 5 유신코드
+  const codeMap = new Map();
+  STATE.merged.forEach(r => {
+    const cur = codeMap.get(r.유신코드) || { 유신코드:r.유신코드, 절대차이:0 };
+    cur.절대차이 += Math.abs(r.포함차이);
+    codeMap.set(r.유신코드, cur);
+  });
+  const top5 = [...codeMap.values()].sort((a,b)=>b.절대차이-a.절대차이).slice(0,5);
+  chCode = new Chart(document.getElementById("chartCode"), {
+    type:"bar",
+    data:{
+      labels:top5.map(x=>x.유신코드),
+      datasets:[{ label:"차이금액(절대)", data:top5.map(x=>x.절대차이), backgroundColor:"rgba(245,158,11,0.75)" }]
+    },
+    options:{ indexAxis:"y", responsive:true, scales:{
+      x:{ ticks:{color:c.tick}, grid:{color:c.grid} },
+      y:{ ticks:{color:c.tick}, grid:{color:c.grid} }
+    }, plugins:{ legend:{labels:{color:c.tick}} } }
+  });
+}
+function drawEmpty(){
+  const c = chartColors();
+  chDept = new Chart(document.getElementById("chartDept"), { type:"bar", data:{labels:[],datasets:[]}, options:{plugins:{legend:{labels:{color:c.tick}}}} });
+  chCause = new Chart(document.getElementById("chartCause"), { type:"doughnut", data:{labels:[],datasets:[]}, options:{plugins:{legend:{labels:{color:c.tick}}}} });
+  chMonth = new Chart(document.getElementById("chartMonth"), { type:"line", data:{labels:[],datasets:[]}, options:{plugins:{legend:{labels:{color:c.tick}}}} });
+  chCode = new Chart(document.getElementById("chartCode"), { type:"bar", data:{labels:[],datasets:[]}, options:{plugins:{legend:{labels:{color:c.tick}}}} });
+}
+
+/* ============ 엑셀 내보내기 ============ */
+function exportExcel(){
+  try{
+    if(!STATE.results){ toast("먼저 비교를 실행하세요","warn"); return; }
+    const wb = XLSX.utils.book_new();
+    const add = (name, arr) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(arr), name);
+    add("1_전체요약", STATE.results.t1.map(x=>({구분:x.구분, ERP기준:x.erp, 업체기준:x.ven, 차이:x.diff, 상태:x.status})));
+    add("2_부서별금액", STATE.results.t2);
+    add("3_품목부서수량", STATE.results.t3);
+    add("4_품목부서금액", STATE.results.t4);
+    add("5_원인부서요약", STATE.results.t5);
+    add("6_조치필요", STATE.results.t6);
+    add("7_검산", STATE.results.t7);
+    add("8_결론", [STATE.results.t8]);
+    XLSX.writeFile(wb, `사무용품정산_V4_${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast("엑셀 다운로드 완료 (8시트)","ok");
+  }catch(err){ console.error(err); toast("엑셀 저장 실패: "+err.message,"bad"); }
+}
+
+/* ============ PDF 보고서 ============ */
+function exportPDF(){
+  try{
+    if(!STATE.results){ toast("먼저 비교를 실행하세요","warn"); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:"landscape", unit:"pt", format:"a4" });
+    doc.setFont("helvetica","bold"); doc.setFontSize(18);
+    doc.text("Office Supply Settlement Report (V4)", 40, 40);
+    doc.setFontSize(10); doc.setFont("helvetica","normal");
+    doc.text(`Generated: ${new Date().toLocaleString("en-US")} / Owner: Lee Hak-jun (General Affairs)`, 40, 58);
+
+    const tableOpts = { startY:75, styles:{fontSize:8, cellPadding:3}, headStyles:{fillColor:[99,102,241]} };
+
+    doc.autoTable({ ...tableOpts, head:[["Type","ERP","Vendor","Diff","Status"]],
+      body: STATE.results.t1.map(x=>[x.구분, fmt(x.erp), fmt(x.ven), fmt(x.diff), x.status]) });
+
+    doc.addPage();
+    doc.text("[Table 2] Department Amount Comparison", 40, 30);
+    doc.autoTable({ startY:40, styles:{fontSize:7,cellPadding:2}, headStyles:{fillColor:[244,114,182]},
+      head:[["Dept","ERP Incl.","Ven Incl.","Diff Incl.","ERP Sup","Ven Sup","Diff Sup","ERP Qty","Ven Qty","Diff Qty","Status"]],
+      body: STATE.results.t2.map(x=>[x.부서명, fmt(x.ERP포함), fmt(x.업체포함), fmt(x.포함차이), fmt(x.ERP공급), fmt(x.업체공급), fmt(x.공급차이), fmt(x.ERP수량), fmt(x.업체수량), fmt(x.수량차이), x.상태]) });
+
+    doc.addPage();
+    doc.text("[Table 6] Action Priority List", 40, 30);
+    doc.autoTable({ startY:40, styles:{fontSize:7,cellPadding:2}, headStyles:{fillColor:[34,211,238]},
+      head:[["#","Dept","Month","Cause","Code","Item","Diff Amount","Action","Assignee"]],
+      body: STATE.results.t6.slice(0,30).map(x=>[x.우선순위, x.부서명, x.월, x.구분, x.유신코드, x.품목명, fmt(x.차이금액), x.조치, x.담당]) });
+
+    doc.save(`OfficeSupply_V4_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast("PDF 보고서 저장 완료","ok");
+  }catch(err){ console.error(err); toast("PDF 생성 실패: "+err.message,"bad"); }
+}
+
+/* ============ 클립보드 복사 ============ */
+function copyTable(id){
+  try{
+    const rows = document.querySelectorAll(`#${id} tr`);
+    let text = "";
+    rows.forEach(tr => {
+      text += [...tr.children].map(td => td.innerText.replace(/\s+/g," ").trim()).join("\t") + "\n";
+    });
+    navigator.clipboard.writeText(text).then(()=>toast("표를 클립보드에 복사했습니다","ok"));
+  }catch(e){ console.error(e); toast("복사 실패","bad"); }
+}
+function copyAllReport(){
+  try{
+    const t = buildReportText();
+    navigator.clipboard.writeText(t).then(()=>toast("보고서 전문을 복사했습니다","ok"));
+  }catch(e){ toast("복사 실패","bad"); }
+}
+function buildReportText(){
+  if(!STATE.results) return "비교를 먼저 실행하세요.";
+  const r = STATE.results, c=r.t8;
+  let s = `[사무용품 정산 자동 비교 보고서 V4]\n생성: ${new Date().toLocaleString("ko-KR")}\n담당: 이학준 (총무부)\n\n`;
+  s += `■ 전체 요약\n` + r.t1.map(x=>` - ${x.구분}: ERP ${fmt(x.erp)} / 업체 ${fmt(x.ven)} / 차이 ${fmt(x.diff)} (${x.status})`).join("\n")+"\n\n";
+  s += `■ 결론\n - 전체: ${c.전체}\n - 차이여부: ${c.차이여부}\n - 차이부서: ${c.차이부서}\n - 주요원인: ${c.주요원인}\n - 업체요청: ${c.업체요청}\n - ERP수정: ${c.ERP수정}\n - 수령확인: ${c.수령확인}\n - 단가협의: ${c.단가협의}\n - 보고가능: ${c.보고가능}\n`;
+  STATE.reportText = s;
+  return s;
+}
+function openReport(){
+  const t = buildReportText();
+  document.getElementById("reportPreview").innerHTML = `<pre class="whitespace-pre-wrap text-white/85">${esc(t)}</pre>`;
+  openModal("reportModal");
+}
+function copyReportText(){ copyAllReport(); }
+
+/* ============ 이력 (LocalStorage) ============ */
+const LS_KEY = "lhj_supply_compare_v4";
+function saveHistory(){
+  try{
+    if(!STATE.results){ toast("결과가 없습니다","warn"); return; }
+    const tag = document.getElementById("histTag").value.trim() || new Date().toISOString().slice(0,10);
+    const list = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+    list.unshift({
+      id: Date.now(), tag,
+      summary: STATE.results.t1,
+      diffCount: STATE.merged.filter(r=>r.상태!=="정상").length,
+      diffAmount: STATE.merged.filter(r=>r.상태!=="정상").reduce((a,r)=>a+Math.abs(r.포함차이),0),
+      depts: [...new Set(STATE.merged.map(r=>r.부서명))],
+      createdAt: new Date().toISOString()
+    });
+    localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0,50)));
+    toast("이력 저장 완료","ok");
+  }catch(e){ console.error(e); toast("이력 저장 실패","bad"); }
+}
+function openHistory(){
+  try{
+    const list = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+    const box = document.getElementById("historyBody");
+    if(!list.length){ box.innerHTML = `<div class="text-white/60 text-sm">저장된 이력이 없습니다.</div>`; openModal("historyModal"); return; }
+    box.innerHTML = `
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>태그</th><th>생성일</th><th class="right">차이 건수</th><th class="right">차이 금액</th><th>부서</th><th>관리</th></tr></thead>
+        <tbody>${list.map(h=>`<tr>
+          <td><b>${esc(h.tag)}</b></td>
+          <td>${esc(new Date(h.createdAt).toLocaleString("ko-KR"))}</td>
+          <td class="right">${fmt(h.diffCount)}</td>
+          <td class="right">${won(h.diffAmount)}</td>
+          <td>${esc((h.depts||[]).join(", "))}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="removeHistory(${h.id})"><i class="fa-solid fa-trash text-rose-300"></i></button></td>
+        </tr>`).join("")}</tbody>
+      </table></div>`;
+    openModal("historyModal");
+  }catch(e){ console.error(e); toast("이력 불러오기 실패","bad"); }
+}
+function removeHistory(id){
+  try{
+    const list = JSON.parse(localStorage.getItem(LS_KEY) || "[]").filter(h=>h.id!==id);
+    localStorage.setItem(LS_KEY, JSON.stringify(list));
+    openHistory();
+  }catch(e){ console.error(e); }
+}
+
+/* ============ 샘플 데이터 ============ */
+const DEPTS = ["토목사업부","건축사업부","환경사업부","총무부","인사팀","기획실"];
+const ITEMS = [
+  {code:"20042", name:"포토용지 A4", vname:"고급 포토페이퍼 A4", price:18000},
+  {code:"20043", name:"포토용지 A3", vname:"고급 포토페이퍼 A3", price:32000},
+  {code:"30110", name:"볼펜 흑색", vname:"검정 볼펜", price:300},
+  {code:"30111", name:"볼펜 청색", vname:"파랑 볼펜", price:300},
+  {code:"30112", name:"볼펜 적색", vname:"빨강 볼펜", price:300},
+  {code:"30220", name:"형광펜 5종", vname:"형광펜 패키지 5색", price:5500},
+  {code:"30330", name:"수정테이프", vname:"수정 테이프 8m", price:2200},
+  {code:"40100", name:"A4 복사용지 1박스", vname:"A4용지 2500매", price:24000},
+  {code:"40101", name:"A3 복사용지 1박스", vname:"A3용지 2500매", price:38000},
+  {code:"40220", name:"라벨지 100매", vname:"라벨용지 100매 A4", price:9800},
+  {code:"50010", name:"포스트잇 76x76", vname:"메모지 76mm", price:1800},
+  {code:"50011", name:"포스트잇 38x50", vname:"미니 메모지", price:1200},
+  {code:"50220", name:"클립 100p", vname:"종이클립 100개", price:1500},
+  {code:"50221", name:"집게핀 대형", vname:"바인더 클립 대", price:3500},
+  {code:"60010", name:"화이트보드 마커", vname:"보드마커 흑색", price:1800},
+  {code:"60011", name:"화이트보드 지우개", vname:"보드 이레이저", price:2500},
+  {code:"60330", name:"가위 일반형", vname:"문구 가위", price:3200},
+  {code:"60331", name:"커터칼", vname:"안전 커터칼", price:1800},
+  {code:"70010", name:"스테이플러", vname:"호치키스 24/6", price:7500},
+  {code:"70011", name:"스테이플러 침", vname:"스테이플 1000개입", price:800},
+  {code:"70220", name:"파일첩 A4", vname:"A4 파일홀더", price:2800},
+  {code:"70221", name:"바인더 3공", vname:"3공 바인더 75mm", price:6500},
+  {code:"70222", name:"클리어파일 20p", vname:"투명 파일 20포켓", price:4800},
+  {code:"80010", name:"테이프 투명", vname:"OPP 테이프", price:1200},
+  {code:"80011", name:"테이프 박스용", vname:"박스 테이프 48mm", price:1800},
+  {code:"80220", name:"가위형 칼", vname:"공작용 칼", price:2400},
+  {code:"80221", name:"커피믹스 100T", vname:"맥심 모카골드 100T", price:18900},
+  {code:"80222", name:"녹차 100T", vname:"동서 녹차 100T", price:9500},
+  {code:"80330", name:"종이컵 1000개", vname:"종이컵 6.5oz 1000P", price:18000},
+  {code:"80331", name:"휴지 30롤", vname:"화장지 30롤", price:21000}
+];
+const MONTHS = ["2026-03","2026-04","2026-05"];
+function rndInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function buildSampleERP(){
+  const out=[];
+  DEPTS.forEach(dept => {
+    MONTHS.forEach(m => {
+      const cnt = rndInt(5,9);
+      const pool = [...ITEMS].sort(()=>Math.random()-0.5).slice(0, cnt);
+      pool.forEach(it => {
+        const qty = rndInt(2,12);
+        const incl = Math.round(qty * it.price * 1.1);
+        out.push({ 부서명:dept, 월:m, 유신코드:it.code, 품목명:it.name, 수량:qty, 단가:it.price, 부가세포함금액:incl });
+      });
+    });
+  });
+  return out;
+}
+function buildSampleVEN(erp){
+  // 의도적으로 차이 포함
+  const out = erp.map(r => ({...r, 품목명: ITEMS.find(i=>i.code===r.유신코드)?.vname || r.품목명 }));
+  const idxs = [...out.keys()].sort(()=>Math.random()-0.5);
+  // 수량 차이 8건
+  idxs.slice(0,8).forEach(i => { out[i].수량 += rndInt(-2,3) || 1; out[i].부가세포함금액 = Math.round(out[i].수량 * out[i].단가 * 1.1); });
+  // 단가 차이 6건
+  idxs.slice(8,14).forEach(i => { out[i].단가 = Math.round(out[i].단가 * (1 + rndInt(5,15)/100)); out[i].부가세포함금액 = Math.round(out[i].수량 * out[i].단가 * 1.1); });
+  // 부가세 계산 차이 4건 (±2~5원)
+  idxs.slice(14,18).forEach(i => { out[i].부가세포함금액 += rndInt(2,5)*(Math.random()<0.5?-1:1); });
+  // 업체 청구 누락 3건
+  out.splice(idxs[18],1); out.splice(idxs[19]-1,1); out.splice(idxs[20]-2,1);
+  // 업체에만 있는 행 추가 (ERP 입력 누락) 3건
+  for(let i=0;i<3;i++){
+    const dept = DEPTS[rndInt(0,DEPTS.length-1)];
+    const m = MONTHS[rndInt(0,MONTHS.length-1)];
+    const it = ITEMS[rndInt(0,ITEMS.length-1)];
+    const qty = rndInt(3,8);
+    out.push({ 부서명:dept, 월:m, 유신코드:it.code, 품목명:it.vname, 수량:qty, 단가:it.price, 부가세포함금액:Math.round(qty*it.price*1.1) });
+  }
+  return out;
+}
+function loadSample(){
+  try{
+    const erp = buildSampleERP();
+    const ven = buildSampleVEN(erp);
+    function toSlot(slot, name, rows){
+      slot.name = name; slot.rows = rows;
+      slot.headers = ["부서명","월","유신코드","품목명","수량","단가","부가세포함금액"];
+      slot.sheetNames = ["사무용품"]; slot.sheet = "사무용품";
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "사무용품");
+      slot.wb = wb;
+    }
+    toSlot(STATE.erp, "샘플_ERP.xlsx", erp);
+    toSlot(STATE.ven, "샘플_업체.xlsx", ven);
+    renderUploadInfo(); renderStructure(); refreshSheetSelectors();
+    buildMappingTable(); renderCleanPreview();
+    toast(`샘플 로드 완료 (ERP ${erp.length}행 / 업체 ${ven.length}행)`,"ok");
+  }catch(e){ console.error(e); toast("샘플 로드 실패: "+e.message,"bad"); }
+}
+
+/* ============ 시트 셀렉터 초기화 시점 ============ */
+const _origRenderStructure = renderStructure;
+renderStructure = function(){ _origRenderStructure(); refreshSheetSelectors(); };
+
+/* ============ 부팅 ============ */
+window.addEventListener("DOMContentLoaded", ()=>{
+  goSection("dashboard");
+  drawEmpty();
+  // 데모용 차트 비어있지 않게 하려면 자동 샘플 로드는 생략
+  toast("V4 시스템 준비 완료 · '샘플 로드' 또는 파일 업로드","info");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1897 @@
+<!-- 이 파일의 역할: 성국현(업무부) 공동도급사 안내 메일 자동 작성 시스템 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>공동도급사 메일 자동 작성 시스템 | 성국현 (업무부)</title>
+
+<!-- TailwindCSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- SheetJS XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- Google Fonts: Pretendard -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" />
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Pretendard', 'Noto Sans KR', 'system-ui', 'sans-serif']
+        },
+        colors: {
+          brand: {
+            50:  '#ecfdf5',
+            100: '#d1fae5',
+            200: '#a7f3d0',
+            300: '#6ee7b7',
+            400: '#34d399',
+            500: '#10b981',
+            600: '#059669',
+            700: '#047857',
+            800: '#065f46',
+            900: '#064e3b'
+          },
+          deep: {
+            500: '#1e3a8a',
+            600: '#1e40af',
+            700: '#1d4ed8'
+          }
+        },
+        boxShadow: {
+          glass: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+          soft:  '0 4px 24px 0 rgba(0, 0, 0, 0.06)'
+        },
+        animation: {
+          'fade-in': 'fadeIn 0.5s ease-out',
+          'slide-up': 'slideUp 0.4s ease-out',
+          'pulse-glow': 'pulseGlow 2s ease-in-out infinite'
+        },
+        keyframes: {
+          fadeIn:   { '0%': {opacity:0}, '100%':{opacity:1} },
+          slideUp:  { '0%': {opacity:0, transform:'translateY(20px)'}, '100%':{opacity:1, transform:'translateY(0)'} },
+          pulseGlow:{ '0%, 100%': {boxShadow:'0 0 20px rgba(16,185,129,0.4)'}, '50%':{boxShadow:'0 0 40px rgba(16,185,129,0.7)'} }
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  html, body { font-family: 'Pretendard','Noto Sans KR', sans-serif; }
+  /* 다크/라이트 그라데이션 배경 */
+  body.light-mode {
+    background:
+      radial-gradient(1200px 600px at 0% 0%, rgba(16,185,129,0.10), transparent 60%),
+      radial-gradient(1000px 500px at 100% 100%, rgba(30,64,175,0.10), transparent 60%),
+      linear-gradient(135deg, #f0fdfa 0%, #eff6ff 100%);
+    min-height: 100vh;
+  }
+  body.dark {
+    background:
+      radial-gradient(1200px 600px at 0% 0%, rgba(16,185,129,0.18), transparent 60%),
+      radial-gradient(1000px 500px at 100% 100%, rgba(29,78,216,0.22), transparent 60%),
+      linear-gradient(135deg, #042f2e 0%, #0f172a 100%);
+    color: #e5e7eb;
+    min-height: 100vh;
+  }
+  /* 글래스모피즘 */
+  .glass {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.45);
+  }
+  body.dark .glass {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .glass-strong {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+  body.dark .glass-strong {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  /* 사이드바 */
+  .sidebar-item {
+    transition: all 0.25s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover {
+    background: rgba(16,185,129,0.10);
+    border-left-color: #10b981;
+  }
+  .sidebar-item.active {
+    background: linear-gradient(90deg, rgba(16,185,129,0.22), rgba(30,64,175,0.10));
+    border-left-color: #10b981;
+    font-weight: 700;
+  }
+  /* 그라데이션 텍스트/버튼 */
+  .gradient-text {
+    background: linear-gradient(135deg, #10b981 0%, #1d4ed8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .btn-grad {
+    background: linear-gradient(135deg, #059669 0%, #1e40af 100%);
+    color: #fff;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .btn-grad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(16,185,129,0.35);
+  }
+  /* 단계 표시 */
+  .step-bullet {
+    width: 38px; height: 38px;
+    border-radius: 999px;
+    display: inline-flex; align-items:center; justify-content:center;
+    font-weight: 800;
+    background: rgba(16,185,129,0.12);
+    color: #047857;
+    border: 2px solid rgba(16,185,129,0.35);
+  }
+  body.dark .step-bullet {
+    background: rgba(16,185,129,0.18);
+    color: #34d399;
+    border-color: rgba(52,211,153,0.4);
+  }
+  .step-bullet.active {
+    background: linear-gradient(135deg,#10b981,#1d4ed8);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 0 0 4px rgba(16,185,129,0.18);
+  }
+  .step-bullet.done {
+    background: #10b981; color:#fff; border-color: transparent;
+  }
+  /* 카드 버튼 */
+  .choice-card {
+    border: 2px solid rgba(148,163,184,0.35);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .choice-card:hover { border-color: #10b981; transform: translateY(-2px); }
+  .choice-card.selected {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(30,64,175,0.08));
+    box-shadow: 0 8px 24px rgba(16,185,129,0.18);
+  }
+  body.dark .choice-card { border-color: rgba(148,163,184,0.25); }
+  /* 토스트 */
+  .toast {
+    animation: slideUp 0.3s ease-out;
+  }
+  /* 스크롤바 */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(135deg,#10b981,#1d4ed8); border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  /* 입력 필드 */
+  .field {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(148,163,184,0.4);
+    background: rgba(255,255,255,0.7);
+    color: inherit;
+    transition: all 0.2s ease;
+  }
+  .field:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.18);
+  }
+  body.dark .field {
+    background: rgba(15,23,42,0.6);
+    border-color: rgba(148,163,184,0.25);
+    color: #e5e7eb;
+  }
+  /* 메일 미리보기 */
+  .mail-preview {
+    background: #fff;
+    color: #111827;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 24px;
+    white-space: pre-wrap;
+    font-family: 'Pretendard', sans-serif;
+    line-height: 1.75;
+  }
+  body.dark .mail-preview {
+    background: #f8fafc;
+  }
+  /* 표 */
+  .result-table th {
+    background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(30,64,175,0.08));
+    font-weight: 700;
+  }
+  body.dark .result-table th {
+    background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(30,64,175,0.18));
+  }
+  .result-table td, .result-table th {
+    border: 1px solid rgba(148,163,184,0.3);
+    padding: 12px 14px;
+    vertical-align: top;
+  }
+  body.dark .result-table td, body.dark .result-table th {
+    border-color: rgba(148,163,184,0.2);
+  }
+  /* 작은 뱃지 */
+  .badge {
+    display:inline-flex; align-items:center; gap:6px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+  }
+  .badge-green { background: rgba(16,185,129,0.15); color: #047857; }
+  .badge-blue  { background: rgba(30,64,175,0.15);  color: #1e40af; }
+  .badge-amber { background: rgba(245,158,11,0.15); color: #b45309; }
+  .badge-gray  { background: rgba(100,116,139,0.15);color: #475569; }
+  body.dark .badge-green { color: #6ee7b7; }
+  body.dark .badge-blue  { color: #93c5fd; }
+  body.dark .badge-amber { color: #fbbf24; }
+  body.dark .badge-gray  { color: #cbd5e1; }
+  /* 페이지 섹션 전환 */
+  .page-section { display: none; }
+  .page-section.active { display: block; animation: fadeIn 0.4s ease-out; }
+</style>
+</head>
+<body class="light-mode">
+
+<!-- 토스트 영역 -->
+<div id="toastArea" class="fixed top-5 right-5 z-50 space-y-2"></div>
+
+<!-- 모달 영역 -->
+<div id="modalArea" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+  <div class="glass-strong rounded-2xl shadow-glass max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 animate-slide-up" id="modalContent">
+    <!-- 동적 -->
+  </div>
+</div>
+
+<!-- 레이아웃 -->
+<div class="flex min-h-screen">
+
+  <!-- 사이드바 -->
+  <aside class="glass w-64 hidden lg:flex flex-col p-5 shadow-glass">
+    <div class="flex items-center gap-3 mb-7">
+      <div class="w-11 h-11 rounded-xl btn-grad flex items-center justify-center text-xl shadow-lg">
+        <i class="fa-solid fa-envelope-open-text"></i>
+      </div>
+      <div>
+        <div class="font-extrabold text-lg gradient-text">MailFlow Pro</div>
+        <div class="text-xs opacity-70">공동도급사 메일 자동화</div>
+      </div>
+    </div>
+
+    <nav class="space-y-1 text-sm">
+      <a class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer" data-page="dashboard">
+        <i class="fa-solid fa-chart-line w-5 text-center"></i> 대시보드
+      </a>
+      <a class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer" data-page="compose">
+        <i class="fa-solid fa-pen-to-square w-5 text-center"></i> 신규 메일 작성
+      </a>
+      <a class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer" data-page="partners">
+        <i class="fa-solid fa-building w-5 text-center"></i> 도급사 관리
+      </a>
+      <a class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer" data-page="history">
+        <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i> 발송 이력
+      </a>
+      <a class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer" data-page="templates">
+        <i class="fa-solid fa-bookmark w-5 text-center"></i> 템플릿 관리
+      </a>
+      <a class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer" data-page="settings">
+        <i class="fa-solid fa-gear w-5 text-center"></i> 설정
+      </a>
+    </nav>
+
+    <div class="mt-auto pt-6">
+      <div class="glass rounded-xl p-4 text-xs">
+        <div class="flex items-center gap-2 mb-2 font-bold">
+          <i class="fa-solid fa-user-tie text-emerald-500"></i> 담당자
+        </div>
+        <div class="opacity-90 font-semibold">성국현 부장</div>
+        <div class="opacity-70">업무부 | 계약·청구</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="flex-1 min-w-0">
+
+    <!-- 헤더 -->
+    <header class="glass sticky top-0 z-30 px-5 lg:px-8 py-4 flex items-center justify-between shadow-soft">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg bg-white/30" onclick="toggleMobileMenu()">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div>
+          <h1 class="text-xl font-extrabold gradient-text" id="pageTitle">대시보드</h1>
+          <p class="text-xs opacity-70" id="pageSubtitle">공동도급사 메일 발송 현황 및 통계</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="badge badge-green hidden md:inline-flex">
+          <i class="fa-solid fa-circle-check"></i> 시스템 정상
+        </span>
+        <button class="p-2 rounded-lg glass hover:scale-105 transition" onclick="toggleTheme()" title="테마 전환">
+          <i class="fa-solid fa-moon dark:hidden"></i>
+          <i class="fa-solid fa-sun hidden dark:inline"></i>
+        </button>
+        <button class="p-2 rounded-lg glass hover:scale-105 transition" onclick="showHelp()" title="도움말">
+          <i class="fa-solid fa-circle-question"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 페이지 컨테이너 -->
+    <div class="p-5 lg:p-8 space-y-6">
+
+      <!-- ============ 대시보드 ============ -->
+      <section id="page-dashboard" class="page-section active">
+        <!-- KPI 카드 -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="glass rounded-2xl p-5 shadow-soft animate-slide-up">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="text-xs opacity-70 mb-1">이번 달 발송 건수</div>
+                <div class="text-3xl font-extrabold" id="kpiSent">0</div>
+                <div class="text-xs text-emerald-500 mt-1 font-semibold"><i class="fa-solid fa-arrow-up"></i> 전월 대비 +18%</div>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <i class="fa-solid fa-paper-plane text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-5 shadow-soft animate-slide-up">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="text-xs opacity-70 mb-1">평균 처리 시간</div>
+                <div class="text-3xl font-extrabold" id="kpiAvgTime">2.3분</div>
+                <div class="text-xs text-emerald-500 mt-1 font-semibold"><i class="fa-solid fa-arrow-down"></i> 88% 단축</div>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <i class="fa-solid fa-stopwatch text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-5 shadow-soft animate-slide-up">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="text-xs opacity-70 mb-1">관리 도급사 수</div>
+                <div class="text-3xl font-extrabold" id="kpiPartners">0</div>
+                <div class="text-xs opacity-70 mt-1">활성 거래처 기준</div>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                <i class="fa-solid fa-building text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-5 shadow-soft animate-slide-up">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="text-xs opacity-70 mb-1">대기 건수</div>
+                <div class="text-3xl font-extrabold" id="kpiPending">0</div>
+                <div class="text-xs text-amber-500 mt-1 font-semibold"><i class="fa-solid fa-circle-exclamation"></i> 확인 필요</div>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                <i class="fa-solid fa-inbox text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 차트 -->
+        <div class="grid lg:grid-cols-3 gap-4 mt-6">
+          <div class="glass rounded-2xl p-5 shadow-soft lg:col-span-2">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-lg"><i class="fa-solid fa-chart-column text-emerald-500 mr-2"></i>일자별 발송 건수</h3>
+              <span class="badge badge-green">최근 14일</span>
+            </div>
+            <div class="h-64"><canvas id="chartDaily"></canvas></div>
+          </div>
+          <div class="glass rounded-2xl p-5 shadow-soft">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-lg"><i class="fa-solid fa-chart-pie text-blue-500 mr-2"></i>청구 유형 분포</h3>
+            </div>
+            <div class="h-64"><canvas id="chartType"></canvas></div>
+          </div>
+        </div>
+
+        <!-- 빠른 작업 -->
+        <div class="grid md:grid-cols-3 gap-4 mt-6">
+          <button class="glass rounded-2xl p-6 shadow-soft text-left hover:scale-[1.02] transition" onclick="goToPage('compose')">
+            <div class="w-12 h-12 rounded-xl btn-grad flex items-center justify-center mb-3">
+              <i class="fa-solid fa-pen-to-square text-xl"></i>
+            </div>
+            <div class="font-bold text-lg mb-1">신규 메일 작성</div>
+            <div class="text-sm opacity-70">단계별로 자동 완성되는 안내 메일</div>
+          </button>
+          <button class="glass rounded-2xl p-6 shadow-soft text-left hover:scale-[1.02] transition" onclick="goToPage('partners')">
+            <div class="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center mb-3">
+              <i class="fa-solid fa-building text-xl"></i>
+            </div>
+            <div class="font-bold text-lg mb-1">도급사 관리</div>
+            <div class="text-sm opacity-70">자주 거래하는 도급사 정보</div>
+          </button>
+          <button class="glass rounded-2xl p-6 shadow-soft text-left hover:scale-[1.02] transition" onclick="goToPage('history')">
+            <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center mb-3">
+              <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+            </div>
+            <div class="font-bold text-lg mb-1">발송 이력 확인</div>
+            <div class="text-sm opacity-70">검색·필터·재발송까지 한 번에</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============ 신규 메일 작성 ============ -->
+      <section id="page-compose" class="page-section">
+
+        <!-- 단계 표시 -->
+        <div class="glass rounded-2xl p-5 shadow-soft mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-3" id="stepHeader">
+            <!-- 동적 렌더 -->
+          </div>
+        </div>
+
+        <!-- Step 1: 청구서 작성 단계 -->
+        <div class="glass rounded-2xl p-6 shadow-soft step-panel" data-step="1">
+          <h2 class="text-2xl font-extrabold mb-2"><i class="fa-solid fa-flag text-emerald-500 mr-2"></i>Step 1. 청구서 작성 단계</h2>
+          <p class="text-sm opacity-70 mb-6">청구서가 작성되기 전인지, 작성 후 안내인지 선택하세요.</p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="choice-card rounded-2xl p-6" data-field="stage" data-value="선요청">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <i class="fa-solid fa-bell text-xl"></i>
+                </div>
+                <div class="font-bold text-lg">선요청</div>
+              </div>
+              <p class="text-sm opacity-80">청구서 작성 <b>전</b>에 필요한 서류를 사전 안내합니다.</p>
+            </div>
+            <div class="choice-card rounded-2xl p-6" data-field="stage" data-value="후요청">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <i class="fa-solid fa-file-circle-check text-xl"></i>
+                </div>
+                <div class="font-bold text-lg">후요청</div>
+              </div>
+              <p class="text-sm opacity-80">청구서 작성 <b>후</b> 추가 서류 보완을 요청합니다.</p>
+            </div>
+          </div>
+          <div class="flex justify-end mt-6">
+            <button class="btn-grad px-6 py-3 rounded-xl font-bold" onclick="nextStep()">다음 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+          </div>
+        </div>
+
+        <!-- Step 2: 계약 기본 정보 -->
+        <div class="glass rounded-2xl p-6 shadow-soft step-panel hidden" data-step="2">
+          <h2 class="text-2xl font-extrabold mb-2"><i class="fa-solid fa-file-contract text-emerald-500 mr-2"></i>Step 2. 계약 기본 정보</h2>
+          <p class="text-sm opacity-70 mb-6">계약 정보와 자사(대표사) 정보를 입력하세요.</p>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold mb-1">계약명 <span class="text-rose-500">*</span></label>
+              <input class="field" id="f_contractName" placeholder="예: ○○하수처리장 기본 및 실시설계 용역" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">발주처</label>
+              <input class="field" id="f_client" placeholder="예: 한국수자원공사" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">계약 금액 (원)</label>
+              <input class="field" id="f_contractAmount" type="text" placeholder="예: 5,200,000,000" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">금회 청구 금액 (원) <span class="text-rose-500">*</span></label>
+              <input class="field" id="f_billAmount" type="text" placeholder="예: 1,560,000,000" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">청구 회차</label>
+              <input class="field" id="f_billRound" placeholder="예: 3회차 기성" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">제출 기한</label>
+              <input class="field" id="f_dueDate" type="date" />
+            </div>
+            <div class="md:col-span-2 border-t border-emerald-200/40 pt-4 mt-2">
+              <div class="text-sm font-extrabold mb-3"><i class="fa-solid fa-crown text-amber-500 mr-1"></i>자사(대표사) 정보</div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold mb-1">대표사명</label>
+                  <input class="field" id="f_leadCompany" value="유신엔지니어링(주)" />
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold mb-1">담당자</label>
+                  <input class="field" id="f_leadManager" value="성국현 부장 (업무부)" />
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold mb-1">담당자 이메일</label>
+                  <input class="field" id="f_leadEmail" value="skh@yooshin.co.kr" />
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold mb-1">연락처</label>
+                  <input class="field" id="f_leadPhone" value="02-1234-5678" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between mt-6">
+            <button class="px-6 py-3 rounded-xl border border-slate-300 font-bold hover:bg-slate-100" onclick="prevStep()"><i class="fa-solid fa-arrow-left mr-1"></i> 이전</button>
+            <button class="btn-grad px-6 py-3 rounded-xl font-bold" onclick="nextStep()">다음 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+          </div>
+        </div>
+
+        <!-- Step 3: 청구 유형 -->
+        <div class="glass rounded-2xl p-6 shadow-soft step-panel hidden" data-step="3">
+          <h2 class="text-2xl font-extrabold mb-2"><i class="fa-solid fa-tags text-emerald-500 mr-2"></i>Step 3. 청구 유형</h2>
+          <p class="text-sm opacity-70 mb-6">청구 유형에 따라 필요한 보증서·증권이 달라집니다.</p>
+
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="choice-card rounded-2xl p-6" data-field="billType" data-value="선금">
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-money-bill-trend-up text-xl"></i>
+              </div>
+              <div class="font-bold text-lg mb-1">선금</div>
+              <p class="text-xs opacity-80 mb-2">착수 시 선급금 청구</p>
+              <span class="badge badge-amber"><i class="fa-solid fa-shield-halved"></i> 선금보증서 필수</span>
+            </div>
+            <div class="choice-card rounded-2xl p-6" data-field="billType" data-value="기성">
+              <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-chart-line text-xl"></i>
+              </div>
+              <div class="font-bold text-lg mb-1">기성</div>
+              <p class="text-xs opacity-80 mb-2">진행률에 따른 청구</p>
+              <span class="badge badge-green"><i class="fa-solid fa-check"></i> 기본 요청 항목</span>
+            </div>
+            <div class="choice-card rounded-2xl p-6" data-field="billType" data-value="준공">
+              <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-flag-checkered text-xl"></i>
+              </div>
+              <div class="font-bold text-lg mb-1">준공</div>
+              <p class="text-xs opacity-80 mb-2">최종 정산·완료</p>
+              <span class="badge badge-blue"><i class="fa-solid fa-file-shield"></i> 하자보증·손해배상공제</span>
+            </div>
+          </div>
+
+          <div class="flex justify-between mt-6">
+            <button class="px-6 py-3 rounded-xl border border-slate-300 font-bold hover:bg-slate-100" onclick="prevStep()"><i class="fa-solid fa-arrow-left mr-1"></i> 이전</button>
+            <button class="btn-grad px-6 py-3 rounded-xl font-bold" onclick="nextStep()">다음 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+          </div>
+        </div>
+
+        <!-- Step 4: 공채 매입 -->
+        <div class="glass rounded-2xl p-6 shadow-soft step-panel hidden" data-step="4">
+          <h2 class="text-2xl font-extrabold mb-2"><i class="fa-solid fa-receipt text-emerald-500 mr-2"></i>Step 4. 공채 매입 필요 여부</h2>
+          <p class="text-sm opacity-70 mb-6">지방자치단체 발주 등 공채 매입이 필요한 경우 선택합니다.</p>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="choice-card rounded-2xl p-6" data-field="needBond" data-value="예">
+              <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-coins text-xl"></i>
+              </div>
+              <div class="font-bold text-lg mb-1">예 (필요)</div>
+              <p class="text-sm opacity-80">지역 공채 매입 영수증 요청을 자동 포함합니다.</p>
+            </div>
+            <div class="choice-card rounded-2xl p-6" data-field="needBond" data-value="아니오">
+              <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-circle-xmark text-xl"></i>
+              </div>
+              <div class="font-bold text-lg mb-1">아니오 (불필요)</div>
+              <p class="text-sm opacity-80">공채 관련 서류 요청을 제외합니다.</p>
+            </div>
+          </div>
+
+          <div class="flex justify-between mt-6">
+            <button class="px-6 py-3 rounded-xl border border-slate-300 font-bold hover:bg-slate-100" onclick="prevStep()"><i class="fa-solid fa-arrow-left mr-1"></i> 이전</button>
+            <button class="btn-grad px-6 py-3 rounded-xl font-bold" onclick="nextStep()">다음 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+          </div>
+        </div>
+
+        <!-- Step 5: 공동도급사 정보 -->
+        <div class="glass rounded-2xl p-6 shadow-soft step-panel hidden" data-step="5">
+          <h2 class="text-2xl font-extrabold mb-2"><i class="fa-solid fa-handshake text-emerald-500 mr-2"></i>Step 5. 공동도급사 정보</h2>
+          <p class="text-sm opacity-70 mb-4">메일을 받을 공동도급사를 추가하세요. 엑셀 일괄 업로드도 가능합니다.</p>
+
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button class="btn-grad px-4 py-2 rounded-lg text-sm font-bold" onclick="openAddPartnerModal()"><i class="fa-solid fa-plus mr-1"></i> 도급사 추가</button>
+            <label class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold border border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30">
+              <i class="fa-solid fa-file-excel mr-1"></i> 엑셀 업로드
+              <input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleExcelUpload(event)" />
+            </label>
+            <button class="px-4 py-2 rounded-lg text-sm font-bold border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30" onclick="openPartnerPicker()">
+              <i class="fa-solid fa-address-book mr-1"></i> 도급사록에서 선택
+            </button>
+            <button class="px-4 py-2 rounded-lg text-sm font-bold border border-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/30" onclick="downloadExcelTemplate()">
+              <i class="fa-solid fa-download mr-1"></i> 엑셀 양식 받기
+            </button>
+          </div>
+
+          <div id="selectedPartners" class="space-y-2 min-h-[120px]"></div>
+
+          <div class="flex justify-between mt-6">
+            <button class="px-6 py-3 rounded-xl border border-slate-300 font-bold hover:bg-slate-100" onclick="prevStep()"><i class="fa-solid fa-arrow-left mr-1"></i> 이전</button>
+            <button class="btn-grad px-6 py-3 rounded-xl font-bold" onclick="generateMail()">메일 자동 생성 <i class="fa-solid fa-wand-magic-sparkles ml-1"></i></button>
+          </div>
+        </div>
+
+        <!-- Step 6: 결과 표 + 메일 본문 + 발송 -->
+        <div class="glass rounded-2xl p-6 shadow-soft step-panel hidden" data-step="6">
+          <h2 class="text-2xl font-extrabold mb-2"><i class="fa-solid fa-circle-check text-emerald-500 mr-2"></i>Step 6. 자동 생성 결과</h2>
+          <p class="text-sm opacity-70 mb-4">프롬프트 표 양식대로 자동 생성됐어요. 미리보기·복사·메일 발송이 가능합니다.</p>
+
+          <!-- 결과 표 -->
+          <div class="overflow-x-auto mb-6">
+            <table class="result-table w-full text-sm rounded-xl overflow-hidden">
+              <thead>
+                <tr>
+                  <th class="w-44 text-left">구분</th>
+                  <th class="text-left">내용</th>
+                </tr>
+              </thead>
+              <tbody id="resultTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- 도급사별 결과 탭 -->
+          <div id="recipientTabs" class="flex flex-wrap gap-2 mb-3"></div>
+
+          <!-- 메일 미리보기 + 편집 -->
+          <div class="grid lg:grid-cols-2 gap-5">
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <div class="font-bold"><i class="fa-solid fa-pen-nib mr-1 text-emerald-500"></i>메일 본문 (편집 가능)</div>
+                <span class="text-xs opacity-70">XSS 방어를 위해 textarea로 처리</span>
+              </div>
+              <div class="mb-2">
+                <label class="block text-xs font-semibold mb-1 opacity-70">메일 제목</label>
+                <input class="field text-sm" id="mailSubject" />
+              </div>
+              <textarea class="field font-mono text-sm" id="mailBody" rows="18"></textarea>
+            </div>
+            <div>
+              <div class="font-bold mb-2"><i class="fa-solid fa-eye mr-1 text-blue-500"></i>실제 메일 미리보기</div>
+              <div class="mail-preview shadow-soft text-sm" id="mailPreview"></div>
+            </div>
+          </div>
+
+          <!-- 발송 액션 -->
+          <div class="flex flex-wrap gap-3 mt-6">
+            <button class="btn-grad px-5 py-3 rounded-xl font-bold" onclick="sendViaMailto()"><i class="fa-solid fa-paper-plane mr-1"></i> 메일 클라이언트로 발송</button>
+            <button class="px-5 py-3 rounded-xl border border-emerald-500 text-emerald-600 font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/30" onclick="copyToClipboard()"><i class="fa-solid fa-copy mr-1"></i> 클립보드 복사</button>
+            <button class="px-5 py-3 rounded-xl border border-blue-500 text-blue-600 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/30" onclick="downloadEml()"><i class="fa-solid fa-file-arrow-down mr-1"></i> .eml 다운로드</button>
+            <button class="px-5 py-3 rounded-xl border border-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-700/30" onclick="saveDraftToHistory()"><i class="fa-solid fa-floppy-disk mr-1"></i> 이력 저장</button>
+            <button class="ml-auto px-5 py-3 rounded-xl border border-rose-400 text-rose-500 font-bold hover:bg-rose-50 dark:hover:bg-rose-900/30" onclick="resetCompose()"><i class="fa-solid fa-rotate-right mr-1"></i> 처음부터 다시</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 도급사 관리 ============ -->
+      <section id="page-partners" class="page-section">
+        <div class="glass rounded-2xl p-6 shadow-soft">
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold"><i class="fa-solid fa-building text-emerald-500 mr-2"></i>도급사 명부</h2>
+              <p class="text-sm opacity-70">자주 거래하는 도급사를 등록·관리하세요. (LocalStorage 자동 저장)</p>
+            </div>
+            <div class="flex gap-2">
+              <input class="field text-sm" id="partnerSearch" placeholder="도급사명·담당자 검색..." oninput="renderPartnerList()" />
+              <button class="btn-grad px-4 py-2 rounded-lg text-sm font-bold" onclick="openAddPartnerModal(true)"><i class="fa-solid fa-plus mr-1"></i> 추가</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs opacity-70 border-b border-slate-300/40">
+                  <th class="py-3 px-2">회사명</th>
+                  <th class="py-3 px-2">담당자</th>
+                  <th class="py-3 px-2">이메일</th>
+                  <th class="py-3 px-2">지분율</th>
+                  <th class="py-3 px-2">계좌</th>
+                  <th class="py-3 px-2">관리</th>
+                </tr>
+              </thead>
+              <tbody id="partnerListBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 발송 이력 ============ -->
+      <section id="page-history" class="page-section">
+        <div class="glass rounded-2xl p-6 shadow-soft">
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold"><i class="fa-solid fa-clock-rotate-left text-emerald-500 mr-2"></i>발송 이력</h2>
+              <p class="text-sm opacity-70">검색·필터·재발송까지 한눈에 관리합니다.</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <input class="field text-sm" id="historySearch" placeholder="계약명·도급사 검색..." oninput="renderHistory()" />
+              <select class="field text-sm" id="historyFilter" onchange="renderHistory()">
+                <option value="">전체 유형</option>
+                <option value="선금">선금</option>
+                <option value="기성">기성</option>
+                <option value="준공">준공</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs opacity-70 border-b border-slate-300/40">
+                  <th class="py-3 px-2">일자</th>
+                  <th class="py-3 px-2">계약명</th>
+                  <th class="py-3 px-2">청구유형</th>
+                  <th class="py-3 px-2">공채</th>
+                  <th class="py-3 px-2">수신 도급사</th>
+                  <th class="py-3 px-2">상태</th>
+                  <th class="py-3 px-2">관리</th>
+                </tr>
+              </thead>
+              <tbody id="historyListBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 템플릿 관리 ============ -->
+      <section id="page-templates" class="page-section">
+        <div class="glass rounded-2xl p-6 shadow-soft">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold"><i class="fa-solid fa-bookmark text-emerald-500 mr-2"></i>인사말·마무리 템플릿</h2>
+              <p class="text-sm opacity-70">자주 쓰는 문구를 저장해 두면 본문 자동 생성 시 사용됩니다.</p>
+            </div>
+            <button class="btn-grad px-4 py-2 rounded-lg text-sm font-bold" onclick="openAddTemplateModal()"><i class="fa-solid fa-plus mr-1"></i> 새 템플릿</button>
+          </div>
+          <div id="templateListBody" class="grid md:grid-cols-2 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- ============ 설정 ============ -->
+      <section id="page-settings" class="page-section">
+        <div class="glass rounded-2xl p-6 shadow-soft space-y-4">
+          <h2 class="text-2xl font-extrabold"><i class="fa-solid fa-gear text-emerald-500 mr-2"></i>설정</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="glass rounded-xl p-5">
+              <div class="font-bold mb-2"><i class="fa-solid fa-database mr-1 text-amber-500"></i>데이터 백업/복원</div>
+              <p class="text-xs opacity-70 mb-3">도급사·이력·템플릿을 JSON으로 백업하세요.</p>
+              <div class="flex gap-2 flex-wrap">
+                <button class="btn-grad px-4 py-2 rounded-lg text-sm font-bold" onclick="exportAll()"><i class="fa-solid fa-download mr-1"></i> 백업 다운로드</button>
+                <label class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold border border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30">
+                  <i class="fa-solid fa-upload mr-1"></i> 백업 복원
+                  <input type="file" accept=".json" class="hidden" onchange="importAll(event)" />
+                </label>
+              </div>
+            </div>
+            <div class="glass rounded-xl p-5">
+              <div class="font-bold mb-2 text-rose-500"><i class="fa-solid fa-triangle-exclamation mr-1"></i>데이터 초기화</div>
+              <p class="text-xs opacity-70 mb-3">모든 도급사·이력·템플릿이 삭제됩니다. (되돌릴 수 없음)</p>
+              <button class="px-4 py-2 rounded-lg text-sm font-bold border border-rose-400 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30" onclick="confirmReset()"><i class="fa-solid fa-trash mr-1"></i> 전체 초기화</button>
+            </div>
+            <div class="glass rounded-xl p-5 md:col-span-2">
+              <div class="font-bold mb-2"><i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>시스템 정보</div>
+              <ul class="text-sm opacity-90 space-y-1">
+                <li><b>버전</b>: v1.0.0</li>
+                <li><b>저장 키</b>: <code class="px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-700/50 text-xs">skh_partner_mail_v1</code></li>
+                <li><b>지원 브라우저</b>: Chrome / Edge / Whale 최신 버전</li>
+                <li><b>오프라인 사용</b>: CDN 로드 후 단일 HTML로 동작</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="text-center text-xs opacity-60 py-6">
+        <p>© 2026 유신엔지니어링 업무부 | 성국현 부장 전용 · 공동도급사 메일 자동화 시스템</p>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script>
+/* =====================================================
+   상수·전역 상태
+   ===================================================== */
+const STORAGE_KEY = 'skh_partner_mail_v1';
+
+const state = {
+  step: 1,
+  form: {
+    stage: '',         // 선요청/후요청
+    contractName: '',
+    client: '',
+    contractAmount: '',
+    billAmount: '',
+    billRound: '',
+    dueDate: '',
+    leadCompany: '',
+    leadManager: '',
+    leadEmail: '',
+    leadPhone: '',
+    billType: '',      // 선금/기성/준공
+    needBond: '',      // 예/아니오
+  },
+  recipients: [],      // 선택된 공동도급사
+  activeRecipientIdx: 0,
+  generatedSubject: '',
+  generatedBody: '',
+  perRecipientResult: [],   // { partner, subject, body, requiredDocs }
+};
+
+let db = {
+  partners: [],
+  history: [],
+  templates: [],
+};
+
+/* =====================================================
+   샘플 데이터
+   ===================================================== */
+const SAMPLE_PARTNERS = [
+  { id: 'P1', name: '대한토건(주)',       manager: '김선우 과장', email: 'sunwoo.kim@daehan.co.kr',   share: 25, bank: '신한은행 140-012-345678' },
+  { id: 'P2', name: '한울ENG(주)',        manager: '박지훈 부장', email: 'jihoon.park@hanwool.co.kr', share: 20, bank: '국민은행 011-22-345678' },
+  { id: 'P3', name: '동방엔지니어링(주)', manager: '이수민 차장', email: 'sumin.lee@dongbang.co.kr',  share: 15, bank: '하나은행 555-12-345678' },
+  { id: 'P4', name: '청해기술(주)',       manager: '정유진 과장', email: 'yujin.jung@cheonghae.co.kr',share: 10, bank: '우리은행 1002-345-67890' },
+  { id: 'P5', name: '서울건설ENG',        manager: '최민호 차장', email: 'minho.choi@seoulcon.co.kr', share: 10, bank: '농협 301-1234-5678-12' },
+  { id: 'P6', name: '미래엔지니어링(주)', manager: '윤서연 과장', email: 'seoyun.yoon@miraeeng.co.kr',share: 8,  bank: 'IBK기업 123-45-678901' },
+  { id: 'P7', name: '백두기술ENG',        manager: '한지호 부장', email: 'jiho.han@baekdu.co.kr',     share: 5,  bank: '신한은행 140-555-12345' },
+  { id: 'P8', name: '한라이엔씨(주)',     manager: '강혜영 차장', email: 'hyeyoung.kang@hanra.co.kr', share: 3,  bank: '카카오뱅크 3333-01-2345678' },
+  { id: 'P9', name: '태평양엔지니어링',   manager: '오승현 과장', email: 'seunghyun.oh@pacific.co.kr',share: 2,  bank: '국민은행 011-99-887766' },
+  { id: 'P10',name: '신성ENG파트너스',    manager: '임유나 차장', email: 'yuna.lim@sinsung.co.kr',    share: 2,  bank: '우리은행 1002-888-77665' },
+];
+
+const SAMPLE_HISTORY = [
+  { id:'H1', date:'2026-06-08', contract:'○○하수처리장 기본 및 실시설계 용역', billType:'기성', needBond:'아니오', recipients:['대한토건(주)','한울ENG(주)','동방엔지니어링(주)'], status:'발송완료', subject:'[유신ENG] 6월 기성 청구 안내 및 서류 요청', body:'(샘플 이력)'},
+  { id:'H2', date:'2026-06-07', contract:'△△하천 정비공사 감리용역',         billType:'선금', needBond:'예',     recipients:['청해기술(주)','서울건설ENG'], status:'발송완료', subject:'[유신ENG] 선금 청구 및 보증서 발급 요청', body:'(샘플 이력)'},
+  { id:'H3', date:'2026-06-05', contract:'□□도로 확포장 실시설계',           billType:'준공', needBond:'아니오', recipients:['미래엔지니어링(주)','백두기술ENG'], status:'발송완료', subject:'[유신ENG] 준공 청구·하자보증서 제출 요청', body:'(샘플 이력)'},
+  { id:'H4', date:'2026-06-04', contract:'◇◇정수장 증설사업 PM',             billType:'기성', needBond:'예',     recipients:['한라이엔씨(주)','태평양엔지니어링'], status:'발송완료', subject:'[유신ENG] 5월 기성 청구·공채 영수증 요청', body:'(샘플 이력)'},
+  { id:'H5', date:'2026-06-03', contract:'☆☆교량 보강 실시설계',             billType:'선금', needBond:'아니오', recipients:['신성ENG파트너스'], status:'발송완료', subject:'[유신ENG] 선금보증서 발급 요청', body:'(샘플 이력)'},
+  { id:'H6', date:'2026-06-02', contract:'▽▽터널 BTL 사업',                  billType:'기성', needBond:'아니오', recipients:['대한토건(주)','청해기술(주)'], status:'발송완료', subject:'[유신ENG] 6월 기성 청구 안내', body:'(샘플 이력)'},
+  { id:'H7', date:'2026-06-01', contract:'◎◎공항 활주로 정비공사',           billType:'준공', needBond:'예',     recipients:['한울ENG(주)','서울건설ENG','동방엔지니어링(주)'], status:'발송완료', subject:'[유신ENG] 준공 청구·하자보증·공채 영수증 일괄 요청', body:'(샘플 이력)'},
+  { id:'H8', date:'2026-05-30', contract:'▷▷항만 매립사업 기본설계',         billType:'기성', needBond:'예',     recipients:['미래엔지니어링(주)','백두기술ENG','한라이엔씨(주)'], status:'발송완료', subject:'[유신ENG] 5월 기성 청구·공채 매입 확인', body:'(샘플 이력)'},
+];
+
+const SAMPLE_TEMPLATES = [
+  { id:'T1', name:'기본 인사말', kind:'opening', content:'안녕하십니까. 유신엔지니어링 업무부 성국현 부장입니다.\n항상 우리 회사와의 원활한 협업에 깊이 감사드립니다.\n다름이 아니라 아래 청구 건 관련하여 협조를 요청드리고자 메일 드립니다.' },
+  { id:'T2', name:'기본 마무리', kind:'closing', content:'바쁘신 와중에 번거롭게 해드려 죄송합니다.\n제출 일정 관련 문의사항은 본 메일로 회신 부탁드립니다.\n늘 감사합니다.\n\n유신엔지니어링(주) 업무부 성국현 부장 드림' },
+  { id:'T3', name:'독촉용 마무리', kind:'closing', content:'제출 기한이 임박하여 다시 한 번 요청 드립니다.\n부득이 지연 사유가 있는 경우, 회신으로 사전에 알려주시면 일정 조율에 반영하겠습니다.\n감사합니다.\n\n유신엔지니어링(주) 업무부 성국현 부장 드림' },
+];
+
+/* =====================================================
+   저장/로드
+   ===================================================== */
+function saveDB() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  } catch (e) {
+    console.error('LocalStorage 저장 실패', e);
+    toast('데이터 저장 중 오류가 발생했습니다.', 'error');
+  }
+}
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      db.partners  = Array.isArray(parsed.partners)  ? parsed.partners  : [];
+      db.history   = Array.isArray(parsed.history)   ? parsed.history   : [];
+      db.templates = Array.isArray(parsed.templates) ? parsed.templates : [];
+    }
+    if (db.partners.length === 0)  db.partners  = JSON.parse(JSON.stringify(SAMPLE_PARTNERS));
+    if (db.history.length === 0)   db.history   = JSON.parse(JSON.stringify(SAMPLE_HISTORY));
+    if (db.templates.length === 0) db.templates = JSON.parse(JSON.stringify(SAMPLE_TEMPLATES));
+    saveDB();
+  } catch (e) {
+    console.error('LocalStorage 로드 실패', e);
+    db.partners  = JSON.parse(JSON.stringify(SAMPLE_PARTNERS));
+    db.history   = JSON.parse(JSON.stringify(SAMPLE_HISTORY));
+    db.templates = JSON.parse(JSON.stringify(SAMPLE_TEMPLATES));
+  }
+}
+
+/* =====================================================
+   토스트
+   ===================================================== */
+function toast(msg, type='info') {
+  const colors = {
+    info:    'bg-blue-500',
+    success: 'bg-emerald-500',
+    error:   'bg-rose-500',
+    warning: 'bg-amber-500'
+  };
+  const icons = {
+    info:    'fa-circle-info',
+    success: 'fa-circle-check',
+    error:   'fa-circle-exclamation',
+    warning: 'fa-triangle-exclamation'
+  };
+  const id = 't_' + Date.now();
+  const el = document.createElement('div');
+  el.id = id;
+  el.className = `toast ${colors[type]||colors.info} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 max-w-md`;
+  el.innerHTML = `<i class="fa-solid ${icons[type]||icons.info}"></i><span class="text-sm">${escapeHtml(msg)}</span>`;
+  document.getElementById('toastArea').appendChild(el);
+  setTimeout(()=> { el.style.opacity='0'; el.style.transform='translateX(40px)'; el.style.transition='all 0.3s ease'; }, 2500);
+  setTimeout(()=> el.remove(), 3000);
+}
+
+/* =====================================================
+   모달
+   ===================================================== */
+function openModal(html) {
+  const area = document.getElementById('modalArea');
+  document.getElementById('modalContent').innerHTML = html;
+  area.classList.remove('hidden');
+  area.classList.add('flex');
+}
+function closeModal() {
+  const area = document.getElementById('modalArea');
+  area.classList.add('hidden');
+  area.classList.remove('flex');
+  document.getElementById('modalContent').innerHTML = '';
+}
+document.getElementById('modalArea').addEventListener('click', (e)=>{
+  if (e.target.id === 'modalArea') closeModal();
+});
+
+/* =====================================================
+   네비게이션
+   ===================================================== */
+const TITLES = {
+  dashboard: ['대시보드', '공동도급사 메일 발송 현황 및 통계'],
+  compose:   ['신규 메일 작성', '단계별로 자동 완성되는 안내 메일'],
+  partners:  ['도급사 관리', '자주 거래하는 도급사 정보'],
+  history:   ['발송 이력', '검색·필터·재발송까지 한눈에'],
+  templates: ['템플릿 관리', '인사말·마무리 문구 저장'],
+  settings:  ['설정', '백업·복원·시스템 정보'],
+};
+function goToPage(name) {
+  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('page-' + name)?.classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  document.querySelector(`.sidebar-item[data-page="${name}"]`)?.classList.add('active');
+  const t = TITLES[name];
+  if (t) {
+    document.getElementById('pageTitle').textContent = t[0];
+    document.getElementById('pageSubtitle').textContent = t[1];
+  }
+  if (name === 'dashboard') refreshDashboard();
+  if (name === 'partners')  renderPartnerList();
+  if (name === 'history')   renderHistory();
+  if (name === 'templates') renderTemplates();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.sidebar-item').forEach(item=>{
+  item.addEventListener('click', ()=> goToPage(item.dataset.page));
+});
+function toggleMobileMenu() {
+  const aside = document.querySelector('aside');
+  aside.classList.toggle('hidden');
+  aside.classList.toggle('flex');
+}
+
+/* =====================================================
+   테마
+   ===================================================== */
+function toggleTheme() {
+  const body = document.body;
+  if (body.classList.contains('dark')) {
+    body.classList.remove('dark');
+    body.classList.add('light-mode');
+  } else {
+    body.classList.add('dark');
+    body.classList.remove('light-mode');
+  }
+  // 차트 색 재적용
+  refreshDashboard();
+}
+
+/* =====================================================
+   대시보드
+   ===================================================== */
+let chartDaily = null, chartType = null;
+function refreshDashboard() {
+  document.getElementById('kpiSent').textContent     = db.history.length + '건';
+  document.getElementById('kpiAvgTime').textContent  = '2.3분';
+  document.getElementById('kpiPartners').textContent = db.partners.length + '개';
+  document.getElementById('kpiPending').textContent  = '3건';
+
+  const isDark = document.body.classList.contains('dark');
+  const txtColor = isDark ? '#e5e7eb' : '#334155';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+  // 일자별 (최근 14일 모의)
+  const today = new Date();
+  const labels = [];
+  const values = [];
+  for (let i=13;i>=0;i--) {
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    labels.push((d.getMonth()+1)+'/'+d.getDate());
+    values.push(Math.floor(Math.random()*5)+1);
+  }
+  if (chartDaily) chartDaily.destroy();
+  chartDaily = new Chart(document.getElementById('chartDaily').getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets:[{
+      label:'발송 건수', data:values,
+      backgroundColor: (ctx)=>{
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,200);
+        g.addColorStop(0,'#10b981'); g.addColorStop(1,'#1d4ed8');
+        return g;
+      },
+      borderRadius: 8,
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ ticks:{color:txtColor}, grid:{color:gridColor}},
+        y:{ ticks:{color:txtColor}, grid:{color:gridColor}, beginAtZero:true}
+      }
+    }
+  });
+
+  // 청구 유형 분포
+  const types = {선금:0, 기성:0, 준공:0};
+  db.history.forEach(h=>{ if (types[h.billType] !== undefined) types[h.billType]++; });
+  if (chartType) chartType.destroy();
+  chartType = new Chart(document.getElementById('chartType').getContext('2d'), {
+    type:'doughnut',
+    data:{ labels: Object.keys(types), datasets:[{
+      data: Object.values(types),
+      backgroundColor: ['#10b981','#1d4ed8','#7c3aed'],
+      borderWidth: 0
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout: '65%',
+      plugins:{
+        legend:{ position:'bottom', labels:{color:txtColor, font:{size:12}}}
+      }
+    }
+  });
+}
+
+/* =====================================================
+   메일 작성 - 단계 헤더
+   ===================================================== */
+const STEPS = [
+  '청구 단계','계약 정보','청구 유형','공채 매입','도급사 정보','메일 생성'
+];
+function renderStepHeader() {
+  const wrap = document.getElementById('stepHeader');
+  wrap.innerHTML = STEPS.map((label, idx)=>{
+    const num = idx+1;
+    let cls = 'step-bullet';
+    if (num < state.step) cls += ' done';
+    else if (num === state.step) cls += ' active';
+    const sep = idx < STEPS.length-1
+      ? `<div class="flex-1 h-0.5 mx-2 ${num < state.step ? 'bg-emerald-500' : 'bg-slate-300/40'}"></div>`
+      : '';
+    return `
+      <div class="flex items-center min-w-0">
+        <div class="${cls}">${num < state.step ? '<i class=\"fa-solid fa-check\"></i>' : num}</div>
+        <div class="hidden md:block ml-2 text-sm font-bold ${num === state.step ? 'text-emerald-600' : 'opacity-70'}">${label}</div>
+        ${sep}
+      </div>`;
+  }).join('');
+}
+function showStep(n) {
+  state.step = n;
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.add('hidden'));
+  document.querySelector(`.step-panel[data-step="${n}"]`)?.classList.remove('hidden');
+  renderStepHeader();
+  window.scrollTo({top: 0, behavior:'smooth'});
+}
+function nextStep() {
+  if (!validateStep(state.step)) return;
+  if (state.step < 6) showStep(state.step + 1);
+  if (state.step === 5) renderSelectedPartners();
+}
+function prevStep() {
+  if (state.step > 1) showStep(state.step - 1);
+}
+function validateStep(n) {
+  if (n === 1 && !state.form.stage) { toast('청구 작성 단계를 선택해주세요.', 'warning'); return false; }
+  if (n === 2) {
+    state.form.contractName    = document.getElementById('f_contractName').value.trim();
+    state.form.client          = document.getElementById('f_client').value.trim();
+    state.form.contractAmount  = document.getElementById('f_contractAmount').value.trim();
+    state.form.billAmount      = document.getElementById('f_billAmount').value.trim();
+    state.form.billRound       = document.getElementById('f_billRound').value.trim();
+    state.form.dueDate         = document.getElementById('f_dueDate').value;
+    state.form.leadCompany     = document.getElementById('f_leadCompany').value.trim();
+    state.form.leadManager     = document.getElementById('f_leadManager').value.trim();
+    state.form.leadEmail       = document.getElementById('f_leadEmail').value.trim();
+    state.form.leadPhone       = document.getElementById('f_leadPhone').value.trim();
+    if (!state.form.contractName) { toast('계약명을 입력해주세요.', 'warning'); return false; }
+    if (!state.form.billAmount)   { toast('금회 청구 금액을 입력해주세요.', 'warning'); return false; }
+  }
+  if (n === 3 && !state.form.billType) { toast('청구 유형을 선택해주세요.', 'warning'); return false; }
+  if (n === 4 && !state.form.needBond) { toast('공채 매입 필요 여부를 선택해주세요.', 'warning'); return false; }
+  if (n === 5 && state.recipients.length === 0) { toast('공동도급사를 1개 이상 추가해주세요.', 'warning'); return false; }
+  return true;
+}
+
+/* =====================================================
+   카드 선택 (라디오)
+   ===================================================== */
+document.querySelectorAll('.choice-card').forEach(card => {
+  card.addEventListener('click', ()=>{
+    const field = card.dataset.field;
+    const value = card.dataset.value;
+    document.querySelectorAll(`.choice-card[data-field="${field}"]`).forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    state.form[field] = value;
+  });
+});
+
+/* =====================================================
+   도급사 추가 / 선택
+   ===================================================== */
+function openAddPartnerModal(saveToDB=false) {
+  openModal(`
+    <h3 class="font-extrabold text-xl mb-4"><i class="fa-solid fa-plus text-emerald-500 mr-2"></i>도급사 ${saveToDB ? '명부 등록' : '추가'}</h3>
+    <div class="space-y-3">
+      <div><label class="text-xs font-bold opacity-70">회사명</label><input class="field" id="mp_name" placeholder="예: 대한토건(주)"/></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-bold opacity-70">담당자</label><input class="field" id="mp_manager" placeholder="예: 홍길동 과장"/></div>
+        <div><label class="text-xs font-bold opacity-70">이메일</label><input class="field" id="mp_email" type="email" placeholder="예: hong@xxx.co.kr"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-bold opacity-70">지분율 (%)</label><input class="field" id="mp_share" type="number" min="0" max="100" placeholder="예: 25"/></div>
+        <div><label class="text-xs font-bold opacity-70">계좌 정보</label><input class="field" id="mp_bank" placeholder="예: 신한 140-12-345678"/></div>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="px-4 py-2 rounded-lg border border-slate-300 font-bold" onclick="closeModal()">취소</button>
+      <button class="btn-grad px-4 py-2 rounded-lg font-bold" onclick="submitAddPartner(${saveToDB})">${saveToDB ? '명부에 저장' : '추가하기'}</button>
+    </div>
+  `);
+}
+function submitAddPartner(saveToDB) {
+  const name    = document.getElementById('mp_name').value.trim();
+  const manager = document.getElementById('mp_manager').value.trim();
+  const email   = document.getElementById('mp_email').value.trim();
+  const share   = parseFloat(document.getElementById('mp_share').value) || 0;
+  const bank    = document.getElementById('mp_bank').value.trim();
+  if (!name) { toast('회사명을 입력해주세요.', 'warning'); return; }
+  if (!email || !/^.+@.+\..+$/.test(email)) { toast('올바른 이메일을 입력해주세요.', 'warning'); return; }
+  const p = { id: 'P' + Date.now(), name, manager, email, share, bank };
+  if (saveToDB) {
+    db.partners.push(p); saveDB(); renderPartnerList();
+    toast('도급사 명부에 저장되었습니다.', 'success');
+  } else {
+    state.recipients.push(p); renderSelectedPartners();
+    toast(name + ' 을(를) 수신 도급사로 추가했습니다.', 'success');
+  }
+  closeModal();
+}
+function openPartnerPicker() {
+  const items = db.partners.map(p=>`
+    <label class="glass rounded-lg p-3 flex items-start gap-3 cursor-pointer hover:bg-emerald-50/40 dark:hover:bg-emerald-900/20">
+      <input type="checkbox" class="mt-1 picker-chk" value="${p.id}" />
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm">${escapeHtml(p.name)} <span class="badge badge-blue ml-1">${p.share}%</span></div>
+        <div class="text-xs opacity-70">${escapeHtml(p.manager)} · ${escapeHtml(p.email)}</div>
+      </div>
+    </label>`).join('');
+  openModal(`
+    <h3 class="font-extrabold text-xl mb-3"><i class="fa-solid fa-address-book text-emerald-500 mr-2"></i>도급사 명부에서 선택</h3>
+    <p class="text-xs opacity-70 mb-3">발송할 도급사를 다중 선택할 수 있습니다.</p>
+    <div class="space-y-2 max-h-[55vh] overflow-y-auto pr-1">${items || '<div class="opacity-70 text-sm">등록된 도급사가 없습니다.</div>'}</div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="px-4 py-2 rounded-lg border border-slate-300 font-bold" onclick="closeModal()">취소</button>
+      <button class="btn-grad px-4 py-2 rounded-lg font-bold" onclick="confirmPickPartners()">선택 추가</button>
+    </div>
+  `);
+}
+function confirmPickPartners() {
+  const ids = Array.from(document.querySelectorAll('.picker-chk:checked')).map(c=>c.value);
+  if (ids.length === 0) { toast('최소 1개를 선택해주세요.', 'warning'); return; }
+  let added = 0;
+  ids.forEach(id=>{
+    const p = db.partners.find(x=>x.id===id);
+    if (p && !state.recipients.some(r=>r.id===id)) { state.recipients.push({...p}); added++; }
+  });
+  toast(`${added}개 도급사를 추가했습니다.`, 'success');
+  closeModal();
+  renderSelectedPartners();
+}
+function removeRecipient(idx) {
+  state.recipients.splice(idx,1);
+  renderSelectedPartners();
+}
+function renderSelectedPartners() {
+  const wrap = document.getElementById('selectedPartners');
+  if (state.recipients.length === 0) {
+    wrap.innerHTML = `
+      <div class="glass rounded-xl p-8 text-center opacity-70">
+        <i class="fa-solid fa-circle-info text-2xl mb-2 text-emerald-500"></i>
+        <p class="text-sm">아직 추가된 공동도급사가 없습니다. 위 버튼으로 추가하세요.</p>
+      </div>`;
+    return;
+  }
+  wrap.innerHTML = state.recipients.map((p,i)=>`
+    <div class="glass rounded-xl p-4 flex items-start gap-3">
+      <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-building"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold">${escapeHtml(p.name)} <span class="badge badge-blue ml-1">${p.share||0}%</span></div>
+        <div class="text-xs opacity-80 mt-0.5"><i class="fa-regular fa-user mr-1"></i>${escapeHtml(p.manager||'')} · <i class="fa-regular fa-envelope mr-1"></i>${escapeHtml(p.email||'')}</div>
+        <div class="text-xs opacity-70 mt-0.5"><i class="fa-solid fa-building-columns mr-1"></i>${escapeHtml(p.bank||'-')}</div>
+      </div>
+      <button class="px-3 py-1.5 rounded-lg border border-rose-400 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/30" onclick="removeRecipient(${i})"><i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
+}
+
+/* =====================================================
+   엑셀 업로드 / 양식
+   ===================================================== */
+function handleExcelUpload(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      let added = 0;
+      rows.forEach(r=>{
+        const name    = (r['회사명']||r['name']||'').toString().trim();
+        const manager = (r['담당자']||r['manager']||'').toString().trim();
+        const email   = (r['이메일']||r['email']||'').toString().trim();
+        const share   = parseFloat(r['지분율']||r['share']||0) || 0;
+        const bank    = (r['계좌']||r['bank']||'').toString().trim();
+        if (name && email) {
+          state.recipients.push({ id:'P'+Date.now()+Math.random(), name, manager, email, share, bank });
+          added++;
+        }
+      });
+      renderSelectedPartners();
+      toast(`엑셀에서 ${added}개 도급사를 추가했습니다.`, 'success');
+    } catch (err) {
+      console.error('엑셀 파싱 오류', err);
+      toast('엑셀 파일을 읽는 중 오류가 발생했습니다.', 'error');
+    }
+    ev.target.value = '';
+  };
+  reader.onerror = ()=> { toast('파일 읽기에 실패했습니다.', 'error'); ev.target.value=''; };
+  reader.readAsArrayBuffer(file);
+}
+function downloadExcelTemplate() {
+  try {
+    const data = [
+      ['회사명','담당자','이메일','지분율','계좌'],
+      ['대한토건(주)','김선우 과장','sunwoo.kim@daehan.co.kr', 25, '신한은행 140-012-345678'],
+      ['한울ENG(주)','박지훈 부장','jihoon.park@hanwool.co.kr', 20, '국민은행 011-22-345678'],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:18},{wch:12},{wch:28},{wch:8},{wch:24}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '공동도급사');
+    XLSX.writeFile(wb, '공동도급사_양식.xlsx');
+    toast('엑셀 양식이 다운로드되었습니다.', 'success');
+  } catch (e) {
+    console.error('양식 생성 실패', e);
+    toast('양식 다운로드에 실패했습니다.', 'error');
+  }
+}
+
+/* =====================================================
+   메일 본문 생성 (흐름도 + 프롬프트 규칙 반영)
+   ===================================================== */
+function buildRequiredDocs() {
+  // 공통 필수
+  const docs = ['통장(계좌) 사본 1부','법인 인감증명서 1부','사용인감계 1부','청구서 날인본 1부'];
+  // 조건부
+  if (state.form.billType === '선금') {
+    docs.push('선금이행보증서 (보증보험 발급분) 1부');
+  }
+  if (state.form.billType === '준공') {
+    docs.push('하자이행보증서 1부');
+    docs.push('손해배상공제증권(영문 손배 포함) 1부');
+  }
+  if (state.form.billType === '기성') {
+    docs.push('기성 청구내역 확인서 1부 (있는 경우)');
+  }
+  if (state.form.needBond === '예') {
+    docs.push('지역 공채 매입 영수증 1부 (도급금액 기준 매입분)');
+  }
+  return docs;
+}
+
+function buildSubject(partner) {
+  const c = state.form.contractName || '용역';
+  const type = state.form.billType || '청구';
+  return `[유신ENG] ${c} ${state.form.billRound || ''} ${type} 청구 안내 및 서류 요청`.replace(/\s+/g,' ').trim();
+}
+
+function buildBody(partner) {
+  const f = state.form;
+  const opening = (db.templates.find(t=>t.kind==='opening')?.content) || '안녕하십니까. 유신엔지니어링 업무부 성국현 부장입니다.';
+  const closing = (db.templates.find(t=>t.kind==='closing')?.content) || '감사합니다.\n\n유신엔지니어링(주) 업무부 성국현 부장 드림';
+
+  const stageLine = f.stage === '선요청'
+    ? '청구서 작성 전 사전 안내드리는 서류 요청 메일입니다.'
+    : '청구서 작성 완료 후 안내드리는 서류 요청 메일입니다.';
+
+  const docs = buildRequiredDocs();
+  const docList = docs.map((d,i)=>`  ${i+1}. ${d}`).join('\n');
+
+  const condLines = [];
+  if (f.billType === '선금') {
+    condLines.push('▶ 본 건은 [선금] 청구 건으로, 선금이행보증서 발급 및 제출이 반드시 필요합니다.');
+  } else if (f.billType === '준공') {
+    condLines.push('▶ 본 건은 [준공] 청구 건으로, 하자이행보증서 및 손해배상공제증권 발급 여부를 확인 후 제출 부탁드립니다.');
+  } else if (f.billType === '기성') {
+    condLines.push('▶ 본 건은 [기성] 청구 건으로, 기본 청구서류만 협조 부탁드립니다.');
+  }
+  if (f.needBond === '예') {
+    condLines.push('▶ 본 청구 건은 공채 매입 대상이므로, 도급 지분에 따른 [지역 공채 매입 영수증]을 함께 제출 부탁드립니다.');
+  }
+
+  const dueLine = f.dueDate ? `※ 제출 기한: ${f.dueDate} 까지` : '※ 제출 기한: 회신 후 별도 안내드리겠습니다.';
+
+  return [
+`${escapeForMail(partner.name)} ${partner.manager ? escapeForMail(partner.manager) : '담당자'} 님`,
+``,
+opening,
+``,
+`■ ${stageLine}`,
+``,
+`■ 계약 기본 정보`,
+`  - 계약명     : ${f.contractName || '-'}`,
+`  - 발주처     : ${f.client || '-'}`,
+`  - 계약금액   : ${f.contractAmount ? f.contractAmount + ' 원' : '-'}`,
+`  - 금회 청구  : ${f.billAmount ? f.billAmount + ' 원' : '-'} (${f.billRound || f.billType})`,
+`  - 청구유형   : ${f.billType}`,
+`  - 공채 매입  : ${f.needBond}`,
+``,
+`■ 요청 서류 (총 ${docs.length}건)`,
+docList,
+``,
+condLines.join('\n'),
+``,
+dueLine,
+``,
+closing
+  ].join('\n');
+}
+
+function generateMail() {
+  if (!validateStep(5)) return;
+
+  state.perRecipientResult = state.recipients.map(p=>({
+    partner: p,
+    subject: buildSubject(p),
+    body: buildBody(p),
+    requiredDocs: buildRequiredDocs()
+  }));
+  state.activeRecipientIdx = 0;
+
+  renderRecipientTabs();
+  renderResultTable();
+  loadActiveRecipientToEditor();
+  showStep(6);
+}
+
+function renderRecipientTabs() {
+  const wrap = document.getElementById('recipientTabs');
+  wrap.innerHTML = state.perRecipientResult.map((r, i)=>`
+    <button class="px-4 py-2 rounded-lg text-sm font-bold transition ${
+      i === state.activeRecipientIdx
+        ? 'btn-grad'
+        : 'border border-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/30'
+    }" onclick="switchRecipient(${i})">
+      <i class="fa-solid fa-building mr-1"></i>${escapeHtml(r.partner.name)}
+    </button>`).join('');
+}
+function switchRecipient(idx) {
+  // 현재 편집 내용 저장
+  if (state.perRecipientResult[state.activeRecipientIdx]) {
+    state.perRecipientResult[state.activeRecipientIdx].subject = document.getElementById('mailSubject').value;
+    state.perRecipientResult[state.activeRecipientIdx].body    = document.getElementById('mailBody').value;
+  }
+  state.activeRecipientIdx = idx;
+  renderRecipientTabs();
+  renderResultTable();
+  loadActiveRecipientToEditor();
+}
+function loadActiveRecipientToEditor() {
+  const r = state.perRecipientResult[state.activeRecipientIdx];
+  if (!r) return;
+  document.getElementById('mailSubject').value = r.subject;
+  document.getElementById('mailBody').value    = r.body;
+  refreshPreview();
+}
+function refreshPreview() {
+  const body = document.getElementById('mailBody').value;
+  // XSS 방지 위해 textContent로 처리
+  document.getElementById('mailPreview').textContent = body;
+}
+document.addEventListener('input', (e)=>{
+  if (e.target.id === 'mailBody' || e.target.id === 'mailSubject') refreshPreview();
+});
+
+function renderResultTable() {
+  const r = state.perRecipientResult[state.activeRecipientIdx];
+  if (!r) return;
+  const docs = r.requiredDocs.map(d=>`<li class="flex items-start gap-1"><i class="fa-solid fa-check text-emerald-500 mt-1 text-xs"></i><span>${escapeHtml(d)}</span></li>`).join('');
+  const tb = document.getElementById('resultTableBody');
+  tb.innerHTML = `
+    <tr>
+      <th class="text-left">수신 업체명</th>
+      <td>
+        <div class="font-bold">${escapeHtml(r.partner.name)}</div>
+        <div class="text-xs opacity-70 mt-1">담당: ${escapeHtml(r.partner.manager||'-')} · ${escapeHtml(r.partner.email||'-')} · 지분 ${r.partner.share||0}%</div>
+      </td>
+    </tr>
+    <tr>
+      <th class="text-left">확인된 청구 조건</th>
+      <td>
+        <span class="badge badge-green">청구 유형: ${escapeHtml(state.form.billType)}</span>
+        <span class="badge badge-blue ml-1">공채 매입: ${escapeHtml(state.form.needBond)}</span>
+        <span class="badge badge-amber ml-1">단계: ${escapeHtml(state.form.stage)}</span>
+      </td>
+    </tr>
+    <tr>
+      <th class="text-left">필수 요청 서류 목록</th>
+      <td><ul class="space-y-1 text-sm">${docs}</ul></td>
+    </tr>
+    <tr>
+      <th class="text-left">메일 본문 초안</th>
+      <td><div class="text-xs opacity-70">우측 편집기에서 자유롭게 수정 가능합니다. 미리보기에 실시간 반영됩니다.</div></td>
+    </tr>
+  `;
+}
+
+/* =====================================================
+   발송 액션
+   ===================================================== */
+function getCurrentMail() {
+  return {
+    subject: document.getElementById('mailSubject').value,
+    body: document.getElementById('mailBody').value,
+    partner: state.perRecipientResult[state.activeRecipientIdx]?.partner || {}
+  };
+}
+function sendViaMailto() {
+  const { subject, body, partner } = getCurrentMail();
+  if (!partner.email) { toast('수신자 이메일이 없습니다.', 'error'); return; }
+  const url = `mailto:${encodeURIComponent(partner.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+  toast('기본 메일 클라이언트가 열렸습니다.', 'success');
+}
+function copyToClipboard() {
+  const { subject, body } = getCurrentMail();
+  const text = `[제목]\n${subject}\n\n[본문]\n${body}`;
+  navigator.clipboard.writeText(text).then(()=>{
+    toast('제목+본문이 클립보드에 복사되었습니다.', 'success');
+  }).catch(()=> toast('복사에 실패했습니다.', 'error'));
+}
+function downloadEml() {
+  try {
+    const { subject, body, partner } = getCurrentMail();
+    const eml = [
+      `From: ${state.form.leadManager} <${state.form.leadEmail}>`,
+      `To: ${partner.name||''} <${partner.email||''}>`,
+      `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/plain; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
+      '',
+      body
+    ].join('\r\n');
+    const blob = new Blob([eml], { type:'message/rfc822' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${(partner.name||'mail').replace(/[\\/:*?"<>|]/g,'_')}_${Date.now()}.eml`;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast('.eml 파일이 다운로드되었습니다.', 'success');
+  } catch (e) {
+    console.error('eml 다운로드 실패', e);
+    toast('.eml 생성에 실패했습니다.', 'error');
+  }
+}
+function saveDraftToHistory() {
+  if (state.perRecipientResult.length === 0) { toast('생성된 메일이 없습니다.', 'warning'); return; }
+  // 현재 편집 반영
+  if (state.perRecipientResult[state.activeRecipientIdx]) {
+    state.perRecipientResult[state.activeRecipientIdx].subject = document.getElementById('mailSubject').value;
+    state.perRecipientResult[state.activeRecipientIdx].body    = document.getElementById('mailBody').value;
+  }
+  const item = {
+    id: 'H' + Date.now(),
+    date: new Date().toISOString().slice(0,10),
+    contract: state.form.contractName,
+    billType: state.form.billType,
+    needBond: state.form.needBond,
+    recipients: state.perRecipientResult.map(r=>r.partner.name),
+    status: '저장됨',
+    subject: state.perRecipientResult[0].subject,
+    body: state.perRecipientResult[0].body,
+  };
+  db.history.unshift(item); saveDB();
+  toast('발송 이력에 저장되었습니다.', 'success');
+}
+function resetCompose() {
+  if (!confirm('작성 중인 내용을 모두 초기화할까요?')) return;
+  state.step = 1;
+  Object.keys(state.form).forEach(k=>state.form[k]='');
+  state.recipients = [];
+  state.perRecipientResult = [];
+  state.activeRecipientIdx = 0;
+  document.querySelectorAll('.choice-card.selected').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('#page-compose input, #page-compose textarea').forEach(i=>{
+    if (i.id.startsWith('f_') && !['f_leadCompany','f_leadManager','f_leadEmail','f_leadPhone'].includes(i.id)) i.value='';
+  });
+  showStep(1);
+  renderSelectedPartners();
+  toast('초기화되었습니다.', 'info');
+}
+
+/* =====================================================
+   도급사 명부
+   ===================================================== */
+function renderPartnerList() {
+  const q = (document.getElementById('partnerSearch')?.value || '').toLowerCase();
+  const list = db.partners.filter(p=>
+    !q || p.name.toLowerCase().includes(q) || (p.manager||'').toLowerCase().includes(q)
+  );
+  const tb = document.getElementById('partnerListBody');
+  if (list.length === 0) {
+    tb.innerHTML = `<tr><td colspan="6" class="py-8 text-center opacity-70 text-sm">등록된 도급사가 없습니다.</td></tr>`;
+    return;
+  }
+  tb.innerHTML = list.map(p=>`
+    <tr class="border-b border-slate-200/40 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10">
+      <td class="py-3 px-2 font-bold">${escapeHtml(p.name)}</td>
+      <td class="py-3 px-2">${escapeHtml(p.manager||'-')}</td>
+      <td class="py-3 px-2 text-xs">${escapeHtml(p.email||'-')}</td>
+      <td class="py-3 px-2">${p.share||0}%</td>
+      <td class="py-3 px-2 text-xs">${escapeHtml(p.bank||'-')}</td>
+      <td class="py-3 px-2 flex gap-1">
+        <button class="px-2 py-1 rounded-lg border border-slate-300 text-xs hover:bg-slate-100" onclick="editPartner('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="px-2 py-1 rounded-lg border border-rose-400 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/30" onclick="deletePartner('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`).join('');
+}
+function editPartner(id) {
+  const p = db.partners.find(x=>x.id===id); if (!p) return;
+  openModal(`
+    <h3 class="font-extrabold text-xl mb-4"><i class="fa-solid fa-pen text-emerald-500 mr-2"></i>도급사 수정</h3>
+    <div class="space-y-3">
+      <div><label class="text-xs font-bold opacity-70">회사명</label><input class="field" id="ep_name" value="${escapeAttr(p.name)}"/></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-bold opacity-70">담당자</label><input class="field" id="ep_manager" value="${escapeAttr(p.manager||'')}"/></div>
+        <div><label class="text-xs font-bold opacity-70">이메일</label><input class="field" id="ep_email" type="email" value="${escapeAttr(p.email||'')}"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-bold opacity-70">지분율 (%)</label><input class="field" id="ep_share" type="number" value="${p.share||0}"/></div>
+        <div><label class="text-xs font-bold opacity-70">계좌</label><input class="field" id="ep_bank" value="${escapeAttr(p.bank||'')}"/></div>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button class="px-4 py-2 rounded-lg border border-slate-300 font-bold" onclick="closeModal()">취소</button>
+      <button class="btn-grad px-4 py-2 rounded-lg font-bold" onclick="submitEditPartner('${p.id}')">저장</button>
+    </div>
+  `);
+}
+function submitEditPartner(id) {
+  const p = db.partners.find(x=>x.id===id); if (!p) return;
+  p.name    = document.getElementById('ep_name').value.trim();
+  p.manager = document.getElementById('ep_manager').value.trim();
+  p.email   = document.getElementById('ep_email').value.trim();
+  p.share   = parseFloat(document.getElementById('ep_share').value)||0;
+  p.bank    = document.getElementById('ep_bank').value.trim();
+  saveDB(); renderPartnerList(); closeModal();
+  toast('수정되었습니다.', 'success');
+}
+function deletePartner(id) {
+  if (!confirm('해당 도급사를 삭제할까요?')) return;
+  db.partners = db.partners.filter(x=>x.id!==id); saveDB(); renderPartnerList();
+  toast('삭제되었습니다.', 'success');
+}
+
+/* =====================================================
+   발송 이력
+   ===================================================== */
+function renderHistory() {
+  const q = (document.getElementById('historySearch')?.value || '').toLowerCase();
+  const fType = document.getElementById('historyFilter')?.value || '';
+  const list = db.history.filter(h=>{
+    const matchQ = !q || h.contract.toLowerCase().includes(q) || h.recipients.join(',').toLowerCase().includes(q);
+    const matchT = !fType || h.billType === fType;
+    return matchQ && matchT;
+  });
+  const tb = document.getElementById('historyListBody');
+  if (list.length === 0) {
+    tb.innerHTML = `<tr><td colspan="7" class="py-8 text-center opacity-70 text-sm">발송 이력이 없습니다.</td></tr>`;
+    return;
+  }
+  tb.innerHTML = list.map(h=>{
+    const typeBadge = { 선금:'badge-amber', 기성:'badge-green', 준공:'badge-blue' }[h.billType] || 'badge-gray';
+    return `
+    <tr class="border-b border-slate-200/40 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10">
+      <td class="py-3 px-2 text-xs">${h.date}</td>
+      <td class="py-3 px-2 font-bold text-sm">${escapeHtml(h.contract)}</td>
+      <td class="py-3 px-2"><span class="badge ${typeBadge}">${h.billType}</span></td>
+      <td class="py-3 px-2 text-xs">${h.needBond}</td>
+      <td class="py-3 px-2 text-xs">${h.recipients.map(r=>escapeHtml(r)).join(', ')}</td>
+      <td class="py-3 px-2"><span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> ${h.status}</span></td>
+      <td class="py-3 px-2 flex gap-1">
+        <button class="px-2 py-1 rounded-lg border border-emerald-500 text-emerald-600 text-xs hover:bg-emerald-50 dark:hover:bg-emerald-900/30" onclick="viewHistory('${h.id}')"><i class="fa-solid fa-eye"></i></button>
+        <button class="px-2 py-1 rounded-lg border border-blue-500 text-blue-600 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/30" onclick="resendHistory('${h.id}')"><i class="fa-solid fa-rotate"></i></button>
+        <button class="px-2 py-1 rounded-lg border border-rose-400 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/30" onclick="deleteHistory('${h.id}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function viewHistory(id) {
+  const h = db.history.find(x=>x.id===id); if (!h) return;
+  openModal(`
+    <h3 class="font-extrabold text-xl mb-3"><i class="fa-solid fa-envelope-open-text text-emerald-500 mr-2"></i>이력 상세</h3>
+    <div class="text-sm space-y-1 mb-3">
+      <div><b>일자</b>: ${h.date}</div>
+      <div><b>계약명</b>: ${escapeHtml(h.contract)}</div>
+      <div><b>청구유형</b>: ${h.billType} · <b>공채</b>: ${h.needBond}</div>
+      <div><b>수신</b>: ${h.recipients.map(escapeHtml).join(', ')}</div>
+    </div>
+    <div class="text-xs opacity-70 mb-1">제목</div>
+    <div class="font-bold mb-3">${escapeHtml(h.subject||'-')}</div>
+    <div class="text-xs opacity-70 mb-1">본문</div>
+    <pre class="mail-preview max-h-[40vh] overflow-y-auto text-xs">${escapeHtml(h.body||'-')}</pre>
+    <div class="flex justify-end mt-4">
+      <button class="px-4 py-2 rounded-lg border border-slate-300 font-bold" onclick="closeModal()">닫기</button>
+    </div>
+  `);
+}
+function resendHistory(id) {
+  const h = db.history.find(x=>x.id===id); if (!h) return;
+  toast(h.contract + ' 건을 작성 화면으로 불러왔습니다.', 'success');
+  goToPage('compose');
+  document.getElementById('f_contractName').value = h.contract;
+  state.form.contractName = h.contract;
+}
+function deleteHistory(id) {
+  if (!confirm('이력을 삭제할까요?')) return;
+  db.history = db.history.filter(x=>x.id!==id); saveDB(); renderHistory();
+  toast('삭제되었습니다.', 'success');
+}
+
+/* =====================================================
+   템플릿
+   ===================================================== */
+function renderTemplates() {
+  const wrap = document.getElementById('templateListBody');
+  if (db.templates.length === 0) {
+    wrap.innerHTML = `<div class="opacity-70 text-sm md:col-span-2 text-center py-6">저장된 템플릿이 없습니다.</div>`;
+    return;
+  }
+  wrap.innerHTML = db.templates.map(t=>`
+    <div class="glass rounded-xl p-4">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <div class="font-bold">${escapeHtml(t.name)}</div>
+          <span class="badge ${t.kind==='opening'?'badge-green':'badge-blue'}">${t.kind==='opening'?'인사말':'마무리'}</span>
+        </div>
+        <div class="flex gap-1">
+          <button class="px-2 py-1 rounded-lg border border-slate-300 text-xs hover:bg-slate-100" onclick="editTemplate('${t.id}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="px-2 py-1 rounded-lg border border-rose-400 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/30" onclick="deleteTemplate('${t.id}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <pre class="text-xs opacity-90 whitespace-pre-wrap">${escapeHtml(t.content)}</pre>
+    </div>`).join('');
+}
+function openAddTemplateModal() {
+  openModal(`
+    <h3 class="font-extrabold text-xl mb-3"><i class="fa-solid fa-plus text-emerald-500 mr-2"></i>새 템플릿</h3>
+    <div class="space-y-3">
+      <div><label class="text-xs font-bold opacity-70">이름</label><input class="field" id="t_name" placeholder="예: 정중한 마무리"/></div>
+      <div>
+        <label class="text-xs font-bold opacity-70">종류</label>
+        <select class="field" id="t_kind">
+          <option value="opening">인사말</option>
+          <option value="closing">마무리</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-bold opacity-70">내용</label>
+        <textarea class="field font-mono text-sm" id="t_content" rows="6" placeholder="안녕하십니까..."></textarea>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-4">
+      <button class="px-4 py-2 rounded-lg border border-slate-300 font-bold" onclick="closeModal()">취소</button>
+      <button class="btn-grad px-4 py-2 rounded-lg font-bold" onclick="submitTemplate()">저장</button>
+    </div>
+  `);
+}
+function submitTemplate() {
+  const name = document.getElementById('t_name').value.trim();
+  const kind = document.getElementById('t_kind').value;
+  const content = document.getElementById('t_content').value.trim();
+  if (!name || !content) { toast('이름·내용을 입력해주세요.', 'warning'); return; }
+  db.templates.push({ id:'T'+Date.now(), name, kind, content }); saveDB(); renderTemplates(); closeModal();
+  toast('템플릿이 저장되었습니다.', 'success');
+}
+function editTemplate(id) {
+  const t = db.templates.find(x=>x.id===id); if (!t) return;
+  openModal(`
+    <h3 class="font-extrabold text-xl mb-3"><i class="fa-solid fa-pen text-emerald-500 mr-2"></i>템플릿 수정</h3>
+    <div class="space-y-3">
+      <div><label class="text-xs font-bold opacity-70">이름</label><input class="field" id="te_name" value="${escapeAttr(t.name)}"/></div>
+      <div>
+        <label class="text-xs font-bold opacity-70">종류</label>
+        <select class="field" id="te_kind">
+          <option value="opening" ${t.kind==='opening'?'selected':''}>인사말</option>
+          <option value="closing" ${t.kind==='closing'?'selected':''}>마무리</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-bold opacity-70">내용</label>
+        <textarea class="field font-mono text-sm" id="te_content" rows="6">${escapeHtml(t.content)}</textarea>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-4">
+      <button class="px-4 py-2 rounded-lg border border-slate-300 font-bold" onclick="closeModal()">취소</button>
+      <button class="btn-grad px-4 py-2 rounded-lg font-bold" onclick="submitEditTemplate('${t.id}')">저장</button>
+    </div>
+  `);
+}
+function submitEditTemplate(id) {
+  const t = db.templates.find(x=>x.id===id); if (!t) return;
+  t.name = document.getElementById('te_name').value.trim();
+  t.kind = document.getElementById('te_kind').value;
+  t.content = document.getElementById('te_content').value.trim();
+  saveDB(); renderTemplates(); closeModal();
+  toast('수정되었습니다.', 'success');
+}
+function deleteTemplate(id) {
+  if (!confirm('템플릿을 삭제할까요?')) return;
+  db.templates = db.templates.filter(x=>x.id!==id); saveDB(); renderTemplates();
+  toast('삭제되었습니다.', 'success');
+}
+
+/* =====================================================
+   설정 - 백업/복원/초기화
+   ===================================================== */
+function exportAll() {
+  try {
+    const blob = new Blob([JSON.stringify(db, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `skh_mail_backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 300);
+    toast('백업 파일이 다운로드되었습니다.', 'success');
+  } catch (e) {
+    console.error('백업 실패', e);
+    toast('백업에 실패했습니다.', 'error');
+  }
+}
+function importAll(ev) {
+  const f = ev.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try {
+      const parsed = JSON.parse(e.target.result);
+      db.partners  = Array.isArray(parsed.partners)  ? parsed.partners  : db.partners;
+      db.history   = Array.isArray(parsed.history)   ? parsed.history   : db.history;
+      db.templates = Array.isArray(parsed.templates) ? parsed.templates : db.templates;
+      saveDB();
+      renderPartnerList(); renderHistory(); renderTemplates(); refreshDashboard();
+      toast('백업이 복원되었습니다.', 'success');
+    } catch (err) {
+      console.error('복원 실패', err);
+      toast('JSON 파일 형식이 올바르지 않습니다.', 'error');
+    }
+    ev.target.value = '';
+  };
+  reader.readAsText(f);
+}
+function confirmReset() {
+  if (!confirm('모든 데이터를 초기화합니다. 진행할까요?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  db = { partners: [], history: [], templates: [] };
+  loadDB();
+  renderPartnerList(); renderHistory(); renderTemplates(); refreshDashboard();
+  toast('초기화되었습니다. 샘플 데이터가 다시 로드되었습니다.', 'success');
+}
+
+/* =====================================================
+   도움말
+   ===================================================== */
+function showHelp() {
+  openModal(`
+    <h3 class="font-extrabold text-xl mb-3"><i class="fa-solid fa-circle-question text-emerald-500 mr-2"></i>도움말</h3>
+    <div class="text-sm space-y-3">
+      <div>
+        <div class="font-bold mb-1">1. 신규 메일 작성 흐름</div>
+        <p class="opacity-80">청구단계 → 계약정보 → 청구유형 → 공채매입 → 도급사 → 메일 자동 생성 순서로 진행됩니다. 흐름도(선금→공채→보증서→발송)를 그대로 반영합니다.</p>
+      </div>
+      <div>
+        <div class="font-bold mb-1">2. 자동 분기 규칙</div>
+        <ul class="list-disc pl-5 opacity-80 space-y-1">
+          <li><b>선금</b> 선택 → 선금보증서 발급·제출 요청 자동 포함</li>
+          <li><b>준공</b> 선택 → 하자보증서·손해배상공제증권 요청 자동 포함</li>
+          <li><b>기성</b> 선택 → 기본 청구 서류만 요청</li>
+          <li><b>공채 매입 예</b> → 지역 공채 영수증 요청 자동 포함</li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-bold mb-1">3. 메일 발송 방법</div>
+        <p class="opacity-80">메일 클라이언트 발송(mailto), 클립보드 복사(Outlook/Gmail 붙여넣기), .eml 다운로드 중 선택할 수 있습니다.</p>
+      </div>
+      <div>
+        <div class="font-bold mb-1">4. 데이터 저장 위치</div>
+        <p class="opacity-80">브라우저 LocalStorage(<code class="px-1 rounded bg-slate-200/50 dark:bg-slate-700/50 text-xs">skh_partner_mail_v1</code>)에 저장됩니다. 설정 화면에서 JSON 백업 가능합니다.</p>
+      </div>
+    </div>
+    <div class="flex justify-end mt-4">
+      <button class="btn-grad px-4 py-2 rounded-lg font-bold" onclick="closeModal()">닫기</button>
+    </div>
+  `);
+}
+
+/* =====================================================
+   유틸
+   ===================================================== */
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+function escapeAttr(s) { return escapeHtml(s); }
+function escapeForMail(s) { return String(s||'').replace(/[\r\n]/g, ' '); }
+
+/* =====================================================
+   초기화
+   ===================================================== */
+function init() {
+  try {
+    loadDB();
+    // 자사 정보 초기 반영
+    state.form.leadCompany = document.getElementById('f_leadCompany').value;
+    state.form.leadManager = document.getElementById('f_leadManager').value;
+    state.form.leadEmail   = document.getElementById('f_leadEmail').value;
+    state.form.leadPhone   = document.getElementById('f_leadPhone').value;
+
+    renderStepHeader();
+    refreshDashboard();
+    renderPartnerList();
+    renderHistory();
+    renderTemplates();
+  } catch (e) {
+    console.error('초기화 오류', e);
+    toast('초기화 중 오류가 발생했습니다.', 'error');
+  }
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

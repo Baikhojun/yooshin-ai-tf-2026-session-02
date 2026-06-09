@@ -1,0 +1,1766 @@
+<!-- 이 파일의 역할: 임준영(회계부) 달러계좌 대체전표 자동 생성 시스템 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>달러계좌 대체전표 자동 생성 시스템 | 회계부 임준영</title>
+
+<!-- TailwindCSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- SheetJS XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- jsPDF + autotable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+<!-- Google Fonts: Noto Sans KR -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Noto Sans KR', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace']
+        },
+        colors: {
+          accGreen: { 50:'#f0fdf4', 100:'#dcfce7', 500:'#10b981', 600:'#059669', 700:'#047857', 900:'#064e3b' },
+          accGold:  { 400:'#fbbf24', 500:'#f59e0b', 600:'#d97706' },
+          accDeep:  { 800:'#1e293b', 900:'#0f172a', 950:'#020617' }
+        },
+        animation: {
+          'fade-in': 'fadeIn 0.4s ease-out',
+          'slide-up': 'slideUp 0.4s ease-out',
+          'pulse-soft': 'pulseSoft 2.4s ease-in-out infinite'
+        },
+        keyframes: {
+          fadeIn: { '0%': {opacity:'0'}, '100%': {opacity:'1'} },
+          slideUp: { '0%': {opacity:'0', transform:'translateY(14px)'}, '100%': {opacity:'1', transform:'translateY(0)'} },
+          pulseSoft: { '0%,100%': {opacity:'1'}, '50%': {opacity:'.6'} }
+        }
+      }
+    }
+  };
+</script>
+
+<style>
+  html, body { font-family:'Noto Sans KR', sans-serif; }
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #0f172a 100%);
+    min-height: 100vh;
+  }
+  body.light {
+    background: linear-gradient(135deg, #f0fdf4 0%, #fef3c7 50%, #e0f2fe 100%);
+  }
+  .glass {
+    background: rgba(255,255,255,.05);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 10px 30px rgba(0,0,0,.30);
+  }
+  body.light .glass {
+    background: rgba(255,255,255,.65);
+    border: 1px solid rgba(15,23,42,.08);
+    box-shadow: 0 6px 24px rgba(15,23,42,.08);
+  }
+  .glass-strong {
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  body.light .glass-strong {
+    background: rgba(255,255,255,.85);
+    border: 1px solid rgba(15,23,42,.10);
+  }
+  .gold-text {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .green-text {
+    background: linear-gradient(135deg, #10b981 0%, #059669 50%, #064e3b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sidebar-item {
+    transition: all .25s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover {
+    background: rgba(16,185,129,.10);
+    border-left-color: #10b981;
+  }
+  .sidebar-item.active {
+    background: linear-gradient(90deg, rgba(16,185,129,.25), rgba(16,185,129,.02));
+    border-left-color: #fbbf24;
+    color: #fbbf24;
+  }
+  body.light .sidebar-item.active {
+    color: #d97706;
+  }
+  .scrollbar::-webkit-scrollbar { width:8px; height:8px; }
+  .scrollbar::-webkit-scrollbar-thumb { background: rgba(16,185,129,.4); border-radius:8px; }
+  .scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .input-base {
+    background: rgba(15,23,42,.40);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #f1f5f9;
+    transition: all .2s;
+  }
+  body.light .input-base {
+    background: rgba(255,255,255,.85);
+    border: 1px solid rgba(15,23,42,.15);
+    color: #0f172a;
+  }
+  .input-base:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.20);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: #fff;
+    transition: all .2s;
+    box-shadow: 0 4px 14px rgba(5,150,105,.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(5,150,105,.55); }
+  .btn-gold {
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    color: #1e1b1b;
+    font-weight: 700;
+    transition: all .2s;
+    box-shadow: 0 4px 14px rgba(217,119,6,.30);
+  }
+  .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(217,119,6,.50); }
+  .btn-ghost {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+    color: inherit;
+    transition: all .2s;
+  }
+  body.light .btn-ghost {
+    background: rgba(15,23,42,.04);
+    border: 1px solid rgba(15,23,42,.12);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,.12); }
+  body.light .btn-ghost:hover { background: rgba(15,23,42,.08); }
+  .badge {
+    display: inline-flex; align-items:center; gap:.35rem;
+    padding: .2rem .6rem;
+    border-radius: 9999px;
+    font-size: .72rem;
+    font-weight: 600;
+  }
+  .badge-success { background: rgba(16,185,129,.18); color: #34d399; border:1px solid rgba(16,185,129,.30); }
+  .badge-warn    { background: rgba(245,158,11,.18); color: #fbbf24; border:1px solid rgba(245,158,11,.30); }
+  .badge-danger  { background: rgba(239,68,68,.18); color: #f87171; border:1px solid rgba(239,68,68,.30); }
+  .badge-info    { background: rgba(59,130,246,.18); color: #60a5fa; border:1px solid rgba(59,130,246,.30); }
+
+  .toast {
+    position: fixed; top: 24px; right: 24px;
+    z-index: 9999;
+    padding: 14px 20px;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 500;
+    box-shadow: 0 12px 30px rgba(0,0,0,.35);
+    animation: slideUp .35s ease-out;
+    max-width: 380px;
+  }
+  .toast-success { background: linear-gradient(135deg,#059669,#047857); }
+  .toast-error   { background: linear-gradient(135deg,#dc2626,#991b1b); }
+  .toast-warn    { background: linear-gradient(135deg,#d97706,#92400e); }
+  .toast-info    { background: linear-gradient(135deg,#0284c7,#0c4a6e); }
+
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(6px);
+    z-index: 9998;
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn .25s ease-out;
+  }
+  .voucher-print {
+    background: #ffffff;
+    color: #111827;
+    padding: 28px;
+    border-radius: 8px;
+    font-family: 'Noto Sans KR', serif;
+  }
+  .voucher-print table { border-collapse: collapse; width: 100%; }
+  .voucher-print th, .voucher-print td {
+    border: 1px solid #1f2937;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .voucher-print th { background: #f3f4f6; font-weight: 700; text-align: center; }
+  .stamp {
+    width: 60px; height: 60px;
+    border: 2px solid #b91c1c;
+    border-radius: 50%;
+    color: #b91c1c;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 13px;
+    transform: rotate(-12deg);
+    margin: 0 auto;
+  }
+  @media print {
+    body { background: #fff !important; }
+    .no-print { display: none !important; }
+    .voucher-print { box-shadow: none; }
+  }
+  .table-header {
+    background: rgba(16,185,129,.10);
+    border-bottom: 2px solid rgba(16,185,129,.35);
+  }
+  body.light .table-header { background: rgba(16,185,129,.08); }
+  .row-hover:hover { background: rgba(16,185,129,.06); }
+  .row-debit { background: rgba(59,130,246,.06); }
+  .row-credit { background: rgba(245,158,11,.06); }
+  .step-indicator {
+    display:flex; align-items:center; gap:.5rem;
+    padding:.55rem .9rem; border-radius:9999px;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    font-size:.85rem;
+  }
+  body.light .step-indicator { background: rgba(15,23,42,.04); border:1px solid rgba(15,23,42,.10); }
+  .step-indicator.active {
+    background: linear-gradient(135deg,#059669,#047857);
+    color:#fff;
+    border-color:#10b981;
+  }
+  .step-indicator.done {
+    background: rgba(16,185,129,.15);
+    color: #34d399;
+    border-color: rgba(16,185,129,.35);
+  }
+</style>
+</head>
+<body class="text-slate-100">
+
+<!-- =============== 토스트 컨테이너 =============== -->
+<div id="toastWrap"></div>
+
+<!-- =============== 모달 컨테이너 =============== -->
+<div id="modalWrap"></div>
+
+<!-- =============== 전체 레이아웃 =============== -->
+<div class="flex min-h-screen">
+
+  <!-- ============ 사이드바 ============ -->
+  <aside id="sidebar" class="w-64 glass-strong flex flex-col p-4 sticky top-0 h-screen overflow-y-auto scrollbar">
+    <div class="flex items-center gap-3 mb-8 px-2">
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center"
+           style="background: linear-gradient(135deg,#10b981,#fbbf24);">
+        <i class="fa-solid fa-receipt text-white text-lg"></i>
+      </div>
+      <div>
+        <div class="font-black text-base leading-tight gold-text">달러 전표 자동화</div>
+        <div class="text-xs opacity-70">USD Voucher System</div>
+      </div>
+    </div>
+
+    <div class="text-[11px] uppercase tracking-wider opacity-50 px-3 mb-2">메인 메뉴</div>
+    <nav class="flex flex-col gap-1 mb-6">
+      <button data-page="dashboard" class="sidebar-item active text-left px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
+        <i class="fa-solid fa-chart-line w-4"></i>대시보드
+      </button>
+      <button data-page="new" class="sidebar-item text-left px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
+        <i class="fa-solid fa-plus-circle w-4"></i>신규 전표 작성
+      </button>
+      <button data-page="history" class="sidebar-item text-left px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
+        <i class="fa-solid fa-clock-rotate-left w-4"></i>전표 이력
+      </button>
+      <button data-page="accounts" class="sidebar-item text-left px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
+        <i class="fa-solid fa-book w-4"></i>계정과목 관리
+      </button>
+    </nav>
+
+    <div class="text-[11px] uppercase tracking-wider opacity-50 px-3 mb-2">도구</div>
+    <nav class="flex flex-col gap-1 mb-6">
+      <button id="btnTheme" class="sidebar-item text-left px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
+        <i id="themeIcon" class="fa-solid fa-moon w-4"></i><span id="themeLabel">라이트 모드</span>
+      </button>
+      <button id="btnSampleReset" class="sidebar-item text-left px-4 py-3 rounded-lg flex items-center gap-3 text-sm">
+        <i class="fa-solid fa-rotate w-4"></i>샘플 데이터 초기화
+      </button>
+    </nav>
+
+    <div class="mt-auto pt-4 border-t border-white/10">
+      <div class="px-3 py-2 rounded-lg" style="background:rgba(251,191,36,.10)">
+        <div class="text-[11px] opacity-70">담당자</div>
+        <div class="font-bold text-sm">임준영 주임</div>
+        <div class="text-xs opacity-70">회계부 / 외화 자금 담당</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ 메인 영역 ============ -->
+  <main class="flex-1 flex flex-col min-w-0">
+
+    <!-- 헤더 -->
+    <header class="glass-strong px-8 py-4 flex items-center justify-between sticky top-0 z-30">
+      <div>
+        <div class="flex items-center gap-2 text-xs opacity-70 mb-1">
+          <i class="fa-solid fa-building-columns"></i>
+          <span>유신 회계부 / 달러계좌 대체전표 시스템</span>
+        </div>
+        <h1 id="pageTitle" class="text-2xl font-black">대시보드</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="glass px-4 py-2 rounded-xl flex items-center gap-3">
+          <i class="fa-solid fa-dollar-sign gold-text"></i>
+          <div class="text-xs">
+            <div class="opacity-60">USD/KRW</div>
+            <div class="font-bold" id="topRate">1,350.00</div>
+          </div>
+        </div>
+        <div class="glass px-4 py-2 rounded-xl flex items-center gap-3">
+          <i class="fa-solid fa-calendar-day text-emerald-400"></i>
+          <div class="text-xs">
+            <div class="opacity-60">오늘</div>
+            <div class="font-bold" id="topDate">2026-06-09</div>
+          </div>
+        </div>
+        <button id="btnQuickNew" class="btn-gold px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+          <i class="fa-solid fa-bolt"></i>빠른 작성
+        </button>
+      </div>
+    </header>
+
+    <!-- 페이지 콘텐츠 -->
+    <section class="p-8 flex-1">
+      <div id="pageRoot" class="animate-fade-in"></div>
+    </section>
+
+    <footer class="px-8 py-4 text-xs opacity-50 border-t border-white/5 text-center">
+      USD Voucher Automation v1.0 · 회계부 임준영 · LocalStorage 보관 · 단일 HTML 실행
+    </footer>
+  </main>
+</div>
+
+<!-- ============ 메인 스크립트 ============ -->
+<script>
+/* ============================================================
+ * 1) 전역 유틸 및 상태
+ * ============================================================ */
+const LS_KEY = 'ljy_dollar_voucher_v1';
+
+const State = {
+  page: 'dashboard',
+  theme: 'dark',
+  vouchers: [],     // 작성된 전표 이력
+  mappings: [],     // 적요 → 계정과목 매핑 룰
+  favorites: [],    // 즐겨찾기 계정과목
+  draft: null,      // 신규 작성 중인 임시 데이터
+  charts: {}        // Chart.js 인스턴스
+};
+
+// XSS 방어
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+const fmtUSD = n => '$' + (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtKRW = n => '₩' + Math.round(Number(n)||0).toLocaleString('ko-KR');
+const fmtNum = n => (Number(n)||0).toLocaleString('ko-KR');
+const todayStr = () => new Date().toISOString().slice(0,10);
+const uid = () => 'V' + Date.now().toString(36) + Math.random().toString(36).slice(2,6).toUpperCase();
+
+/* ============================================================
+ * 2) 토스트 / 모달
+ * ============================================================ */
+function toast(msg, type='success') {
+  const w = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  const icon = type==='success'?'fa-circle-check'
+              :type==='error'?'fa-circle-xmark'
+              :type==='warn'?'fa-triangle-exclamation':'fa-circle-info';
+  el.innerHTML = `<div class="flex items-start gap-3">
+    <i class="fa-solid ${icon} text-xl mt-0.5"></i>
+    <div class="text-sm leading-relaxed">${esc(msg)}</div>
+  </div>`;
+  w.appendChild(el);
+  setTimeout(()=> { el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 2800);
+}
+
+function openModal(html, opts={}) {
+  const w = document.getElementById('modalWrap');
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-backdrop';
+  wrap.innerHTML = `<div class="glass-strong rounded-2xl ${opts.size||'max-w-2xl'} w-full mx-4 p-6 animate-slide-up max-h-[90vh] overflow-y-auto scrollbar">
+    ${html}
+  </div>`;
+  wrap.addEventListener('click', e => {
+    if (e.target === wrap && !opts.persistent) wrap.remove();
+  });
+  w.appendChild(wrap);
+  return wrap;
+}
+function closeModals() { document.getElementById('modalWrap').innerHTML = ''; }
+
+/* ============================================================
+ * 3) 데이터 영속화 (LocalStorage)
+ * ============================================================ */
+function saveLS() {
+  try {
+    const payload = {
+      vouchers: State.vouchers,
+      mappings: State.mappings,
+      favorites: State.favorites,
+      theme: State.theme
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+  } catch (e) {
+    console.error('LS 저장 실패', e);
+    toast('저장에 실패했습니다: ' + e.message, 'error');
+  }
+}
+function loadLS() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    State.vouchers = d.vouchers || [];
+    State.mappings = d.mappings || [];
+    State.favorites = d.favorites || [];
+    State.theme = d.theme || 'dark';
+    return true;
+  } catch (e) {
+    console.error('LS 로드 실패', e);
+    return false;
+  }
+}
+
+/* ============================================================
+ * 4) 기본 매핑 룰 + 샘플 데이터
+ * ============================================================ */
+const DEFAULT_MAPPINGS = [
+  { id:'M01', keyword:'외화송금',     account:'외화예금',     type:'asset',  side:'auto', desc:'외화 계좌 입금/출금' },
+  { id:'M02', keyword:'USD 입금',     account:'외화예금',     type:'asset',  side:'debit',desc:'달러 입금 거래' },
+  { id:'M03', keyword:'은행 수수료',  account:'지급수수료',   type:'expense',side:'debit',desc:'은행 부과 수수료' },
+  { id:'M04', keyword:'송금수수료',   account:'지급수수료',   type:'expense',side:'debit',desc:'해외송금 수수료' },
+  { id:'M05', keyword:'현장 운영비',  account:'현장운영비',   type:'expense',side:'debit',desc:'해외현장 운영 비용' },
+  { id:'M06', keyword:'사이트 비용',  account:'현장운영비',   type:'expense',side:'debit',desc:'현장 사이트 지출' },
+  { id:'M07', keyword:'급여',         account:'급여',         type:'expense',side:'debit',desc:'외화 급여 지급' },
+  { id:'M08', keyword:'임금',         account:'급여',         type:'expense',side:'debit',desc:'외화 임금 지급' },
+  { id:'M09', keyword:'환전',         account:'외환차손익',   type:'auto',   side:'auto', desc:'환전에 따른 차익/차손' },
+  { id:'M10', keyword:'환차',         account:'외환차손익',   type:'auto',   side:'auto', desc:'환율 변동에 따른 손익' },
+  { id:'M11', keyword:'이자수익',     account:'이자수익',     type:'revenue',side:'credit',desc:'예금 이자 수익' },
+  { id:'M12', keyword:'이자',         account:'이자수익',     type:'revenue',side:'credit',desc:'기본 이자 거래' },
+  { id:'M13', keyword:'이자비용',     account:'이자비용',     type:'expense',side:'debit',desc:'차입금 이자' },
+  { id:'M14', keyword:'외주',         account:'외주비',       type:'expense',side:'debit',desc:'해외 외주 용역' },
+  { id:'M15', keyword:'자재',         account:'원재료',       type:'asset',  side:'debit',desc:'외화 자재 매입' },
+  { id:'M16', keyword:'여비',         account:'여비교통비',   type:'expense',side:'debit',desc:'해외 출장 여비' },
+  { id:'M17', keyword:'출장',         account:'여비교통비',   type:'expense',side:'debit',desc:'출장 관련 비용' },
+  { id:'M18', keyword:'통신',         account:'통신비',       type:'expense',side:'debit',desc:'국제 통신/전산비' },
+  { id:'M19', keyword:'세금',         account:'세금과공과',   type:'expense',side:'debit',desc:'외화 세금/공과금' },
+  { id:'M20', keyword:'보험',         account:'보험료',       type:'expense',side:'debit',desc:'해외 보험료' }
+];
+
+const SAMPLE_VOUCHERS = () => {
+  const rate = 1350;
+  const base = [
+    { date:'2026-06-08', dept:'해외사업부', remark:'USAID 본사 USD 송금 입금',  usd:50000, account:'외화예금', kind:'외화송금' },
+    { date:'2026-06-07', dept:'회계부',     remark:'KEB하나은행 송금수수료',     usd:25,    account:'지급수수료', kind:'송금수수료' },
+    { date:'2026-06-06', dept:'현장운영팀', remark:'두바이 현장 운영비 송금',    usd:8500,  account:'현장운영비', kind:'현장 운영비' },
+    { date:'2026-06-05', dept:'해외사업부', remark:'현지 직원 6월 급여 지급',    usd:12000, account:'급여',       kind:'급여' },
+    { date:'2026-06-04', dept:'회계부',     remark:'USD→KRW 환전 차익',          usd:1500,  account:'외환차손익', kind:'환전' },
+    { date:'2026-06-03', dept:'회계부',     remark:'외화예금 이자 수익',         usd:120,   account:'이자수익',   kind:'이자' },
+    { date:'2026-06-02', dept:'해외사업부', remark:'카타르 외주 용역비',          usd:4500,  account:'외주비',     kind:'외주' },
+    { date:'2026-06-01', dept:'현장운영팀', remark:'사우디 출장 여비 송금',      usd:2200,  account:'여비교통비', kind:'여비' },
+    { date:'2026-05-31', dept:'해외사업부', remark:'국제 통신비 지급',           usd:340,   account:'통신비',     kind:'통신' },
+    { date:'2026-05-30', dept:'회계부',     remark:'해외 보험료 6월분',          usd:780,   account:'보험료',     kind:'보험' }
+  ];
+  return base.map(b => buildVoucherFromSample(b, rate));
+};
+
+function buildVoucherFromSample(b, rate) {
+  const krw = Math.round(b.usd * rate);
+  const isAsset = ['외화예금','원재료'].includes(b.account);
+  const isRevenue = ['이자수익'].includes(b.account);
+  let debit, credit;
+  if (b.account === '외화예금') {
+    // 송금 입금: 차변 외화예금 / 대변 보통예금
+    debit  = { account:'외화예금', usd:b.usd, krw, remark:b.remark };
+    credit = { account:'보통예금', usd:b.usd, krw, remark:'KRW 출금' };
+  } else if (isRevenue) {
+    // 이자수익: 차변 외화예금 / 대변 이자수익
+    debit  = { account:'외화예금', usd:b.usd, krw, remark:'이자 입금' };
+    credit = { account:b.account,  usd:b.usd, krw, remark:b.remark };
+  } else if (b.account === '외환차손익') {
+    debit  = { account:'보통예금',     usd:b.usd, krw, remark:'환전 KRW 수령' };
+    credit = { account:'외환차익',     usd:b.usd, krw, remark:b.remark };
+  } else {
+    // 비용 지출: 차변 비용 / 대변 외화예금
+    debit  = { account:b.account,  usd:b.usd, krw, remark:b.remark };
+    credit = { account:'외화예금', usd:b.usd, krw, remark:b.remark };
+  }
+  return {
+    id: uid(),
+    date: b.date,
+    dept: b.dept,
+    approved: true,
+    evidence: ['청구서', '품의서'],
+    rate,
+    entries: [{ debit, credit }],
+    totalUSD: b.usd,
+    totalKRW: krw,
+    verified: true,
+    createdAt: new Date(b.date + 'T09:00:00').toISOString()
+  };
+}
+
+function ensureInitialData() {
+  if (!loadLS() || State.vouchers.length === 0) {
+    State.mappings = DEFAULT_MAPPINGS.slice();
+    State.vouchers = SAMPLE_VOUCHERS();
+    State.favorites = ['외화예금','지급수수료','현장운영비'];
+    State.theme = 'dark';
+    saveLS();
+  } else {
+    if (!State.mappings || State.mappings.length === 0) State.mappings = DEFAULT_MAPPINGS.slice();
+  }
+}
+
+/* ============================================================
+ * 5) 계정과목 자동 판단
+ * ============================================================ */
+function suggestAccount(remark) {
+  if (!remark) return null;
+  const r = remark.toLowerCase();
+  for (const m of State.mappings) {
+    if (r.includes(m.keyword.toLowerCase())) {
+      return { account: m.account, rule: m, confidence: 'high' };
+    }
+  }
+  // 부분 매칭
+  for (const m of State.mappings) {
+    const tokens = m.keyword.split(/\s+/);
+    for (const t of tokens) {
+      if (t.length >= 2 && r.includes(t.toLowerCase())) {
+        return { account: m.account, rule: m, confidence: 'mid' };
+      }
+    }
+  }
+  return { account: '미분류', rule: null, confidence: 'low' };
+}
+
+function autoJournalize(remark, account, usd, krw) {
+  // 계정 성격으로 차/대변 자동 결정
+  const expenseAccs = ['지급수수료','현장운영비','급여','이자비용','외주비','여비교통비','통신비','세금과공과','보험료'];
+  const revenueAccs = ['이자수익','외환차익'];
+  const assetAccs   = ['외화예금','보통예금','원재료'];
+
+  if (expenseAccs.includes(account)) {
+    return {
+      debit:  { account, remark, usd, krw },
+      credit: { account:'외화예금', remark, usd, krw }
+    };
+  }
+  if (revenueAccs.includes(account)) {
+    return {
+      debit:  { account:'외화예금', remark, usd, krw },
+      credit: { account, remark, usd, krw }
+    };
+  }
+  if (account === '외화예금') {
+    return {
+      debit:  { account:'외화예금', remark, usd, krw },
+      credit: { account:'보통예금', remark, usd, krw }
+    };
+  }
+  if (account === '외환차손익') {
+    return {
+      debit:  { account:'보통예금', remark, usd, krw },
+      credit: { account:'외환차익', remark, usd, krw }
+    };
+  }
+  // 기본: 차변 미분류
+  return {
+    debit:  { account: account||'미분류', remark, usd, krw },
+    credit: { account:'외화예금', remark, usd, krw }
+  };
+}
+
+/* ============================================================
+ * 6) 페이지 라우팅
+ * ============================================================ */
+const Pages = {
+  dashboard: renderDashboard,
+  new:       renderNewVoucher,
+  history:   renderHistory,
+  accounts:  renderAccounts
+};
+
+const PageTitles = {
+  dashboard: '대시보드',
+  new: '신규 전표 작성',
+  history: '전표 이력 관리',
+  accounts: '계정과목 마스터'
+};
+
+function go(page) {
+  State.page = page;
+  document.getElementById('pageTitle').textContent = PageTitles[page] || page;
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  const root = document.getElementById('pageRoot');
+  root.innerHTML = '';
+  root.classList.remove('animate-fade-in');
+  void root.offsetWidth;
+  root.classList.add('animate-fade-in');
+  try {
+    Pages[page]();
+  } catch (e) {
+    console.error('페이지 렌더 실패:', e);
+    root.innerHTML = `<div class="glass p-6 rounded-xl text-red-300">렌더링 오류: ${esc(e.message)}</div>`;
+  }
+}
+
+/* ============================================================
+ * 7) 대시보드
+ * ============================================================ */
+function renderDashboard() {
+  const root = document.getElementById('pageRoot');
+  const month = todayStr().slice(0,7);
+  const monthVouchers = State.vouchers.filter(v => v.date.startsWith(month));
+  const totalUSD = monthVouchers.reduce((s,v)=> s + (v.totalUSD||0), 0);
+  const totalKRW = monthVouchers.reduce((s,v)=> s + (v.totalKRW||0), 0);
+  const passCnt  = State.vouchers.filter(v => v.verified).length;
+  const passRate = State.vouchers.length ? Math.round(passCnt/State.vouchers.length*100) : 100;
+
+  root.innerHTML = `
+    <!-- KPI 카드 4종 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+      ${kpiCard('이번달 전표 건수', monthVouchers.length+'건', 'fa-receipt', 'from-emerald-500 to-emerald-700')}
+      ${kpiCard('차변 USD 합계', fmtUSD(totalUSD), 'fa-arrow-down', 'from-blue-500 to-indigo-700')}
+      ${kpiCard('차변 KRW 합계', fmtKRW(totalKRW), 'fa-won-sign', 'from-amber-500 to-orange-700')}
+      ${kpiCard('검증 통과율', passRate+'%', 'fa-shield-check', 'from-violet-500 to-fuchsia-700')}
+    </div>
+
+    <!-- 차트 영역 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+      <div class="glass rounded-2xl p-6 lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-chart-line gold-text"></i>일자별 거래 금액 추이</h3>
+            <p class="text-xs opacity-60 mt-1">최근 30일 KRW 환산</p>
+          </div>
+          <span class="badge badge-info"><i class="fa-solid fa-calendar"></i> 일별</span>
+        </div>
+        <div style="height: 280px;"><canvas id="lineChart"></canvas></div>
+      </div>
+      <div class="glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-chart-pie gold-text"></i>계정과목별 분포</h3>
+            <p class="text-xs opacity-60 mt-1">차변 USD 기준</p>
+          </div>
+        </div>
+        <div style="height: 280px;"><canvas id="donutChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 환율 위젯 + 최근 전표 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="glass rounded-2xl p-6">
+        <div class="text-xs uppercase tracking-widest opacity-60 mb-2">오늘의 환율</div>
+        <div class="flex items-end gap-3 mb-4">
+          <span class="text-4xl font-black gold-text">1,350</span>
+          <span class="text-sm opacity-70 mb-1">원 / 달러</span>
+        </div>
+        <div class="space-y-2 text-sm">
+          ${rateRow('매도(은행)','1,352.50', '+0.30', 'text-red-400')}
+          ${rateRow('매수(은행)','1,347.50', '-0.20', 'text-blue-400')}
+          ${rateRow('전신환 송금','1,350.00','보합','text-amber-300')}
+          ${rateRow('현찰','1,355.20', '+0.45', 'text-red-400')}
+        </div>
+        <div class="text-[11px] opacity-50 mt-4">* 가상 환율 (데모용)</div>
+      </div>
+
+      <div class="glass rounded-2xl p-6 lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-list-check gold-text"></i>최근 작성 전표</h3>
+          <button class="btn-ghost text-xs px-3 py-1.5 rounded-lg" onclick="go('history')">전체 보기 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+        </div>
+        <div class="space-y-2 max-h-72 overflow-y-auto scrollbar pr-2">
+          ${State.vouchers.slice(0,6).map(v => `
+            <div class="flex items-center justify-between p-3 rounded-lg row-hover border border-white/5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#10b981,#fbbf24)">
+                  <i class="fa-solid fa-file-invoice-dollar text-white text-sm"></i>
+                </div>
+                <div>
+                  <div class="font-bold text-sm">${esc(v.entries[0].debit.account)} / ${esc(v.entries[0].credit.account)}</div>
+                  <div class="text-xs opacity-60">${esc(v.date)} · ${esc(v.dept)}</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-sm">${fmtUSD(v.totalUSD)}</div>
+                <div class="text-xs opacity-60">${fmtKRW(v.totalKRW)}</div>
+              </div>
+            </div>
+          `).join('') || '<div class="text-sm opacity-60 text-center py-8">아직 작성된 전표가 없습니다.</div>'}
+        </div>
+      </div>
+    </div>
+  `;
+
+  drawCharts(monthVouchers);
+}
+
+function kpiCard(label, value, icon, bg) {
+  return `<div class="glass rounded-2xl p-5">
+    <div class="flex items-start justify-between mb-3">
+      <div class="text-xs uppercase tracking-widest opacity-60">${esc(label)}</div>
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${bg} flex items-center justify-center">
+        <i class="fa-solid ${icon} text-white"></i>
+      </div>
+    </div>
+    <div class="text-2xl font-black">${esc(value)}</div>
+    <div class="text-xs opacity-50 mt-1 flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up text-emerald-400"></i> 정상</div>
+  </div>`;
+}
+function rateRow(label, val, delta, color) {
+  return `<div class="flex items-center justify-between py-1.5 border-b border-white/5">
+    <span class="opacity-70">${esc(label)}</span>
+    <span class="font-mono font-bold">${esc(val)} <span class="${color} text-xs ml-1">${esc(delta)}</span></span>
+  </div>`;
+}
+
+function drawCharts(monthVouchers) {
+  Object.values(State.charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  State.charts = {};
+
+  const isLight = document.body.classList.contains('light');
+  const textColor = isLight ? '#0f172a' : '#e2e8f0';
+  const gridColor = isLight ? 'rgba(15,23,42,.08)' : 'rgba(255,255,255,.06)';
+
+  // 라인 차트: 최근 14일 일자별 합계
+  const dates = [];
+  const today = new Date(todayStr());
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    dates.push(d.toISOString().slice(0,10));
+  }
+  const dataMap = {};
+  dates.forEach(d => dataMap[d] = 0);
+  State.vouchers.forEach(v => { if (dataMap[v.date] !== undefined) dataMap[v.date] += v.totalKRW; });
+
+  const ctx1 = document.getElementById('lineChart')?.getContext('2d');
+  if (ctx1) {
+    State.charts.line = new Chart(ctx1, {
+      type:'line',
+      data: {
+        labels: dates.map(d => d.slice(5)),
+        datasets: [{
+          label: 'KRW 환산 (원)',
+          data: dates.map(d => dataMap[d]),
+          fill: true,
+          borderColor: '#10b981',
+          backgroundColor: (ctx) => {
+            const g = ctx.chart.ctx.createLinearGradient(0,0,0,260);
+            g.addColorStop(0,'rgba(251,191,36,0.45)');
+            g.addColorStop(1,'rgba(16,185,129,0.05)');
+            return g;
+          },
+          tension: .35,
+          pointRadius: 3,
+          pointBackgroundColor: '#fbbf24',
+          pointBorderColor: '#10b981',
+          borderWidth: 2.5
+        }]
+      },
+      options: {
+        maintainAspectRatio:false, responsive:true,
+        plugins: { legend:{labels:{color:textColor}} },
+        scales: {
+          x: { ticks:{color:textColor}, grid:{color:gridColor} },
+          y: { ticks:{color:textColor, callback:v=>(v/1000)+'k'}, grid:{color:gridColor} }
+        }
+      }
+    });
+  }
+
+  // 도넛 차트: 계정과목 분포
+  const accMap = {};
+  State.vouchers.forEach(v => {
+    const a = v.entries[0].debit.account;
+    accMap[a] = (accMap[a]||0) + v.totalUSD;
+  });
+  const ctx2 = document.getElementById('donutChart')?.getContext('2d');
+  if (ctx2) {
+    State.charts.donut = new Chart(ctx2, {
+      type:'doughnut',
+      data: {
+        labels: Object.keys(accMap),
+        datasets: [{
+          data: Object.values(accMap),
+          backgroundColor: [
+            '#10b981','#fbbf24','#3b82f6','#a855f7','#ef4444',
+            '#06b6d4','#f97316','#84cc16','#ec4899','#8b5cf6'
+          ],
+          borderWidth: 2,
+          borderColor: isLight ? '#fff' : '#0f172a'
+        }]
+      },
+      options: {
+        maintainAspectRatio:false, responsive:true, cutout:'62%',
+        plugins: {
+          legend: { position:'bottom', labels:{color:textColor, padding:10, font:{size:11}} },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmtUSD(ctx.parsed)}` } }
+        }
+      }
+    });
+  }
+}
+
+/* ============================================================
+ * 8) 신규 전표 작성
+ * ============================================================ */
+function renderNewVoucher() {
+  if (!State.draft) {
+    State.draft = createBlankDraft();
+  }
+  const d = State.draft;
+  const root = document.getElementById('pageRoot');
+
+  root.innerHTML = `
+    <!-- 스텝 표시기 -->
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <div class="step-indicator ${d.step>=1?'active':''} ${d.step>1?'done':''}"><span class="font-black">1</span>증빙·결재 확인</div>
+      <i class="fa-solid fa-chevron-right opacity-40"></i>
+      <div class="step-indicator ${d.step===2?'active':''} ${d.step>2?'done':''}"><span class="font-black">2</span>거래 내역 입력</div>
+      <i class="fa-solid fa-chevron-right opacity-40"></i>
+      <div class="step-indicator ${d.step===3?'active':''} ${d.step>3?'done':''}"><span class="font-black">3</span>계정과목 판단</div>
+      <i class="fa-solid fa-chevron-right opacity-40"></i>
+      <div class="step-indicator ${d.step===4?'active':''}"><span class="font-black">4</span>분개·검증·출력</div>
+    </div>
+    <div id="draftBody"></div>
+  `;
+  renderDraftStep();
+}
+
+function createBlankDraft() {
+  return {
+    step: 1,
+    dept: '해외사업부',
+    evidence: ['청구서'],
+    approved: false,
+    rate: 1350,
+    date: todayStr(),
+    txs: [
+      { date: todayStr(), remark: '', usd: 0, krw: 0, account: '', side: '' }
+    ]
+  };
+}
+
+function renderDraftStep() {
+  const body = document.getElementById('draftBody');
+  const d = State.draft;
+  if (d.step === 1) body.innerHTML = stepEvidence(d);
+  else if (d.step === 2) body.innerHTML = stepTransactions(d);
+  else if (d.step === 3) body.innerHTML = stepAccountSuggest(d);
+  else if (d.step === 4) body.innerHTML = stepJournalize(d);
+  bindDraftEvents();
+}
+
+/* ----- Step 1: 증빙·결재 ----- */
+function stepEvidence(d) {
+  return `
+    <div class="glass rounded-2xl p-6 mb-5">
+      <h3 class="text-lg font-bold mb-1 flex items-center gap-2"><i class="fa-solid fa-folder-open gold-text"></i>증빙 및 결재 정보</h3>
+      <p class="text-sm opacity-60 mb-5">청구서·품의서 제출 부서와 결재 승인 여부를 확인합니다.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs uppercase tracking-widest opacity-60 mb-2">제출 부서</label>
+          <select id="fDept" class="input-base w-full px-4 py-3 rounded-lg">
+            ${['해외사업부','현장운영팀','회계부','자금팀','구매팀'].map(x => `<option ${d.dept===x?'selected':''}>${x}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-widest opacity-60 mb-2">작성일자</label>
+          <input id="fDate" type="date" value="${esc(d.date)}" class="input-base w-full px-4 py-3 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-widest opacity-60 mb-2">적용 환율 (USD/KRW)</label>
+          <input id="fRate" type="number" min="0" step="0.01" value="${d.rate}" class="input-base w-full px-4 py-3 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-widest opacity-60 mb-2">제출 증빙 종류</label>
+          <div class="flex flex-wrap gap-2">
+            ${['청구서','품의서','계약서','세금계산서','거래명세서'].map(e => `
+              <label class="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 cursor-pointer ${d.evidence.includes(e)?'bg-emerald-500/15 border-emerald-400/40':''}">
+                <input type="checkbox" class="evChk" value="${e}" ${d.evidence.includes(e)?'checked':''}>
+                <span class="text-sm">${e}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 p-4 rounded-xl border ${d.approved?'border-emerald-400/40 bg-emerald-500/10':'border-amber-400/40 bg-amber-500/10'}">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input id="fApproved" type="checkbox" ${d.approved?'checked':''} class="w-5 h-5 accent-emerald-500">
+          <div>
+            <div class="font-bold">결재 승인 완료</div>
+            <div class="text-xs opacity-70">미체크 시 다음 단계 진행 불가 → "수정 요구 사항" 모달이 표시됩니다.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3">
+      <button id="bResetDraft" class="btn-ghost px-5 py-3 rounded-lg text-sm"><i class="fa-solid fa-rotate-left mr-2"></i>초기화</button>
+      <button id="bNext1" class="btn-primary px-6 py-3 rounded-lg text-sm font-bold">다음: 거래 내역 <i class="fa-solid fa-arrow-right ml-2"></i></button>
+    </div>
+  `;
+}
+
+/* ----- Step 2: 거래 내역 ----- */
+function stepTransactions(d) {
+  const rows = d.txs.map((t,i) => `
+    <tr class="row-hover border-b border-white/5">
+      <td class="px-3 py-2"><input data-i="${i}" data-f="date" type="date" value="${esc(t.date)}" class="input-base w-full px-2 py-1.5 rounded text-sm"></td>
+      <td class="px-3 py-2"><input data-i="${i}" data-f="remark" value="${esc(t.remark)}" placeholder="예: USAID 본사 송금 입금" class="input-base w-full px-2 py-1.5 rounded text-sm"></td>
+      <td class="px-3 py-2"><input data-i="${i}" data-f="usd" type="number" step="0.01" value="${t.usd}" class="input-base w-32 px-2 py-1.5 rounded text-sm text-right font-mono"></td>
+      <td class="px-3 py-2 text-right font-mono text-sm opacity-80">${fmtKRW(t.krw)}</td>
+      <td class="px-3 py-2 text-center"><button data-i="${i}" class="bDelRow text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>
+  `).join('');
+
+  return `
+    <div class="glass rounded-2xl p-6 mb-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-table-list gold-text"></i>거래 내역 입력</h3>
+          <p class="text-sm opacity-60 mt-1">은행 통장 내역을 직접 입력하거나 엑셀로 업로드합니다.</p>
+        </div>
+        <div class="flex gap-2">
+          <label class="btn-ghost px-4 py-2 rounded-lg text-sm cursor-pointer">
+            <i class="fa-solid fa-file-excel mr-2"></i>엑셀 업로드
+            <input id="fXlsx" type="file" accept=".xlsx,.xls,.csv" class="hidden">
+          </label>
+          <button id="bAddRow" class="btn-primary px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-plus mr-2"></i>행 추가</button>
+        </div>
+      </div>
+
+      <div class="text-xs opacity-70 mb-3">적용 환율: <span class="font-mono font-bold gold-text">${d.rate.toLocaleString()}</span> 원 / USD</div>
+
+      <div class="overflow-x-auto rounded-xl border border-white/10">
+        <table class="w-full text-sm">
+          <thead class="table-header">
+            <tr>
+              <th class="px-3 py-3 text-left">거래일자</th>
+              <th class="px-3 py-3 text-left">적요 (거래 내용)</th>
+              <th class="px-3 py-3 text-right">USD 금액</th>
+              <th class="px-3 py-3 text-right">KRW 자동환산</th>
+              <th class="px-3 py-3 text-center">삭제</th>
+            </tr>
+          </thead>
+          <tbody id="txBody">${rows}</tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-400/30 text-xs">
+        <i class="fa-solid fa-circle-info mr-1 text-blue-300"></i> 엑셀 첫 행은 헤더(거래일자, 적요, 금액)여야 하며 USD 금액 컬럼은 숫자입니다.
+      </div>
+    </div>
+
+    <div class="flex justify-between gap-3">
+      <button id="bPrev2" class="btn-ghost px-5 py-3 rounded-lg text-sm"><i class="fa-solid fa-arrow-left mr-2"></i>이전</button>
+      <button id="bNext2" class="btn-primary px-6 py-3 rounded-lg text-sm font-bold">다음: 계정과목 판단 <i class="fa-solid fa-arrow-right ml-2"></i></button>
+    </div>
+  `;
+}
+
+/* ----- Step 3: 계정과목 추천 ----- */
+function stepAccountSuggest(d) {
+  const rows = d.txs.map((t,i) => {
+    const sug = suggestAccount(t.remark);
+    if (!t.account) t.account = sug.account;
+    if (!t.side) t.side = sug.rule?.side || 'auto';
+    const conf = sug.confidence;
+    const confBadge = conf==='high' ? 'badge-success' : conf==='mid' ? 'badge-warn' : 'badge-danger';
+    const confLabel = conf==='high' ? '높음' : conf==='mid' ? '보통' : '낮음';
+    return `
+      <tr class="border-b border-white/5">
+        <td class="px-3 py-3"><div class="font-bold text-sm">${esc(t.date)}</div></td>
+        <td class="px-3 py-3"><div class="text-sm">${esc(t.remark||'-')}</div>
+          <div class="text-xs opacity-60 mt-1">${fmtUSD(t.usd)} · ${fmtKRW(t.krw)}</div></td>
+        <td class="px-3 py-3">
+          <span class="badge ${confBadge}"><i class="fa-solid fa-wand-magic-sparkles"></i> 신뢰도 ${confLabel}</span>
+          ${sug.rule ? `<div class="text-[11px] opacity-60 mt-1">매칭: "${esc(sug.rule.keyword)}"</div>` : ''}
+        </td>
+        <td class="px-3 py-3">
+          <select data-i="${i}" class="accSel input-base w-full px-2 py-2 rounded text-sm font-bold">
+            ${getAllAccounts().map(a => `<option ${t.account===a?'selected':''}>${a}</option>`).join('')}
+          </select>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="glass rounded-2xl p-6 mb-5">
+      <h3 class="text-lg font-bold mb-1 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles gold-text"></i>적요 기반 계정과목 자동 판단</h3>
+      <p class="text-sm opacity-60 mb-5">매핑 룰에 따라 계정과목이 자동 추천됩니다. 필요 시 수정하세요.</p>
+
+      <div class="overflow-x-auto rounded-xl border border-white/10">
+        <table class="w-full text-sm">
+          <thead class="table-header">
+            <tr>
+              <th class="px-3 py-3 text-left w-28">일자</th>
+              <th class="px-3 py-3 text-left">적요 / 금액</th>
+              <th class="px-3 py-3 text-left w-44">추천 신뢰도</th>
+              <th class="px-3 py-3 text-left w-56">최종 계정과목</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex justify-between gap-3">
+      <button id="bPrev3" class="btn-ghost px-5 py-3 rounded-lg text-sm"><i class="fa-solid fa-arrow-left mr-2"></i>이전</button>
+      <button id="bNext3" class="btn-primary px-6 py-3 rounded-lg text-sm font-bold">다음: 분개 및 검증 <i class="fa-solid fa-arrow-right ml-2"></i></button>
+    </div>
+  `;
+}
+
+/* ----- Step 4: 분개·검증·출력 ----- */
+function stepJournalize(d) {
+  // 분개 만들기
+  const entries = d.txs.map(t => autoJournalize(t.remark, t.account, Number(t.usd)||0, Math.round((Number(t.usd)||0) * d.rate)));
+  const totalDebit  = entries.reduce((s,e)=> s + e.debit.usd, 0);
+  const totalCredit = entries.reduce((s,e)=> s + e.credit.usd, 0);
+  const balanced = Math.abs(totalDebit - totalCredit) < 0.01;
+
+  const rows = entries.map((e,i) => `
+    <tr class="border-b border-white/5">
+      <td class="px-3 py-2 text-center text-xs opacity-60">${i+1}</td>
+      <td class="px-3 py-2 row-debit"><div class="font-bold text-sm">${esc(e.debit.account)}</div></td>
+      <td class="px-3 py-2 row-debit text-right font-mono text-sm">${fmtUSD(e.debit.usd)}<div class="text-[11px] opacity-60">${fmtKRW(e.debit.krw)}</div></td>
+      <td class="px-3 py-2 row-credit"><div class="font-bold text-sm">${esc(e.credit.account)}</div></td>
+      <td class="px-3 py-2 row-credit text-right font-mono text-sm">${fmtUSD(e.credit.usd)}<div class="text-[11px] opacity-60">${fmtKRW(e.credit.krw)}</div></td>
+      <td class="px-3 py-2 text-sm">${esc(e.debit.remark||'-')}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <!-- 검증 결과 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+      <div class="glass rounded-2xl p-5">
+        <div class="text-xs opacity-60 mb-1">차변 합계</div>
+        <div class="text-2xl font-black text-blue-300">${fmtUSD(totalDebit)}</div>
+        <div class="text-xs opacity-60 mt-1">${fmtKRW(totalDebit * d.rate)}</div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="text-xs opacity-60 mb-1">대변 합계</div>
+        <div class="text-2xl font-black text-amber-300">${fmtUSD(totalCredit)}</div>
+        <div class="text-xs opacity-60 mt-1">${fmtKRW(totalCredit * d.rate)}</div>
+      </div>
+      <div class="glass rounded-2xl p-5 ${balanced?'border-emerald-400/40':'border-red-400/40'} border-2">
+        <div class="text-xs opacity-60 mb-1">검증 결과</div>
+        ${balanced ? `
+          <div class="text-2xl font-black text-emerald-400 flex items-center gap-2"><i class="fa-solid fa-circle-check"></i>일치</div>
+          <div class="text-xs opacity-70 mt-1">차변 = 대변 · 분개 정상</div>
+        ` : `
+          <div class="text-2xl font-black text-red-400 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i>불일치</div>
+          <div class="text-xs opacity-70 mt-1">차이: ${fmtUSD(Math.abs(totalDebit-totalCredit))} → 자동 조정 권장</div>
+        `}
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl p-6 mb-5">
+      <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-scale-balanced gold-text"></i>차변/대변 자동 분개</h3>
+      <div class="overflow-x-auto rounded-xl border border-white/10">
+        <table class="w-full text-sm">
+          <thead class="table-header">
+            <tr>
+              <th class="px-3 py-3 w-10">#</th>
+              <th class="px-3 py-3 text-left">차변 계정과목</th>
+              <th class="px-3 py-3 text-right">차변 금액</th>
+              <th class="px-3 py-3 text-left">대변 계정과목</th>
+              <th class="px-3 py-3 text-right">대변 금액</th>
+              <th class="px-3 py-3 text-left">적요</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr class="font-black ${balanced?'bg-emerald-500/10':'bg-red-500/10'}">
+              <td class="px-3 py-3 text-center">합계</td>
+              <td class="px-3 py-3"></td>
+              <td class="px-3 py-3 text-right font-mono">${fmtUSD(totalDebit)}</td>
+              <td class="px-3 py-3"></td>
+              <td class="px-3 py-3 text-right font-mono">${fmtUSD(totalCredit)}</td>
+              <td class="px-3 py-3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap justify-between gap-3">
+      <button id="bPrev4" class="btn-ghost px-5 py-3 rounded-lg text-sm"><i class="fa-solid fa-arrow-left mr-2"></i>이전</button>
+      <div class="flex flex-wrap gap-2">
+        <button id="bPreview" class="btn-ghost px-5 py-3 rounded-lg text-sm"><i class="fa-solid fa-eye mr-2"></i>전표 미리보기</button>
+        <button id="bSaveOnly" class="btn-ghost px-5 py-3 rounded-lg text-sm"><i class="fa-solid fa-floppy-disk mr-2"></i>이력 저장</button>
+        <button id="bFinalize" class="btn-gold px-6 py-3 rounded-lg text-sm font-bold"><i class="fa-solid fa-check-double mr-2"></i>전표 확정 및 출력</button>
+      </div>
+    </div>
+  `;
+}
+
+function getAllAccounts() {
+  const set = new Set();
+  State.mappings.forEach(m => set.add(m.account));
+  ['외화예금','보통예금','지급수수료','현장운영비','급여','외환차익','이자수익','이자비용','외주비','여비교통비','통신비','세금과공과','보험료','원재료','미분류'].forEach(a => set.add(a));
+  return Array.from(set);
+}
+
+/* ----- Draft 이벤트 바인딩 ----- */
+function bindDraftEvents() {
+  const d = State.draft;
+
+  // 공통: 부모 이동
+  const goStep = n => { d.step = n; renderNewVoucher(); };
+
+  // Step 1
+  const fDept = document.getElementById('fDept');
+  if (fDept) fDept.addEventListener('change', e => d.dept = e.target.value);
+  const fDate = document.getElementById('fDate');
+  if (fDate) fDate.addEventListener('change', e => d.date = e.target.value);
+  const fRate = document.getElementById('fRate');
+  if (fRate) fRate.addEventListener('change', e => {
+    d.rate = Number(e.target.value) || 1350;
+    d.txs.forEach(t => t.krw = Math.round((Number(t.usd)||0) * d.rate));
+  });
+  document.querySelectorAll('.evChk').forEach(c => c.addEventListener('change', () => {
+    d.evidence = Array.from(document.querySelectorAll('.evChk:checked')).map(x => x.value);
+  }));
+  const fApproved = document.getElementById('fApproved');
+  if (fApproved) fApproved.addEventListener('change', e => d.approved = e.target.checked);
+
+  document.getElementById('bResetDraft')?.addEventListener('click', () => {
+    State.draft = createBlankDraft();
+    renderNewVoucher();
+    toast('초안을 초기화했습니다.', 'info');
+  });
+  document.getElementById('bNext1')?.addEventListener('click', () => {
+    if (!d.approved) {
+      openModal(`
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-triangle-exclamation text-3xl text-amber-400"></i>
+          </div>
+          <h3 class="text-xl font-black mb-2">수정 요구 사항</h3>
+          <p class="text-sm opacity-75 mb-4">결재가 완료되지 않았습니다. 현업부서 보완 절차를 진행해 주세요.</p>
+          <div class="text-left bg-amber-500/10 border border-amber-400/30 rounded-xl p-4 mb-5 text-sm">
+            <div class="font-bold mb-2"><i class="fa-solid fa-list-check mr-2"></i>보완 요청 항목</div>
+            <ul class="list-disc pl-5 space-y-1 opacity-90">
+              <li>결재라인 ${esc(d.dept)} 담당자 → 부서장 → 회계부장 순으로 결재 완료</li>
+              <li>제출 증빙(${esc(d.evidence.join(', ')||'-')}) 원본 첨부 여부 재확인</li>
+              <li>적용 환율 ${d.rate.toLocaleString()}원의 기준일 확인</li>
+            </ul>
+          </div>
+          <div class="flex gap-3 justify-center">
+            <button onclick="closeModals()" class="btn-ghost px-5 py-2 rounded-lg text-sm">닫기</button>
+            <button onclick="State.draft.approved=true;closeModals();go('new')" class="btn-gold px-5 py-2 rounded-lg text-sm font-bold">결재 완료 처리</button>
+          </div>
+        </div>`);
+      return;
+    }
+    goStep(2);
+  });
+
+  // Step 2
+  const bAddRow = document.getElementById('bAddRow');
+  if (bAddRow) bAddRow.addEventListener('click', () => {
+    d.txs.push({ date: d.date, remark:'', usd:0, krw:0, account:'', side:'' });
+    renderDraftStep();
+  });
+  document.querySelectorAll('#txBody input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const i = Number(e.target.dataset.i);
+      const f = e.target.dataset.f;
+      d.txs[i][f] = (f==='usd') ? Number(e.target.value)||0 : e.target.value;
+      if (f==='usd') d.txs[i].krw = Math.round(d.txs[i].usd * d.rate);
+      if (f==='usd') {
+        const td = e.target.closest('tr').children[3];
+        if (td) td.textContent = fmtKRW(d.txs[i].krw);
+      }
+    });
+  });
+  document.querySelectorAll('.bDelRow').forEach(b => b.addEventListener('click', e => {
+    const i = Number(e.currentTarget.dataset.i);
+    d.txs.splice(i,1);
+    if (d.txs.length === 0) d.txs.push({ date:d.date, remark:'', usd:0, krw:0, account:'', side:'' });
+    renderDraftStep();
+  }));
+  document.getElementById('fXlsx')?.addEventListener('change', handleXlsxUpload);
+  document.getElementById('bPrev2')?.addEventListener('click', () => goStep(1));
+  document.getElementById('bNext2')?.addEventListener('click', () => {
+    const valid = d.txs.filter(t => t.remark && Number(t.usd) > 0);
+    if (valid.length === 0) { toast('적요와 USD 금액을 입력해 주세요.', 'warn'); return; }
+    d.txs = valid;
+    goStep(3);
+  });
+
+  // Step 3
+  document.querySelectorAll('.accSel').forEach(sel => sel.addEventListener('change', e => {
+    const i = Number(e.target.dataset.i);
+    d.txs[i].account = e.target.value;
+  }));
+  document.getElementById('bPrev3')?.addEventListener('click', () => goStep(2));
+  document.getElementById('bNext3')?.addEventListener('click', () => goStep(4));
+
+  // Step 4
+  document.getElementById('bPrev4')?.addEventListener('click', () => goStep(3));
+  document.getElementById('bPreview')?.addEventListener('click', showVoucherPreview);
+  document.getElementById('bSaveOnly')?.addEventListener('click', () => {
+    saveCurrentVoucher();
+    toast('이력에 저장되었습니다.');
+  });
+  document.getElementById('bFinalize')?.addEventListener('click', () => {
+    saveCurrentVoucher();
+    showVoucherPreview(true);
+  });
+}
+
+/* ----- 엑셀 업로드 처리 ----- */
+function handleXlsxUpload(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), { type:'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+      if (rows.length < 2) { toast('데이터가 없습니다.', 'warn'); return; }
+      const d = State.draft;
+      const newTxs = [];
+      for (let i=1; i<rows.length; i++) {
+        const r = rows[i];
+        if (!r || r.length === 0) continue;
+        let date = r[0], remark = r[1], usd = r[2];
+        if (typeof date === 'number') {
+          // 엑셀 시리얼
+          const dd = XLSX.SSF.parse_date_code(date);
+          if (dd) date = `${dd.y}-${String(dd.m).padStart(2,'0')}-${String(dd.d).padStart(2,'0')}`;
+        }
+        usd = Number(String(usd).replace(/[,$\s]/g,''))||0;
+        if (!remark || usd <= 0) continue;
+        newTxs.push({ date:String(date).slice(0,10), remark:String(remark), usd, krw:Math.round(usd*d.rate), account:'', side:'' });
+      }
+      if (newTxs.length === 0) { toast('가져올 유효한 행이 없습니다.', 'warn'); return; }
+      d.txs = newTxs;
+      renderDraftStep();
+      toast(`${newTxs.length}건 가져왔습니다.`, 'success');
+    } catch (err) {
+      console.error(err);
+      toast('엑셀 파싱 오류: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+/* ----- 전표 미리보기 모달 ----- */
+function showVoucherPreview(afterSave=false) {
+  const d = State.draft;
+  const entries = d.txs.map(t => autoJournalize(t.remark, t.account, Number(t.usd)||0, Math.round((Number(t.usd)||0) * d.rate)));
+  const totalDebit = entries.reduce((s,e)=> s + e.debit.usd, 0);
+  const totalCredit = entries.reduce((s,e)=> s + e.credit.usd, 0);
+  const balanced = Math.abs(totalDebit-totalCredit) < 0.01;
+
+  const html = `
+    <div class="flex items-center justify-between mb-4 no-print">
+      <h3 class="text-lg font-black flex items-center gap-2"><i class="fa-solid fa-receipt gold-text"></i>대체전표 미리보기</h3>
+      <div class="flex gap-2">
+        <button onclick="exportPDF()" class="btn-ghost px-3 py-1.5 rounded text-xs"><i class="fa-solid fa-file-pdf mr-1"></i>PDF</button>
+        <button onclick="exportXLSX()" class="btn-ghost px-3 py-1.5 rounded text-xs"><i class="fa-solid fa-file-excel mr-1"></i>엑셀</button>
+        <button onclick="copyVoucherText()" class="btn-ghost px-3 py-1.5 rounded text-xs"><i class="fa-solid fa-copy mr-1"></i>복사</button>
+        <button onclick="window.print()" class="btn-ghost px-3 py-1.5 rounded text-xs"><i class="fa-solid fa-print mr-1"></i>인쇄</button>
+        <button onclick="closeModals()" class="btn-gold px-3 py-1.5 rounded text-xs font-bold">닫기</button>
+      </div>
+    </div>
+    <div class="voucher-print">
+      <div class="flex items-center justify-between border-b-2 border-gray-800 pb-3 mb-4">
+        <div>
+          <div class="text-3xl font-black tracking-tight">대 체 전 표</div>
+          <div class="text-xs text-gray-500 mt-1">Voucher of Substitute Slip · USD 계좌</div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-bold">유신 (YOOSHIN)</div>
+          <div class="text-xs text-gray-500">회계부 / 외화 자금</div>
+        </div>
+      </div>
+      <table class="mb-4">
+        <tr>
+          <th style="width:18%">작성일자</th><td>${esc(d.date)}</td>
+          <th style="width:18%">제출부서</th><td>${esc(d.dept)}</td>
+        </tr>
+        <tr>
+          <th>적용 환율</th><td>USD/KRW ${d.rate.toLocaleString()}</td>
+          <th>관련 증빙</th><td>${esc(d.evidence.join(', ')||'-')}</td>
+        </tr>
+      </table>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:8%">No</th>
+            <th>차변 계정과목</th>
+            <th style="width:14%">차변 금액(USD)</th>
+            <th>대변 계정과목</th>
+            <th style="width:14%">대변 금액(USD)</th>
+            <th>적요</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map((e,i) => `
+            <tr>
+              <td style="text-align:center">${i+1}</td>
+              <td>${esc(e.debit.account)}</td>
+              <td style="text-align:right">${fmtUSD(e.debit.usd)}</td>
+              <td>${esc(e.credit.account)}</td>
+              <td style="text-align:right">${fmtUSD(e.credit.usd)}</td>
+              <td>${esc(e.debit.remark)}</td>
+            </tr>
+          `).join('')}
+          <tr style="background:#f3f4f6;font-weight:900">
+            <td style="text-align:center">합계</td>
+            <td></td>
+            <td style="text-align:right">${fmtUSD(totalDebit)}</td>
+            <td></td>
+            <td style="text-align:right">${fmtUSD(totalCredit)}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="mt-4 ${balanced?'text-emerald-700':'text-red-700'} font-bold text-sm">
+        ${balanced ? '✓ 검증 결과: 차변 합계와 대변 합계가 정확히 일치합니다.'
+                   : '✗ 검증 실패: 차변과 대변이 불일치합니다. ('+ fmtUSD(Math.abs(totalDebit-totalCredit)) +')'}
+      </div>
+      <div class="grid grid-cols-4 gap-2 mt-6 text-center text-xs">
+        ${['담당','대리','과장','부장'].map(p => `
+          <div class="border border-gray-800 rounded">
+            <div class="bg-gray-100 py-1 border-b border-gray-800">${p}</div>
+            <div class="h-16 flex items-center justify-center">
+              ${p==='담당' ? '<div class="stamp">임준영</div>' : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    ${afterSave ? '<div class="mt-4 p-3 bg-emerald-500/15 border border-emerald-400/30 rounded-lg text-sm text-center no-print"><i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i> 전표가 이력에 저장되었습니다.</div>' : ''}
+  `;
+  openModal(html, { size: 'max-w-4xl' });
+  // 임시 객체에 보존 (출력용)
+  State._lastPreview = { d, entries, totalDebit, totalCredit };
+}
+
+/* ----- 출력 함수들 ----- */
+function exportPDF() {
+  try {
+    const p = State._lastPreview;
+    if (!p) { toast('미리보기 후 사용 가능합니다.', 'warn'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    doc.setFontSize(18);
+    doc.text('Substitute Voucher (USD)', 14, 18);
+    doc.setFontSize(10);
+    doc.text(`Date: ${p.d.date} | Dept: ${p.d.dept} | Rate: ${p.d.rate}`, 14, 26);
+    doc.text(`Evidence: ${p.d.evidence.join(', ')||'-'}`, 14, 32);
+    const head = [['No','Debit Account','Debit (USD)','Credit Account','Credit (USD)','Remark']];
+    const body = p.entries.map((e,i) => [
+      i+1, e.debit.account, e.debit.usd.toFixed(2),
+      e.credit.account, e.credit.usd.toFixed(2),
+      e.debit.remark
+    ]);
+    body.push(['Total','', p.totalDebit.toFixed(2), '', p.totalCredit.toFixed(2),'']);
+    doc.autoTable({ head, body, startY: 40, styles:{ fontSize:9, cellPadding:2 }, headStyles:{ fillColor:[5,150,105] } });
+    const bal = Math.abs(p.totalDebit - p.totalCredit) < 0.01;
+    doc.setTextColor(bal? 16:200, bal?185:0, bal?129:0);
+    doc.text(bal ? 'Verified: Debit equals Credit.' : 'Mismatch detected!', 14, doc.lastAutoTable.finalY + 10);
+    doc.save(`voucher_${p.d.date}.pdf`);
+    toast('PDF가 저장되었습니다.');
+  } catch (e) { toast('PDF 생성 실패: '+e.message,'error'); }
+}
+
+function exportXLSX() {
+  try {
+    const p = State._lastPreview;
+    if (!p) { toast('미리보기 후 사용 가능합니다.', 'warn'); return; }
+    const aoa = [
+      ['대체전표'],['작성일자',p.d.date,'제출부서',p.d.dept,'환율',p.d.rate],
+      ['관련증빙',p.d.evidence.join(', ')], [],
+      ['No','차변 계정과목','차변 USD','대변 계정과목','대변 USD','적요']
+    ];
+    p.entries.forEach((e,i)=> aoa.push([i+1, e.debit.account, e.debit.usd, e.credit.account, e.credit.usd, e.debit.remark]));
+    aoa.push(['합계','', p.totalDebit, '', p.totalCredit, '']);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '대체전표');
+    XLSX.writeFile(wb, `voucher_${p.d.date}.xlsx`);
+    toast('엑셀이 저장되었습니다.');
+  } catch (e) { toast('엑셀 저장 실패: '+e.message,'error'); }
+}
+
+function copyVoucherText() {
+  try {
+    const p = State._lastPreview;
+    if (!p) return;
+    let txt = `### 대체전표\n* 작성일자: ${p.d.date}\n* 부서: ${p.d.dept}\n* 환율: ${p.d.rate}\n* 증빙: ${p.d.evidence.join(', ')}\n\n`;
+    txt += '| 차변 계정과목 | 차변 USD | 대변 계정과목 | 대변 USD | 적요 |\n|---|---:|---|---:|---|\n';
+    p.entries.forEach(e => { txt += `| ${e.debit.account} | ${e.debit.usd.toFixed(2)} | ${e.credit.account} | ${e.credit.usd.toFixed(2)} | ${e.debit.remark} |\n`; });
+    txt += `| **합계** | **${p.totalDebit.toFixed(2)}** | **합계** | **${p.totalCredit.toFixed(2)}** | |\n`;
+    navigator.clipboard.writeText(txt);
+    toast('클립보드에 복사되었습니다.');
+  } catch (e) { toast('복사 실패: '+e.message,'error'); }
+}
+
+function saveCurrentVoucher() {
+  const d = State.draft;
+  const entries = d.txs.map(t => autoJournalize(t.remark, t.account, Number(t.usd)||0, Math.round((Number(t.usd)||0) * d.rate)));
+  const totalUSD = entries.reduce((s,e)=> s + e.debit.usd, 0);
+  const totalKRW = entries.reduce((s,e)=> s + e.debit.krw, 0);
+  const balanced = Math.abs(totalUSD - entries.reduce((s,e)=>s+e.credit.usd,0)) < 0.01;
+
+  const v = {
+    id: uid(),
+    date: d.date,
+    dept: d.dept,
+    approved: d.approved,
+    evidence: d.evidence.slice(),
+    rate: d.rate,
+    entries,
+    totalUSD,
+    totalKRW,
+    verified: balanced,
+    createdAt: new Date().toISOString()
+  };
+  State.vouchers.unshift(v);
+  saveLS();
+}
+
+/* ============================================================
+ * 9) 전표 이력
+ * ============================================================ */
+function renderHistory() {
+  const root = document.getElementById('pageRoot');
+  root.innerHTML = `
+    <div class="glass rounded-2xl p-6 mb-5">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <input id="hSearch" placeholder="🔍 적요, 계정과목, 부서 검색..." class="input-base px-4 py-3 rounded-lg md:col-span-2">
+        <select id="hAccount" class="input-base px-4 py-3 rounded-lg">
+          <option value="">전체 계정과목</option>
+          ${getAllAccounts().map(a => `<option>${esc(a)}</option>`).join('')}
+        </select>
+        <input id="hDate" type="month" class="input-base px-4 py-3 rounded-lg" value="${todayStr().slice(0,7)}">
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl p-4">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="table-header">
+            <tr>
+              <th class="px-3 py-3 text-left">전표번호</th>
+              <th class="px-3 py-3 text-left">일자</th>
+              <th class="px-3 py-3 text-left">부서</th>
+              <th class="px-3 py-3 text-left">차변 → 대변</th>
+              <th class="px-3 py-3 text-right">USD</th>
+              <th class="px-3 py-3 text-right">KRW</th>
+              <th class="px-3 py-3 text-center">검증</th>
+              <th class="px-3 py-3 text-center">동작</th>
+            </tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('hSearch').addEventListener('input', renderHistList);
+  document.getElementById('hAccount').addEventListener('change', renderHistList);
+  document.getElementById('hDate').addEventListener('change', renderHistList);
+  renderHistList();
+}
+
+function renderHistList() {
+  const q = (document.getElementById('hSearch').value||'').toLowerCase();
+  const accF = document.getElementById('hAccount').value;
+  const month = document.getElementById('hDate').value;
+  const tbody = document.getElementById('histBody');
+  const list = State.vouchers.filter(v => {
+    if (month && !v.date.startsWith(month)) return false;
+    if (accF && !v.entries.some(e => e.debit.account===accF || e.credit.account===accF)) return false;
+    if (q) {
+      const haystack = [v.id, v.date, v.dept,
+        ...v.entries.flatMap(e => [e.debit.account,e.credit.account,e.debit.remark])].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 opacity-60">검색 결과가 없습니다.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(v => `
+    <tr class="row-hover border-b border-white/5">
+      <td class="px-3 py-3 font-mono text-xs">${esc(v.id)}</td>
+      <td class="px-3 py-3">${esc(v.date)}</td>
+      <td class="px-3 py-3"><span class="badge badge-info">${esc(v.dept)}</span></td>
+      <td class="px-3 py-3">
+        <div class="text-sm">${esc(v.entries[0].debit.account)} → ${esc(v.entries[0].credit.account)}</div>
+        <div class="text-[11px] opacity-60">${esc(v.entries[0].debit.remark)}</div>
+      </td>
+      <td class="px-3 py-3 text-right font-mono">${fmtUSD(v.totalUSD)}</td>
+      <td class="px-3 py-3 text-right font-mono">${fmtKRW(v.totalKRW)}</td>
+      <td class="px-3 py-3 text-center">
+        ${v.verified ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i>통과</span>' : '<span class="badge badge-danger"><i class="fa-solid fa-xmark"></i>실패</span>'}
+      </td>
+      <td class="px-3 py-3 text-center">
+        <button onclick="viewVoucher('${v.id}')" class="btn-ghost px-2 py-1 rounded text-xs" title="보기"><i class="fa-solid fa-eye"></i></button>
+        <button onclick="duplicateVoucher('${v.id}')" class="btn-ghost px-2 py-1 rounded text-xs" title="복사"><i class="fa-solid fa-copy"></i></button>
+        <button onclick="deleteVoucher('${v.id}')" class="btn-ghost px-2 py-1 rounded text-xs text-red-400" title="삭제"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function viewVoucher(id) {
+  const v = State.vouchers.find(x => x.id === id);
+  if (!v) return;
+  State.draft = {
+    step:4, dept:v.dept, evidence:v.evidence, approved:v.approved, rate:v.rate, date:v.date,
+    txs: v.entries.map(e => ({ date:v.date, remark:e.debit.remark, usd:e.debit.usd, krw:e.debit.krw, account:e.debit.account, side:'auto' }))
+  };
+  showVoucherPreview();
+}
+function duplicateVoucher(id) {
+  const v = State.vouchers.find(x => x.id === id);
+  if (!v) return;
+  State.draft = {
+    step:2, dept:v.dept, evidence:v.evidence.slice(), approved:true, rate:v.rate, date:todayStr(),
+    txs: v.entries.map(e => ({ date:todayStr(), remark:e.debit.remark, usd:e.debit.usd, krw:e.debit.krw, account:e.debit.account, side:'auto' }))
+  };
+  go('new');
+  toast('복사 후 신규 작성 모드로 이동했습니다.');
+}
+function deleteVoucher(id) {
+  if (!confirm('이 전표를 삭제하시겠습니까?')) return;
+  State.vouchers = State.vouchers.filter(x => x.id !== id);
+  saveLS();
+  renderHistList();
+  toast('삭제되었습니다.', 'info');
+}
+
+/* ============================================================
+ * 10) 계정과목 마스터
+ * ============================================================ */
+function renderAccounts() {
+  const root = document.getElementById('pageRoot');
+  root.innerHTML = `
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="lg:col-span-2 glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-book gold-text"></i>키워드 → 계정과목 매핑</h3>
+            <p class="text-sm opacity-60 mt-1">적요 자동 판단 룰을 관리합니다.</p>
+          </div>
+          <button id="bAddMap" class="btn-primary px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-plus mr-1"></i>룰 추가</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="table-header">
+              <tr>
+                <th class="px-3 py-3 text-left">키워드</th>
+                <th class="px-3 py-3 text-left">계정과목</th>
+                <th class="px-3 py-3 text-left">구분</th>
+                <th class="px-3 py-3 text-left">설명</th>
+                <th class="px-3 py-3 text-center">동작</th>
+              </tr>
+            </thead>
+            <tbody id="mapBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-bold mb-3 flex items-center gap-2"><i class="fa-solid fa-star gold-text"></i>즐겨찾는 계정과목</h3>
+        <p class="text-xs opacity-60 mb-4">자주 사용하는 계정과목을 핀 고정합니다.</p>
+        <div id="favWrap" class="space-y-2"></div>
+      </div>
+    </div>
+  `;
+  renderMapTable();
+  renderFavorites();
+  document.getElementById('bAddMap').addEventListener('click', () => editMapping(null));
+}
+
+function renderMapTable() {
+  const tbody = document.getElementById('mapBody');
+  if (State.mappings.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-12 opacity-60">매핑 룰이 없습니다.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = State.mappings.map(m => `
+    <tr class="row-hover border-b border-white/5">
+      <td class="px-3 py-3"><span class="badge badge-warn">${esc(m.keyword)}</span></td>
+      <td class="px-3 py-3 font-bold">${esc(m.account)}</td>
+      <td class="px-3 py-3 text-xs opacity-70">${esc(m.type||'-')}</td>
+      <td class="px-3 py-3 text-xs opacity-70">${esc(m.desc||'-')}</td>
+      <td class="px-3 py-3 text-center">
+        <button onclick="editMapping('${m.id}')" class="btn-ghost px-2 py-1 rounded text-xs"><i class="fa-solid fa-pen"></i></button>
+        <button onclick="delMapping('${m.id}')" class="btn-ghost px-2 py-1 rounded text-xs text-red-400"><i class="fa-solid fa-trash"></i></button>
+        <button onclick="toggleFav('${m.account}')" class="btn-ghost px-2 py-1 rounded text-xs ${State.favorites.includes(m.account)?'text-amber-400':''}"><i class="fa-solid fa-star"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderFavorites() {
+  const wrap = document.getElementById('favWrap');
+  if (State.favorites.length === 0) {
+    wrap.innerHTML = '<div class="text-sm opacity-60 text-center py-8">즐겨찾기가 없습니다.</div>';
+    return;
+  }
+  wrap.innerHTML = State.favorites.map(a => `
+    <div class="flex items-center justify-between p-3 rounded-lg border border-amber-400/30 bg-amber-500/10">
+      <div class="flex items-center gap-2"><i class="fa-solid fa-star text-amber-400"></i><span class="font-bold">${esc(a)}</span></div>
+      <button onclick="toggleFav('${a}')" class="text-xs opacity-70 hover:text-red-300"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  `).join('');
+}
+
+function editMapping(id) {
+  const m = id ? State.mappings.find(x=>x.id===id) : { id:'', keyword:'', account:'', type:'expense', side:'debit', desc:'' };
+  if (!m) return;
+  openModal(`
+    <h3 class="text-lg font-black mb-4">${id?'룰 수정':'룰 추가'}</h3>
+    <div class="space-y-3">
+      <div><label class="text-xs opacity-60">키워드</label>
+        <input id="mKw" value="${esc(m.keyword)}" class="input-base w-full px-3 py-2 rounded mt-1"></div>
+      <div><label class="text-xs opacity-60">계정과목</label>
+        <input id="mAcc" value="${esc(m.account)}" class="input-base w-full px-3 py-2 rounded mt-1"></div>
+      <div><label class="text-xs opacity-60">구분</label>
+        <select id="mType" class="input-base w-full px-3 py-2 rounded mt-1">
+          ${['asset','expense','revenue','liability'].map(t => `<option ${m.type===t?'selected':''}>${t}</option>`).join('')}
+        </select></div>
+      <div><label class="text-xs opacity-60">설명</label>
+        <input id="mDesc" value="${esc(m.desc||'')}" class="input-base w-full px-3 py-2 rounded mt-1"></div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button onclick="closeModals()" class="btn-ghost px-4 py-2 rounded text-sm">취소</button>
+      <button id="mSave" class="btn-gold px-4 py-2 rounded text-sm font-bold">저장</button>
+    </div>
+  `);
+  document.getElementById('mSave').addEventListener('click', () => {
+    const data = {
+      id: m.id || 'M'+Date.now().toString(36),
+      keyword: document.getElementById('mKw').value.trim(),
+      account: document.getElementById('mAcc').value.trim(),
+      type: document.getElementById('mType').value,
+      side: 'auto',
+      desc: document.getElementById('mDesc').value.trim()
+    };
+    if (!data.keyword || !data.account) { toast('키워드와 계정과목은 필수입니다.','warn'); return; }
+    if (m.id) {
+      const idx = State.mappings.findIndex(x=>x.id===m.id);
+      State.mappings[idx] = data;
+    } else {
+      State.mappings.unshift(data);
+    }
+    saveLS();
+    closeModals();
+    renderMapTable();
+    toast('저장되었습니다.');
+  });
+}
+
+function delMapping(id) {
+  if (!confirm('이 룰을 삭제하시겠습니까?')) return;
+  State.mappings = State.mappings.filter(x => x.id !== id);
+  saveLS();
+  renderMapTable();
+  toast('삭제되었습니다.','info');
+}
+function toggleFav(acc) {
+  if (State.favorites.includes(acc)) State.favorites = State.favorites.filter(x => x !== acc);
+  else State.favorites.push(acc);
+  saveLS();
+  renderMapTable();
+  renderFavorites();
+}
+
+/* ============================================================
+ * 11) 사이드바 / 헤더 이벤트
+ * ============================================================ */
+function bindNav() {
+  document.querySelectorAll('[data-page]').forEach(b => b.addEventListener('click', () => go(b.dataset.page)));
+  document.getElementById('btnTheme').addEventListener('click', toggleTheme);
+  document.getElementById('btnSampleReset').addEventListener('click', () => {
+    if (!confirm('샘플 데이터로 초기화하시겠습니까? (기존 이력/룰 삭제)')) return;
+    localStorage.removeItem(LS_KEY);
+    State.vouchers = []; State.mappings = []; State.favorites = [];
+    ensureInitialData();
+    go(State.page);
+    toast('샘플 데이터로 초기화되었습니다.', 'info');
+  });
+  document.getElementById('btnQuickNew').addEventListener('click', () => {
+    State.draft = createBlankDraft();
+    State.draft.approved = true;
+    go('new');
+  });
+}
+
+function toggleTheme() {
+  State.theme = State.theme === 'dark' ? 'light' : 'dark';
+  document.body.classList.toggle('light', State.theme === 'light');
+  document.getElementById('themeIcon').className = State.theme==='dark' ? 'fa-solid fa-moon w-4' : 'fa-solid fa-sun w-4';
+  document.getElementById('themeLabel').textContent = State.theme==='dark' ? '라이트 모드' : '다크 모드';
+  saveLS();
+  if (State.page === 'dashboard') drawCharts(State.vouchers.filter(v => v.date.startsWith(todayStr().slice(0,7))));
+}
+
+/* ============================================================
+ * 12) 초기화
+ * ============================================================ */
+(function init() {
+  try {
+    ensureInitialData();
+    if (State.theme === 'light') document.body.classList.add('light');
+    document.getElementById('themeIcon').className = State.theme==='dark' ? 'fa-solid fa-moon w-4' : 'fa-solid fa-sun w-4';
+    document.getElementById('themeLabel').textContent = State.theme==='dark' ? '라이트 모드' : '다크 모드';
+    document.getElementById('topDate').textContent = todayStr();
+    bindNav();
+    go('dashboard');
+    setTimeout(() => toast('시스템 준비 완료 · 샘플 전표 ' + State.vouchers.length + '건 로드됨'), 200);
+  } catch (e) {
+    console.error('초기화 오류', e);
+    alert('초기화 실패: ' + e.message);
+  }
+})();
+</script>
+</body>
+</html>

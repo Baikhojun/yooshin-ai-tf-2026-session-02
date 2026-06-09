@@ -1277,9 +1277,82 @@ background: /cover-ai-native.jpg
 
 </div>
 
+<div class="mt-5 mb-2 text-sm font-extrabold tracking-wider" style="color:#fbbf24;text-shadow:0 2px 10px rgba(0,0,0,0.65);">
+🚀 7명 위원 자동화 프로그램 · 클릭하면 새 창에서 실행됩니다 🚀
+</div>
+
+<div class="flex flex-wrap justify-center gap-3 px-4 max-w-6xl mx-auto" style="position:relative;z-index:50;">
+
+  <a href="./programs/01_금교현_실행예산검토.html" target="_blank" class="prog-card" style="background:linear-gradient(135deg,#7c3aed,#4338ca);">
+    <div class="prog-emoji">📊</div>
+    <div class="prog-name">금교현</div>
+    <div class="prog-task">실행예산 검토</div>
+  </a>
+
+  <a href="./programs/02_이태정_급여변동자료.html" target="_blank" class="prog-card" style="background:linear-gradient(135deg,#ec4899,#be185d);">
+    <div class="prog-emoji">💰</div>
+    <div class="prog-name">이태정</div>
+    <div class="prog-task">급여변동자료</div>
+  </a>
+
+  <a href="./programs/03_김혜강_귀임휴가검토.html" target="_blank" class="prog-card" style="background:linear-gradient(135deg,#06b6d4,#0e7490);">
+    <div class="prog-emoji">✈️</div>
+    <div class="prog-name">김혜강</div>
+    <div class="prog-task">귀임휴가 검토</div>
+  </a>
+
+  <a href="./programs/04_사공훈_청구서작성.html" target="_blank" class="prog-card" style="background:linear-gradient(135deg,#f59e0b,#b45309);">
+    <div class="prog-emoji">📄</div>
+    <div class="prog-name">사공훈</div>
+    <div class="prog-task">청구서 작성</div>
+  </a>
+
+  <a href="./programs/05_성국현_도급사메일.html" target="_blank" class="prog-card" style="background:linear-gradient(135deg,#10b981,#047857);">
+    <div class="prog-emoji">📧</div>
+    <div class="prog-name">성국현</div>
+    <div class="prog-task">도급사 메일</div>
+  </a>
+
+  <a href="./programs/06_이학준_사무용품정산.html" target="_blank" class="prog-card" style="background:linear-gradient(135deg,#8b5cf6,#5b21b6);">
+    <div class="prog-emoji">📦</div>
+    <div class="prog-name">이학준</div>
+    <div class="prog-task">사무용품 정산</div>
+  </a>
+
+  <a href="./programs/07_임준영_달러전표.html" target="_blank" class="prog-card" style="background:linear-gradient(135deg,#14b8a6,#065f46);">
+    <div class="prog-emoji">💵</div>
+    <div class="prog-name">임준영</div>
+    <div class="prog-task">달러 대체전표</div>
+  </a>
+
+</div>
+
 <div class="abs-bl mx-14 my-12 cover-footer">
 정보시스템실 · 2026. 6. 9.
 </div>
+
+<style>
+.prog-card {
+  display: block;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.95rem;
+  text-align: center;
+  width: 7.8rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.22);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), box-shadow 0.28s;
+  text-decoration: none !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(10px);
+}
+.prog-card:hover {
+  transform: translateY(-6px) scale(1.07);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.32);
+}
+.prog-emoji { font-size: 1.6rem; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+.prog-name { font-size: 0.9rem; font-weight: 800; margin-top: 0.4rem; color: #fff; letter-spacing: -0.02em; }
+.prog-task { font-size: 0.68rem; opacity: 0.94; margin-top: 0.18rem; color: rgba(255,255,255,0.96); font-weight: 600; }
+</style>
 
 ---
 
